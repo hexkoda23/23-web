@@ -7,47 +7,47 @@ import ImageCard from '../components/ImageCard.jsx'
 const LOOKBOOK_ITEMS = [
   {
     id: 1,
-    imageUrl: '/lookbook/01.jpg',
+    imageUrl: '/lookbook/1.jpg',
     href: 'https://www.shopify.com',
   },
   {
     id: 2,
-    imageUrl: '/lookbook/02.jpg',
+    imageUrl: '/lookbook/2.jpg',
     href: 'https://www.shopify.com',
   },
   {
     id: 3,
-    imageUrl: '/lookbook/03.jpg',
+    imageUrl: '/lookbook/3.jpg',
     href: 'https://www.shopify.com',
   },
   {
     id: 4,
-    imageUrl: '/lookbook/04.jpg',
+    imageUrl: '/lookbook/4.jpg',
     href: 'https://www.shopify.com',
   },
   {
     id: 5,
-    imageUrl: '/lookbook/05.jpg',
+    imageUrl: '/lookbook/5.jpg',
     href: 'https://www.shopify.com',
   },
   {
     id: 6,
-    imageUrl: '/lookbook/06.jpg',
+    imageUrl: '/lookbook/6.jpg',
     href: 'https://www.shopify.com',
   },
   {
     id: 7,
-    imageUrl: '/lookbook/07.jpg',
+    imageUrl: '/lookbook/7.jpg',
     href: 'https://www.shopify.com',
   },
   {
     id: 8,
-    imageUrl: '/lookbook/08.jpg',
+    imageUrl: '/lookbook/8.jpg',
     href: 'https://www.shopify.com',
   },
   {
     id: 9,
-    imageUrl: '/lookbook/09.jpg',
+    imageUrl: '/lookbook/9.jpg',
     href: 'https://www.shopify.com',
   },
 ]
