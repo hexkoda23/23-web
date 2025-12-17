@@ -21,7 +21,7 @@ function Header() {
             Lookbook
           </NavLink>
           <a
-            href="https://shop.example.com"
+            href="https://23-1111111150.myshopify.com/"
             target="_blank"
             rel="noreferrer"
             className="transition-colors hover:text-neutral-100"
