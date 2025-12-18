@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 
 import Landing from "./pages/Landing.jsx";
@@ -10,9 +10,17 @@ import PageTransition from "./components/PageTransition.jsx";
 export default function App() {
   const location = useLocation();
 
+  // check if user has passed access gate
+  const hasAccess = Boolean(localStorage.getItem("23-access"));
+
+  // pages where header should NOT show
+  const hideHeader =
+    location.pathname === "/" || location.pathname === "/access";
+
   return (
     <>
-      <Header />
+      {/* Header only shows AFTER access */}
+      {!hideHeader && hasAccess && <Header />}
 
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
@@ -24,6 +32,7 @@ export default function App() {
               </PageTransition>
             }
           />
+
           <Route
             path="/access"
             element={
@@ -32,12 +41,18 @@ export default function App() {
               </PageTransition>
             }
           />
+
+          {/* Protected Lookbook */}
           <Route
             path="/lookbook"
             element={
-              <PageTransition>
-                <Lookbook />
-              </PageTransition>
+              hasAccess ? (
+                <PageTransition>
+                  <Lookbook />
+                </PageTransition>
+              ) : (
+                <Navigate to="/access" replace />
+              )
             }
           />
         </Routes>
