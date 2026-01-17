@@ -6,7 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+FIRESTORE_RULES_DEPLOY.md
+firestore.rules
 node_modules
 dist
 dist-ssr

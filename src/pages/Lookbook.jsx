@@ -1,4 +1,6 @@
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import PageTransition from '../components/PageTransition.jsx'
 import Footer from '../components/Footer.jsx'
 import ImageCard from '../components/ImageCard.jsx'
@@ -28,6 +30,8 @@ const LOOKBOOK_ITEMS = [
 ]
 
 function Lookbook() {
+  const navigate = useNavigate()
+
   useEffect(() => {
     window.scrollTo({ top: 0 })
   }, [])
@@ -36,8 +40,21 @@ function Lookbook() {
     <PageTransition>
       <div className="min-h-screen bg-black text-neutral-100">
         <main>
+          {/* Back Button */}
+          <section className="mx-auto max-w-6xl px-6 pt-8">
+            <motion.button
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              onClick={() => navigate("/hub")}
+              className="text-sm text-neutral-400 hover:text-white transition-colors flex items-center gap-2"
+            >
+              <span>←</span> Back to Main
+            </motion.button>
+          </section>
+
           {/* Intro */}
-          <section className="mx-auto max-w-6xl px-6 pt-20 pb-24">
+          <section className="mx-auto max-w-6xl px-6 pt-12 pb-24">
             <p className="text-xs uppercase tracking-[0.4em] text-neutral-400">
               Lookbook 23 — Studio Series
             </p>

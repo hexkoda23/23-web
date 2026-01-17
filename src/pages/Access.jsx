@@ -1,50 +1,27 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { useAuth } from "../contexts/AuthContext";
 import PageTransition from "../components/PageTransition.jsx";
 
 function Access() {
   const navigate = useNavigate();
-
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [phoneError, setPhoneError] = useState("");
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
-
-  const handlePhoneChange = (e) => {
-    const value = e.target.value.replace(/\D/g, "");
-    setPhone(value);
-
-    if (value.length !== 11) {
-      setPhoneError("Phone number must be exactly 11 digits");
-    } else {
-      setPhoneError("");
+    
+    // If user is already logged in, redirect to hub
+    if (currentUser) {
+      navigate("/hub");
     }
+  }, [currentUser, navigate]);
+
+  const handleGetStarted = () => {
+    navigate("/signup");
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (phone.length !== 11) {
-      setPhoneError("Phone number must be exactly 11 digits");
-      return;
-    }
-
-    try {
-      await setDoc(doc(db, "subscribers", email.toLowerCase()), {
-        email,
-        phone,
-        createdAt: serverTimestamp(),
-      });
-
-      navigate("/lookbook");
-    } catch (error) {
-      console.error("Error saving subscriber:", error);
-    }
+  const handleLogin = () => {
+    navigate("/login");
   };
 
   return (
@@ -64,45 +41,25 @@ function Access() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-[0.25em] text-neutral-400">
-                Email
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border-b border-neutral-700 bg-transparent pb-2 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-white"
-                placeholder="you@23studio.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs uppercase tracking-[0.25em] text-neutral-400">
-                Phone
-              </label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={handlePhoneChange}
-                maxLength={11}
-                className="w-full border-b border-neutral-700 bg-transparent pb-2 text-sm text-white outline-none placeholder:text-neutral-600 focus:border-white"
-                placeholder="08012345678"
-              />
-              {phoneError && (
-                <p className="text-xs text-red-500">{phoneError}</p>
-              )}
-            </div>
-
+          <div className="space-y-4">
             <button
-              type="submit"
-              className="mt-4 inline-flex w-full items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 px-6 py-3 text-xs uppercase tracking-[0.35em] text-white transition hover:border-white hover:bg-neutral-800"
+              onClick={handleGetStarted}
+              className="w-full inline-flex items-center justify-center rounded-full border border-white bg-white text-black px-6 py-3 text-xs uppercase tracking-[0.35em] transition hover:bg-neutral-100"
             >
-              Unlock Lookbook
+              Create Account
             </button>
-          </form>
+            
+            <button
+              onClick={handleLogin}
+              className="w-full inline-flex items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 px-6 py-3 text-xs uppercase tracking-[0.35em] text-white transition hover:border-white hover:bg-neutral-800"
+            >
+              Login
+            </button>
+          </div>
+          
+          <p className="text-xs text-center text-neutral-500">
+            Create an account to access personalized features
+          </p>
         </section>
       </div>
     </PageTransition>
