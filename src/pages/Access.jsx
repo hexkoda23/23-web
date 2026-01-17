@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import PageTransition from "../components/PageTransition.jsx";
 
 function Access() {
@@ -9,19 +10,38 @@ function Access() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    
-    // If user is already logged in, redirect to hub
-    if (currentUser) {
-      navigate("/hub");
-    }
-  }, [currentUser, navigate]);
+  }, []);
 
-  const handleGetStarted = () => {
-    navigate("/signup");
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, "");
+    setPhone(value);
+
+    if (value.length !== 11) {
+      setPhoneError("Phone number must be exactly 11 digits");
+    } else {
+      setPhoneError("");
+    }
   };
 
-  const handleLogin = () => {
-    navigate("/login");
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (phone.length !== 11) {
+      setPhoneError("Phone number must be exactly 11 digits");
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, "subscribers", email.toLowerCase()), {
+        email,
+        phone,
+        createdAt: serverTimestamp(),
+      });
+
+      navigate("/lookbook");
+    } catch (error) {
+      console.error("Error saving subscriber:", error);
+    }
   };
 
   return (

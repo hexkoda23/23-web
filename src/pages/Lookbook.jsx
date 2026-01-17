@@ -7,7 +7,7 @@ import ImageCard from '../components/ImageCard.jsx'
 
 // Curated studio lookbook items
 const LOOKBOOK_ITEMS = [
-  { id: 1, imageUrl: '/lookbook/1.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766706015607-m77' },
+  { id: 1, imageUrl: '/lookbook/1.jpg', href: 'https://catlog.shop/products/23-x-itl-1766706523775-x6p' },
   { id: 2, imageUrl: '/lookbook/2.jpg', href: 'https://catlog.shop/products/23-x-sober-1766706198646-yl1' },
   { id: 3, imageUrl: '/lookbook/3.jpg', href: 'https://catlog.shop/products/23-x-itl-1766706523775-x6p' },
   { id: 4, imageUrl: '/lookbook/4.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej' },
