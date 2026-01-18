@@ -15,7 +15,7 @@ export const MEMBERS = [
 
 {
   id: 2,
-  name: "Ashibogwu Chukwudi",
+  name: "Ashibogwu Chukwudi Hilary",
   role: "Brand Manager",
   bio: "Oversees the identity and direction of 23, ensuring consistency, storytelling, and cultural relevance across every touchpoint.",
   image: "/members/chucks.jpg",
