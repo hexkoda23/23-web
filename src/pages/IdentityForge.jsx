@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { doc, setDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db } from "../lib/firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../lib/firebase";
 import PageTransition from "../components/PageTransition.jsx";
 import * as QRCode from "qrcode";
 import { useCart } from "../contexts/CartContext";
@@ -14,7 +14,6 @@ function IdentityForge() {
   const location = useLocation();
   const { currentUser } = useAuth();
   const { addToCart } = useCart();
-  const storage = getStorage();
   
   // Get product data passed from ProductDetails or fallback from localStorage
   const productData = location.state?.productData || (() => {
@@ -39,6 +38,7 @@ function IdentityForge() {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  const [uploadProgress, setUploadProgress] = useState({});
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -68,21 +68,37 @@ function IdentityForge() {
       });
       if (validFiles.length === 0) return;
       setUploading(true);
-      const uploaded = await Promise.all(
-        validFiles.map(async (file) => {
-          const path = `digitalProfiles/${currentUser?.uid || 'anonymous'}/${Date.now()}-${file.name}`;
-          const fileRef = ref(storage, path);
-          await uploadBytes(fileRef, file);
-          const url = await getDownloadURL(fileRef);
-          return {
-            name: file.name,
-            type: file.type,
-            url,
-            size: file.size,
-            storagePath: path
-          };
-        })
-      );
+      const uploaded = [];
+      for (const file of validFiles) {
+        const path = `digitalProfiles/${currentUser?.uid || 'anonymous'}/${Date.now()}-${file.name}`;
+        const fileRef = ref(storage, path);
+        await new Promise((resolve, reject) => {
+          const task = uploadBytesResumable(fileRef, file);
+          task.on(
+            "state_changed",
+            (snap) => {
+              const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+              setUploadProgress(prev => ({ ...prev, [file.name]: pct }));
+            },
+            (err) => reject(err),
+            async () => {
+              try {
+                const url = await getDownloadURL(fileRef);
+                uploaded.push({
+                  name: file.name,
+                  type: file.type,
+                  url,
+                  size: file.size,
+                  storagePath: path
+                });
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            }
+          );
+        });
+      }
       setFormData(prev => ({
         ...prev,
         craftFiles: [...prev.craftFiles, ...uploaded]
@@ -304,6 +320,11 @@ function IdentityForge() {
                           <div className="p-3 text-center">
                             <p className="text-xs font-semibold truncate">{file.name}</p>
                             <p className="text-[10px] text-gray-500">{file.type || "file"}</p>
+                          </div>
+                        )}
+                        {uploadProgress[file.name] != null && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-1">
+                            {uploadProgress[file.name]}%
                           </div>
                         )}
                         <button
