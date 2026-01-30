@@ -92,7 +92,20 @@ function IdentityForge() {
               const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
               setUploadProgress(prev => ({ ...prev, [file.name]: pct }));
             },
-            (err) => reject(err),
+            (err) => {
+              setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
+              setFormData(prev => ({
+                ...prev,
+                craftFiles: prev.craftFiles.map(cf => {
+                  if (cf.name === file.name && cf.size === file.size && cf.status === "uploading") {
+                    return { ...cf, status: "error" };
+                  }
+                  return cf;
+                })
+              }));
+              alert(`Upload failed for ${file.name}: ${err.code || ''} ${err.message || ''}`);
+              reject(err);
+            },
             async () => {
               try {
                 const url = await getDownloadURL(fileRef);
