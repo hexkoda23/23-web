@@ -15,6 +15,7 @@ export default function ProductDetails() {
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const isUnreleased = product?.category === 'unreleased';
 
   useEffect(() => {
@@ -35,11 +36,66 @@ export default function ProductDetails() {
       return;
     }
     setError('');
-    addToCart(product, selectedSize, quantity);
+    setIsModalOpen(true);
+  };
+
+  const confirmAddToCart = (customize) => {
+    if (customize) {
+      navigate('/identity-forge', { 
+        state: { 
+          productData: { 
+            product, 
+            selectedSize, 
+            quantity 
+          } 
+        } 
+      });
+    } else {
+      addToCart(product, selectedSize, quantity);
+      setIsModalOpen(false);
+    }
   };
 
   return (
-    <div className="pt-32 pb-20 min-h-screen">
+    <div className="pt-32 pb-20 min-h-screen relative">
+      {/* Customization Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white p-8 max-w-md w-full shadow-2xl space-y-6 text-center"
+          >
+            <h2 className="text-2xl font-bold uppercase tracking-tighter">Choose Your Identity</h2>
+            <p className="text-gray-600 text-sm">
+              Would you like to customize your barcode with your personal digital signature, or proceed with the standard 23 barcode?
+            </p>
+            
+            <div className="space-y-3 pt-4">
+              <button
+                onClick={() => confirmAddToCart(true)}
+                className="w-full bg-black text-white py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+              >
+                Customize Barcode
+              </button>
+              <button
+                onClick={() => confirmAddToCart(false)}
+                className="w-full bg-transparent border border-gray-200 text-black py-4 text-sm font-bold uppercase tracking-widest hover:border-black transition-colors"
+              >
+                Use Initial Barcode
+              </button>
+            </div>
+            
+            <button 
+              onClick={() => setIsModalOpen(false)}
+              className="text-xs text-gray-400 hover:text-black uppercase tracking-widest mt-4"
+            >
+              Cancel
+            </button>
+          </motion.div>
+        </div>
+      )}
+
       <div className="container mx-auto px-6">
         <button 
           onClick={() => navigate(-1)} 

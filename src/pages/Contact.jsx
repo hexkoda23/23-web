@@ -43,15 +43,15 @@ export default function Contact() {
             <div className="space-y-8">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest mb-2 text-gray-900">Email</h3>
-                <p className="text-gray-600">twentythreepreppy@gmail.com</p>
+                <a href="mailto:twentythreepreppy@gmail.com" className="text-gray-600 hover:underline">twentythreepreppy@gmail.com</a>
               </div>
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest mb-2 text-gray-900">Instagram</h3>
-                <p className="text-gray-600">twentythreepreppy</p>
+                <a href="https://instagram.com/twentythreepreppy" target="_blank" rel="noreferrer" className="text-gray-600 hover:underline">twentythreepreppy</a>
               </div>
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest mb-2 text-gray-900">Whatsapp</h3>
-                <p className="text-gray-600">08107869063</p>
+                <a href="https://wa.me/2348107869063" target="_blank" rel="noreferrer" className="text-gray-600 hover:underline">08107869063</a>
               </div>
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest mb-2 text-gray-900">Headquarters</h3>

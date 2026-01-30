@@ -26,7 +26,7 @@ export default function About() {
           <div className="container mx-auto max-w-4xl space-y-12">
             <div className="space-y-6">
               <p className="text-gray-700 leading-relaxed text-sm md:text-base">
-                23 is luxury streetwear, personalized for you. Born from the bold spirit of Preppy Nigga, we craft exclusive pieces where style meets identity.
+                23 is luxury Brand, personalized for you. Born from the bold spirit of Preppy Nigga, we craft exclusive pieces where style meets identity.
               </p>
               <p className="text-gray-700 leading-relaxed text-sm md:text-base">
                 Every item carries a unique barcode, making it truly yours — because at 23, you don’t just wear fashion, you own it.
@@ -47,15 +47,15 @@ export default function About() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div className="space-y-4">
                 <p className="text-sm md:text-base leading-relaxed text-neutral-300">
-                  Adeleke Kehinde, our visionary founder, turned a bold idea into a personalized luxury brand. With unmatched creativity and a passion for redefining luxury wear, Adeleke sets the standard for style, individuality, and exclusivity.
+                  <span className="font-bold text-white">ADELEKE KEHINDE BOLUWATIFE</span>, our visionary founder, turned a bold idea into a personalized luxury brand. With unmatched creativity and a passion for redefining luxury wear, Adeleke sets the standard for style, individuality, and exclusivity.
                 </p>
               </div>
               <div className="space-y-4">
                 <p className="text-sm md:text-base leading-relaxed text-neutral-300">
-                  Guiding this vision is Ashibogwu Chukwudi Hilary, our brand manager. Through strategic brilliance and meticulous attention to detail.
+                  <span className="font-bold text-white">ASHIBOGWU CHUKWUDI HILARY</span>, our brand manager. Through strategic brilliance and meticulous attention to detail.
                 </p>
                 <p className="text-sm md:text-base leading-relaxed text-neutral-300">
-                  Bringing the brand to life in the digital world is Christiana Obidare, our social media manager. With exceptional creativity and deep community engagement, she transforms every post into an experience that connects, inspires, and elevates the 23 lifestyle.
+                  Bringing the brand to life in the digital world is <span className="font-bold text-white">CHRISTIANA OBIDARE</span>, our social media manager. With exceptional creativity and deep community engagement, she transforms every post into an experience that connects, inspires, and elevates the 23 lifestyle.
                 </p>
               </div>
               <div className="space-y-4">

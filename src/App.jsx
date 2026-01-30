@@ -21,6 +21,8 @@ import Lookbook from './pages/Lookbook';
 import CartDrawer from './components/CartDrawer';
 import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import IdentityForge from './pages/IdentityForge';
+import DigitalProfile from './pages/DigitalProfile';
 
 // ScrollToTop component
 function ScrollToTop() {
@@ -56,6 +58,8 @@ function App() {
             <Route path="/account" element={<Account />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/identity-forge" element={<IdentityForge />} />
+            <Route path="/profile/:id" element={<DigitalProfile />} />
           </Routes>
         </main>
         <Footer />
