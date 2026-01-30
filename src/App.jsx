@@ -58,7 +58,7 @@ function App() {
             <Route path="/account" element={<Account />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-            <Route path="/identity-forge" element={<IdentityForge />} />
+            <Route path="/identity-forge" element={<ProtectedRoute><IdentityForge /></ProtectedRoute>} />
             <Route path="/profile/:id" element={<DigitalProfile />} />
           </Routes>
         </main>

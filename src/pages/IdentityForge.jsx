@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { doc, setDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db } from "../lib/firebase";
 import PageTransition from "../components/PageTransition.jsx";
 import * as QRCode from "qrcode";
@@ -13,9 +14,17 @@ function IdentityForge() {
   const location = useLocation();
   const { currentUser } = useAuth();
   const { addToCart } = useCart();
+  const storage = getStorage();
   
-  // Get product data passed from ProductDetails
-  const productData = location.state?.productData;
+  // Get product data passed from ProductDetails or fallback from localStorage
+  const productData = location.state?.productData || (() => {
+    try {
+      const raw = localStorage.getItem('pendingCustomization');
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  })();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -43,28 +52,32 @@ function IdentityForge() {
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const newFiles = await Promise.all(
-      files.map(async (file) => {
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-        
-        return {
-          name: file.name,
-          type: file.type,
-          data: base64,
-          size: file.size
-        };
-      })
-    );
-    
-    setFormData(prev => ({
-      ...prev,
-      craftFiles: [...prev.craftFiles, ...newFiles]
-    }));
+    setIsSubmitting(true);
+    try {
+      const uploaded = await Promise.all(
+        files.map(async (file) => {
+          const path = `digitalProfiles/${currentUser?.uid || 'anonymous'}/${Date.now()}-${file.name}`;
+          const fileRef = ref(storage, path);
+          await uploadBytes(fileRef, file);
+          const url = await getDownloadURL(fileRef);
+          return {
+            name: file.name,
+            type: file.type,
+            url,
+            size: file.size,
+            storagePath: path
+          };
+        })
+      );
+      setFormData(prev => ({
+        ...prev,
+        craftFiles: [...prev.craftFiles, ...uploaded]
+      }));
+    } catch (error) {
+      alert("Failed to upload files. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const removeFile = (index) => {
@@ -84,6 +97,10 @@ function IdentityForge() {
       alert("Please enter at least your name!");
       return;
     }
+    if (!currentUser) {
+      navigate('/login?redirect=/identity-forge');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -93,7 +110,8 @@ function IdentityForge() {
       const profileRef = collection(db, "digitalProfiles");
       const newProfileRef = await addDoc(profileRef, {
         ...formData,
-        userId: currentUser?.uid || "anonymous",
+        userId: currentUser.uid,
+        userEmail: currentUser.email || "",
         createdAt: serverTimestamp(),
       });
       
@@ -125,14 +143,13 @@ function IdentityForge() {
         };
         
         addToCart(customizedProduct, productData.selectedSize, productData.quantity);
+        try { localStorage.removeItem('pendingCustomization'); } catch (e) {}
         
         // Wait a bit to show success then redirect
-        setTimeout(() => {
-          navigate("/checkout");
-        }, 2000);
-      } else {
-          // Just show the success state
       }
+      setTimeout(() => {
+        navigate("/checkout");
+      }, 2000);
 
     } catch (error) {
       console.error("Error creating identity:", error);

@@ -4,12 +4,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Minus, Plus, ArrowLeft } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
 import { PRODUCTS } from '../data/products';
 
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { currentUser } = useAuth();
   
   const product = PRODUCTS.find(p => p.id === id);
   const [selectedSize, setSelectedSize] = useState('');
@@ -41,15 +43,15 @@ export default function ProductDetails() {
 
   const confirmAddToCart = (customize) => {
     if (customize) {
-      navigate('/identity-forge', { 
-        state: { 
-          productData: { 
-            product, 
-            selectedSize, 
-            quantity 
-          } 
-        } 
-      });
+      const productData = { product, selectedSize, quantity };
+      if (!currentUser) {
+        try {
+          localStorage.setItem('pendingCustomization', JSON.stringify(productData));
+        } catch (e) {}
+        navigate('/login?redirect=/identity-forge');
+        return;
+      }
+      navigate('/identity-forge', { state: { productData } });
     } else {
       addToCart(product, selectedSize, quantity);
       setIsModalOpen(false);
