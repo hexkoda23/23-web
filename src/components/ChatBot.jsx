@@ -115,9 +115,10 @@ export default function ChatBot() {
       {/* Floating Icon */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-8 right-8 z-40 bg-black text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 ${isOpen ? 'hidden' : 'flex'}`}
+        className={`fixed bottom-8 right-8 z-40 bg-black text-white px-4 py-3 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 ${isOpen ? 'hidden' : 'flex'} items-center gap-2`}
       >
         <MessageSquare size={24} />
+        <span className="text-xs font-bold uppercase tracking-widest">Chat with 23</span>
       </button>
 
       {/* Chat Window */}
