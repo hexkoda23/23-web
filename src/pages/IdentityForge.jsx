@@ -86,6 +86,22 @@ function IdentityForge() {
         const fileRef = ref(storage, path);
         await new Promise((resolve, reject) => {
           const task = uploadBytesResumable(fileRef, file, { contentType: file.type || undefined });
+          const timeoutMs = 20000;
+          const timeoutId = setTimeout(() => {
+            try { task.cancel(); } catch (e) {}
+            setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
+            setFormData(prev => ({
+              ...prev,
+              craftFiles: prev.craftFiles.map(cf => {
+                if (cf.name === file.name && cf.size === file.size && cf.status === "uploading") {
+                  return { ...cf, status: "error" };
+                }
+                return cf;
+              })
+            }));
+            alert(`Upload timed out for ${file.name}. Please verify you are logged in and Firebase Storage rules allow writes.`);
+            reject(new Error("upload-timeout"));
+          }, timeoutMs);
           task.on(
             "state_changed",
             (snap) => {
@@ -93,6 +109,7 @@ function IdentityForge() {
               setUploadProgress(prev => ({ ...prev, [file.name]: pct }));
             },
             (err) => {
+              clearTimeout(timeoutId);
               setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
               setFormData(prev => ({
                 ...prev,
@@ -108,6 +125,7 @@ function IdentityForge() {
             },
             async () => {
               try {
+                clearTimeout(timeoutId);
                 const url = await getDownloadURL(fileRef);
                 uploaded.push({
                   name: file.name,
