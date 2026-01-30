@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { doc, setDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../lib/firebase";
+import { uploadFileCloudinary } from "../lib/uploader";
 import PageTransition from "../components/PageTransition.jsx";
 import * as QRCode from "qrcode";
 import { useCart } from "../contexts/CartContext";
@@ -80,15 +81,31 @@ function IdentityForge() {
         ...prev,
         craftFiles: [...prev.craftFiles, ...placeholders]
       }));
+      const useCloudinary = Boolean(import.meta.env.VITE_CLOUDINARY_CLOUD_NAME && import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
       const uploaded = [];
       for (const file of validFiles) {
-        const path = `digitalProfiles/${currentUser?.uid || 'anonymous'}/${Date.now()}-${file.name}`;
-        const fileRef = ref(storage, path);
-        await new Promise((resolve, reject) => {
-          const task = uploadBytesResumable(fileRef, file, { contentType: file.type || undefined });
-          const timeoutMs = 20000;
-          const timeoutId = setTimeout(() => {
-            try { task.cancel(); } catch (e) {}
+        if (useCloudinary) {
+          try {
+            setUploadProgress(prev => ({ ...prev, [file.name]: 10 }));
+            const res = await uploadFileCloudinary(file, currentUser.uid);
+            uploaded.push({
+              name: file.name,
+              type: file.type,
+              url: res.url,
+              size: file.size,
+              storagePath: res.publicId
+            });
+            setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
+            setFormData(prev => ({
+              ...prev,
+              craftFiles: prev.craftFiles.map(cf => {
+                if (cf.name === file.name && cf.size === file.size && cf.status === "uploading") {
+                  return { ...cf, url: res.url, storagePath: res.publicId, status: "done" };
+                }
+                return cf;
+              })
+            }));
+          } catch (err) {
             setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
             setFormData(prev => ({
               ...prev,
@@ -99,17 +116,16 @@ function IdentityForge() {
                 return cf;
               })
             }));
-            alert(`Upload timed out for ${file.name}. Please verify you are logged in and Firebase Storage rules allow writes.`);
-            reject(new Error("upload-timeout"));
-          }, timeoutMs);
-          task.on(
-            "state_changed",
-            (snap) => {
-              const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-              setUploadProgress(prev => ({ ...prev, [file.name]: pct }));
-            },
-            (err) => {
-              clearTimeout(timeoutId);
+            alert(`Upload failed (Cloudinary) for ${file.name}: ${err.message || err}`);
+          }
+        } else {
+          const path = `digitalProfiles/${currentUser?.uid || 'anonymous'}/${Date.now()}-${file.name}`;
+          const fileRef = ref(storage, path);
+          await new Promise((resolve, reject) => {
+            const task = uploadBytesResumable(fileRef, file, { contentType: file.type || undefined });
+            const timeoutMs = 20000;
+            const timeoutId = setTimeout(() => {
+              try { task.cancel(); } catch (e) {}
               setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
               setFormData(prev => ({
                 ...prev,
@@ -120,36 +136,58 @@ function IdentityForge() {
                   return cf;
                 })
               }));
-              alert(`Upload failed for ${file.name}: ${err.code || ''} ${err.message || ''}`);
-              reject(err);
-            },
-            async () => {
-              try {
+              alert(`Upload timed out for ${file.name}. Please verify you are logged in and Firebase Storage rules allow writes.`);
+              reject(new Error("upload-timeout"));
+            }, timeoutMs);
+            task.on(
+              "state_changed",
+              (snap) => {
+                const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                setUploadProgress(prev => ({ ...prev, [file.name]: pct }));
+              },
+              (err) => {
                 clearTimeout(timeoutId);
-                const url = await getDownloadURL(fileRef);
-                uploaded.push({
-                  name: file.name,
-                  type: file.type,
-                  url,
-                  size: file.size,
-                  storagePath: path
-                });
+                setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
                 setFormData(prev => ({
                   ...prev,
                   craftFiles: prev.craftFiles.map(cf => {
                     if (cf.name === file.name && cf.size === file.size && cf.status === "uploading") {
-                      return { ...cf, url, storagePath: path, status: "done" };
+                      return { ...cf, status: "error" };
                     }
                     return cf;
                   })
                 }));
-                resolve();
-              } catch (e) {
-                reject(e);
+                alert(`Upload failed for ${file.name}: ${err.code || ''} ${err.message || ''}`);
+                reject(err);
+              },
+              async () => {
+                try {
+                  clearTimeout(timeoutId);
+                  const url = await getDownloadURL(fileRef);
+                  uploaded.push({
+                    name: file.name,
+                    type: file.type,
+                    url,
+                    size: file.size,
+                    storagePath: path
+                  });
+                  setFormData(prev => ({
+                    ...prev,
+                    craftFiles: prev.craftFiles.map(cf => {
+                      if (cf.name === file.name && cf.size === file.size && cf.status === "uploading") {
+                        return { ...cf, url, storagePath: path, status: "done" };
+                      }
+                      return cf;
+                    })
+                  }));
+                  resolve();
+                } catch (e) {
+                  reject(e);
+                }
               }
-            }
-          );
-        });
+            );
+          });
+        }
       }
     } catch (error) {
       alert("Failed to upload files. Please try again.");
