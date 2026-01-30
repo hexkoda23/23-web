@@ -12,7 +12,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import OutfitGenerator from './pages/OutfitGenerator';
 import Login from './pages/Login';
-import Signup from './pages/Signup';
+import Signup from './pages/SignUp';
 import Account from './pages/Account';
 import Messages from './pages/Messages';
 import Checkout from './pages/Checkout';
