@@ -59,12 +59,12 @@ export default function DigitalProfile() {
       <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
         {/* Header / Banner */}
         <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
-            {profile.craftFiles && profile.craftFiles.length > 0 ? (
-                 <img 
-                    src={profile.craftFiles[0].data} 
-                    alt="Cover" 
-                    className="w-full h-full object-cover opacity-50 blur-sm scale-105"
-                 />
+            {profile.craftFiles && profile.craftFiles.length > 0 && (profile.craftFiles[0].url || profile.craftFiles[0].data) ? (
+              <img 
+                src={profile.craftFiles[0].url || profile.craftFiles[0].data} 
+                alt="Cover" 
+                className="w-full h-full object-cover opacity-50 blur-sm scale-105"
+              />
             ) : (
                 <div className="w-full h-full bg-neutral-900" />
             )}

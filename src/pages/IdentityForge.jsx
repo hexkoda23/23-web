@@ -37,6 +37,8 @@ function IdentityForge() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedProfileId, setGeneratedProfileId] = useState(null);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -51,11 +53,23 @@ function IdentityForge() {
   };
 
   const handleFileUpload = async (e) => {
+    if (!currentUser) {
+      navigate('/login?redirect=/identity-forge');
+      return;
+    }
     const files = Array.from(e.target.files);
-    setIsSubmitting(true);
     try {
+      const validFiles = files.filter(f => {
+        if (f.size > MAX_FILE_SIZE) {
+          alert(`${f.name} is larger than 5MB and will be skipped.`);
+          return false;
+        }
+        return true;
+      });
+      if (validFiles.length === 0) return;
+      setUploading(true);
       const uploaded = await Promise.all(
-        files.map(async (file) => {
+        validFiles.map(async (file) => {
           const path = `digitalProfiles/${currentUser?.uid || 'anonymous'}/${Date.now()}-${file.name}`;
           const fileRef = ref(storage, path);
           await uploadBytes(fileRef, file);
@@ -76,7 +90,7 @@ function IdentityForge() {
     } catch (error) {
       alert("Failed to upload files. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setUploading(false);
     }
   };
 
@@ -266,23 +280,32 @@ function IdentityForge() {
                     multiple
                     onChange={handleFileUpload}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    accept="image/*"
+                    accept="*/*"
                   />
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Drop files here or click to upload</p>
-                    <p className="text-xs text-gray-400">Support for images up to 5MB</p>
+                    <p className="text-sm text-gray-500">
+                      {uploading ? "Uploading files..." : "Drop files here or click to upload"}
+                    </p>
+                    <p className="text-xs text-gray-400">Support for files up to 5MB</p>
                   </div>
                 </div>
 
                 {formData.craftFiles.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                     {formData.craftFiles.map((file, index) => (
-                      <div key={index} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                        <img
-                          src={file.data}
-                          alt={`Upload ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
+                      <div key={index} className="relative group aspect-square bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                        {file.type?.startsWith("image/") ? (
+                          <img
+                            src={file.url || file.data}
+                            alt={file.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="p-3 text-center">
+                            <p className="text-xs font-semibold truncate">{file.name}</p>
+                            <p className="text-[10px] text-gray-500">{file.type || "file"}</p>
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={() => removeFile(index)}
