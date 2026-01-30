@@ -48,6 +48,20 @@ export default function Home() {
       <section className="py-24 px-6">
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Link to="/shop?category=tops" className="relative group overflow-hidden aspect-[4/5] md:aspect-auto md:h-[600px]">
+              <img 
+                src="/lookbook/3.jpg" 
+                alt="Tops" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+              <div className="absolute bottom-10 left-10 text-white">
+                <h3 className="text-3xl font-bold uppercase tracking-tighter mb-2">23</h3>
+                <span className="text-xs font-bold uppercase tracking-widest border-b border-transparent group-hover:border-white transition-all pb-1">
+                  Explore
+                </span>
+              </div>
+            </Link>
             <Link to="/shop?category=unreleased" className="relative group overflow-hidden aspect-[4/5] md:aspect-auto md:h-[600px]">
               <img 
                 src="/wardrobe/23xpolo.jpg" 
@@ -57,20 +71,6 @@ export default function Home() {
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
               <div className="absolute bottom-10 left-10 text-white">
                 <h3 className="text-3xl font-bold uppercase tracking-tighter mb-2">Unreleased</h3>
-                <span className="text-xs font-bold uppercase tracking-widest border-b border-transparent group-hover:border-white transition-all pb-1">
-                  Explore
-                </span>
-              </div>
-            </Link>
-            <Link to="/shop?category=outerwear" className="relative group overflow-hidden aspect-[4/5] md:aspect-auto md:h-[600px]">
-              <img 
-                src="/lookbook/1.jpg" 
-                alt="New Collections" 
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-              <div className="absolute bottom-10 left-10 text-white">
-                <h3 className="text-3xl font-bold uppercase tracking-tighter mb-2">23</h3>
                 <span className="text-xs font-bold uppercase tracking-widest border-b border-transparent group-hover:border-white transition-all pb-1">
                   Explore
                 </span>
