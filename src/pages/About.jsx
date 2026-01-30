@@ -67,15 +67,6 @@ export default function About() {
           </div>
         </section>
 
-        <section className="py-20 px-6 bg-white">
-          <div className="container mx-auto max-w-4xl">
-            <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tighter mb-6">Personalized Barcode / Your Signature Code</h2>
-            <ul className="space-y-3 text-gray-700">
-              <li className="text-sm md:text-base">• Words You Live By</li>
-              <li className="text-sm md:text-base">• Your Soundtrack</li>
-            </ul>
-          </div>
-        </section>
       </div>
     </PageTransition>
   );
