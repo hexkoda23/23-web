@@ -68,12 +68,24 @@ function IdentityForge() {
       });
       if (validFiles.length === 0) return;
       setUploading(true);
+      const placeholders = validFiles.map(f => ({
+        name: f.name,
+        type: f.type,
+        url: URL.createObjectURL(f),
+        size: f.size,
+        storagePath: "",
+        status: "uploading"
+      }));
+      setFormData(prev => ({
+        ...prev,
+        craftFiles: [...prev.craftFiles, ...placeholders]
+      }));
       const uploaded = [];
       for (const file of validFiles) {
         const path = `digitalProfiles/${currentUser?.uid || 'anonymous'}/${Date.now()}-${file.name}`;
         const fileRef = ref(storage, path);
         await new Promise((resolve, reject) => {
-          const task = uploadBytesResumable(fileRef, file);
+          const task = uploadBytesResumable(fileRef, file, { contentType: file.type || undefined });
           task.on(
             "state_changed",
             (snap) => {
@@ -91,6 +103,15 @@ function IdentityForge() {
                   size: file.size,
                   storagePath: path
                 });
+                setFormData(prev => ({
+                  ...prev,
+                  craftFiles: prev.craftFiles.map(cf => {
+                    if (cf.name === file.name && cf.size === file.size && cf.status === "uploading") {
+                      return { ...cf, url, storagePath: path, status: "done" };
+                    }
+                    return cf;
+                  })
+                }));
                 resolve();
               } catch (e) {
                 reject(e);
@@ -99,10 +120,6 @@ function IdentityForge() {
           );
         });
       }
-      setFormData(prev => ({
-        ...prev,
-        craftFiles: [...prev.craftFiles, ...uploaded]
-      }));
     } catch (error) {
       alert("Failed to upload files. Please try again.");
     } finally {

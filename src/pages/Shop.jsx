@@ -30,11 +30,30 @@ export default function Shop() {
     return PRODUCTS.filter(p => p.category === 'unreleased' && p.price <= priceRange);
   }, [priceRange]);
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter(product => {
-      const categoryMatch = currentCategory === 'all' || product.category === currentCategory;
-      const priceMatch = product.price <= priceRange;
-      return categoryMatch && priceMatch;
-    });
+    const matchCategory = (product) => {
+      if (currentCategory === 'all') return true;
+      if (currentCategory === 'new' || currentCategory === 'unreleased') {
+        return product.category === currentCategory;
+      }
+      if (currentCategory === 'tops') {
+        return product.id?.startsWith('top-');
+      }
+      if (currentCategory === 'bottoms') {
+        const id = product.id || '';
+        const name = (product.name || '').toLowerCase();
+        return id.startsWith('bottom-') || id.startsWith('bpttom-') || id.startsWith('trouser-') ||
+               name.includes('pant') || name.includes('jean') || name.includes('jogger');
+      }
+      if (currentCategory === 'outerwear') {
+        const name = (product.name || '').toLowerCase();
+        return (product.id?.startsWith('outer-')) || name.includes('jacket') || name.includes('hoodie');
+      }
+      if (currentCategory === 'accessories') {
+        return product.category === 'accessories' || product.id?.startsWith('acc-');
+      }
+      return product.category === currentCategory;
+    };
+    return PRODUCTS.filter(product => matchCategory(product) && product.price <= priceRange);
   }, [currentCategory, priceRange]);
 
   const handleCategoryChange = (category) => {
