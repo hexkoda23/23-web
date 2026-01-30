@@ -1,25 +1,18 @@
+
 @import "tailwindcss";
 
 @layer base {
-  /* Global dark theme baseline */
-  html,
-  body,
-  #root {
-    @apply h-full;
+  html, body, #root {
+    height: 100%;
   }
 
   body {
-    @apply bg-black text-neutral-100 antialiased;
-  }
-
-  a {
-    @apply text-neutral-100;
+    @apply bg-white text-black antialiased font-sans;
   }
 }
 
 @layer utilities {
-  /* Subtle elevated card feel for dark editorial UI */
-  .glass-panel {
-    @apply bg-neutral-900/80 border border-neutral-800/80 backdrop-blur-md;
+  .text-luxury {
+    @apply font-serif;
   }
 }
