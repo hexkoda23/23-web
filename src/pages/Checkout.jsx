@@ -6,8 +6,8 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../lib/firebase";
 
-const OPAY_ACCOUNT_NAME = "UPDATE_ME";
-const OPAY_ACCOUNT_NUMBER = "UPDATE_ME";
+const OPAY_ACCOUNT_NAME = "Ashibogwu Chukwudi Hilary";
+const OPAY_ACCOUNT_NUMBER = "8072715465";
 
 export default function Checkout() {
   const { cart, getCartTotal, clearCart } = useCart();
@@ -112,8 +112,8 @@ export default function Checkout() {
                 <div className="mt-6 border border-gray-200 p-6">
                   <p className="text-xs uppercase tracking-widest text-gray-500">OPay Account</p>
                   <div className="mt-2">
-                    <p className="text-sm"><span className="font-bold">Name:</span> {"ADELEKE KEHINDE"}</p>
-                    <p className="text-sm"><span className="font-bold">Number:</span> {"08107869063"}</p>
+                    <p className="text-sm"><span className="font-bold">Name:</span> {OPAY_ACCOUNT_NAME}</p>
+                    <p className="text-sm"><span className="font-bold">Number:</span> {OPAY_ACCOUNT_NUMBER}</p>
                   </div>
                 </div>
 

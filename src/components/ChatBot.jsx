@@ -25,14 +25,12 @@ export default function ChatBot() {
 
         // Attempt to load from files
         try {
-            const modules = import.meta.glob('../data/knowledge/*.txt', { query: '?raw', import: 'default' });
-            let allText = [];
-            for (const path in modules) {
-                const content = await modules[path]();
-                const lines = content.split('\n').filter(line => line.trim().length > 0);
-                allText = [...allText, ...lines];
-            }
-            if (allText.length > 0) setKnowledgeBase(allText);
+            const texts = import.meta.glob('../data/knowledge/*.txt', { as: 'raw', eager: true });
+            const lines = Object.values(texts)
+              .flatMap(txt => String(txt).split('\n'))
+              .map(l => l.trim())
+              .filter(l => l.length > 0);
+            if (lines.length > 0) setKnowledgeBase(lines);
         } catch (e) {
             console.warn("Could not load knowledge files:", e);
         }
@@ -52,7 +50,8 @@ export default function ChatBot() {
   const findBestMatch = (query) => {
     if (!knowledgeBase.length) return null;
 
-    const queryTerms = query.toLowerCase().split(' ').filter(term => term.length > 3);
+    const clean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+    const queryTerms = clean.split(/\s+/).filter(term => term.length >= 2);
     if (queryTerms.length === 0) return null;
 
     let bestMatch = null;
