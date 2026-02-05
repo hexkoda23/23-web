@@ -10,6 +10,7 @@ export default function ChatBot() {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [knowledgeBase, setKnowledgeBase] = useState([]);
+  const [kbQA, setKbQA] = useState([]);
   const messagesEndRef = useRef(null);
 
   // Load Knowledge Base
@@ -25,12 +26,40 @@ export default function ChatBot() {
 
         // Attempt to load from files
         try {
-            const texts = import.meta.glob('../data/knowledge/*.txt', { as: 'raw', eager: true });
-            const lines = Object.values(texts)
-              .flatMap(txt => String(txt).split('\n'))
+            const modules = import.meta.glob('../data/knowledge/*.txt', { as: 'raw' });
+            let allText = [];
+            for (const path in modules) {
+              const content = await modules[path]();
+              allText.push(String(content));
+            }
+            const allLines = allText
+              .join('\n')
+              .split('\n')
               .map(l => l.trim())
               .filter(l => l.length > 0);
-            if (lines.length > 0) setKnowledgeBase(lines);
+            // Parse Q/A style entries
+            const qa = [];
+            let currentQ = null;
+            for (const line of allLines) {
+              const qMatch = line.match(/^Q:\s*(.+)$/i);
+              const aMatch = line.match(/^A:\s*(.+)$/i);
+              if (qMatch) {
+                currentQ = qMatch[1].trim();
+                continue;
+              }
+              if (aMatch && currentQ) {
+                qa.push({ q: currentQ, a: aMatch[1].trim() });
+                currentQ = null;
+                continue;
+              }
+              // key: value fallback
+              const kv = line.match(/^(.+?):\s*(.+)$/);
+              if (kv && !line.startsWith('http')) {
+                qa.push({ q: kv[1].trim(), a: kv[2].trim() });
+              }
+            }
+            if (qa.length > 0) setKbQA(qa);
+            if (allLines.length > 0) setKnowledgeBase(allLines);
         } catch (e) {
             console.warn("Could not load knowledge files:", e);
         }
@@ -48,15 +77,34 @@ export default function ChatBot() {
   }, [messages]);
 
   const findBestMatch = (query) => {
-    if (!knowledgeBase.length) return null;
+    const hasKB = knowledgeBase.length > 0 || kbQA.length > 0;
+    if (!hasKB) return null;
 
-    const clean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-    const queryTerms = clean.split(/\s+/).filter(term => term.length >= 2);
+    const clean = query.toLowerCase().replace(/[^a-z0-9\\s]/g, ' ');
+    const queryTerms = clean.split(/\\s+/).filter(term => term.length >= 2);
     if (queryTerms.length === 0) return null;
 
+    // First, try structured Q/A
+    if (kbQA.length) {
+      let bestQA = null;
+      let bestScore = 0;
+      kbQA.forEach(({ q, a }) => {
+        const lowerQ = q.toLowerCase();
+        let score = 0;
+        queryTerms.forEach(term => {
+          if (lowerQ.includes(term)) score += 1;
+        });
+        if (score > bestScore) {
+          bestScore = score;
+          bestQA = { q, a, score };
+        }
+      });
+      if (bestScore > 0) return bestQA.a;
+    }
+
+    // Fallback: match individual lines
     let bestMatch = null;
     let maxScore = 0;
-
     knowledgeBase.forEach(text => {
       let score = 0;
       const lowerText = text.toLowerCase();
