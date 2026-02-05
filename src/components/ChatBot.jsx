@@ -102,12 +102,12 @@ export default function ChatBot() {
   const findBestMatch = (query) => {
     const hasKB = knowledgeBase.length > 0 || kbQA.length > 0;
     if (!hasKB) return null;
-    const clean = query.toLowerCase().replace(/[^a-z0-9\\s]/g, ' ');
-    const terms = clean.split(/\\s+/).filter(t => t.length >= 2);
+    const clean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+    const terms = clean.split(/\s+/).filter(t => t.length >= 2);
     if (!terms.length) return null;
     const intentSynonyms = {
       payment: ['pay','payment','opay','account','transfer','number','bank'],
-      owner: ['owner','founder','who','created'],
+      owner: ['owner','founder','who','created','owns'],
       contact: ['contact','reach','whatsapp','phone','email','instagram'],
       customize: ['custom','customize','personalize','design','collection'],
       trend: ['trend','trending','vogue','fashion','latest'],
