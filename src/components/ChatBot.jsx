@@ -20,9 +20,9 @@ export default function ChatBot() {
       try {
         // Simple fallback if glob fails
         setKnowledgeBase([
-            "23 is a luxury fashion brand founded in London.",
-            "We offer worldwide shipping to over 100 countries.",
-            "Our mission is to provide timeless pieces that transcend seasonal trends."
+            "23 is a luxury fashion brand founded in Lagos.",
+            "We offer worldwide shipping.",
+            "Ask me about payments (OPay), policies, owner, customization, or trends."
         ]);
 
         // Attempt to load from files
@@ -260,7 +260,7 @@ export default function ChatBot() {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask about fashion, 23 Look, or style..."
+                placeholder="Ask about fashion, 23, or style..."
                 className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm outline-none focus:border-black transition-colors"
               />
               <button
