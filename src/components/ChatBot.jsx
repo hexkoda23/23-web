@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, User } from 'lucide-react';
+import { askGemini } from '../lib/ai';
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -157,27 +158,36 @@ export default function ChatBot() {
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate "thinking" time
-    setTimeout(() => {
-      const match = findBestMatch(userMessage);
-      let response;
-
-      if (match) {
-        response = match;
-        // If it's short, maybe find a second related line? (For now, simple RAG)
-      } else {
-        // Fallback responses
-        const fallbacks = [
-          "I don't have specific information on that in my database yet. Could you try rephrasing or ask about 23's policies, fashion trends, or care instructions?",
-          "That's interesting! I'm still learning. Try asking me about our sustainable materials or how to style oversized fits.",
-          "I'm 23, focused on fashion and our brand. I couldn't find a direct answer to that in my files."
-        ];
-        response = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    try {
+      const greetTerms = ['hi','hello','hey','yo','sup'];
+      const qLow = userMessage.toLowerCase().trim();
+      if (greetTerms.includes(qLow)) {
+        const greet = "Hi! Ask me about 23, payments, policies, trends, or customization.";
+        setMessages(prev => [...prev, { role: 'bot', content: greet }]);
+        setIsTyping(false);
+        return;
       }
-
+      const kbText = [
+        ...kbQA.map(({q,a}) => `Q: ${q}\nA: ${a}`),
+        ...knowledgeBase
+      ].join('\n');
+      let response = null;
+      const hasGemini = Boolean(import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GEMINI_KEY);
+      if (hasGemini) {
+        try {
+          response = await askGemini(userMessage, kbText);
+        } catch (err) {
+          response = null;
+        }
+      }
+      if (!response) {
+        const match = findBestMatch(userMessage);
+        response = match || "Try asking a specific question about 23, like 'How do I pay?' or 'Who owns 23?'";
+      }
       setMessages(prev => [...prev, { role: 'bot', content: response }]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   return (
