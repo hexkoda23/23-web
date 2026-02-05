@@ -43,6 +43,12 @@ export default function ChatBot() {
             for (let i=0; i<rawLines.length; i++) {
               const orig = rawLines[i];
               const line = orig.trim();
+              const qmMatch = line.match(/^(.+\\?)$/); // Treat lines ending with ? as questions
+              if (qmMatch && !line.startsWith('A:')) {
+                pushQA();
+                currentQ = qmMatch[1].replace(/\?+$/,'').trim();
+                continue;
+              }
               const qMatch = line.match(/^Q:\s*(.+)$/i);
               if (qMatch) { pushQA(); currentQ = qMatch[1].trim(); continue; }
               const aMatch = line.match(/^A:\s*(.+)$/i);
