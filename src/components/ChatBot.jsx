@@ -27,39 +27,50 @@ export default function ChatBot() {
         // Attempt to load from files
         try {
             const modules = import.meta.glob('../data/knowledge/*.txt', { as: 'raw' });
-            let allText = [];
-            for (const path in modules) {
-              const content = await modules[path]();
-              allText.push(String(content));
+            const rawTexts = [];
+            for (const p in modules) {
+              const txt = await modules[p]();
+              rawTexts.push(String(txt));
             }
-            const allLines = allText
-              .join('\n')
+            const textCombined = rawTexts.join('\n');
+            const lines = textCombined
               .split('\n')
               .map(l => l.trim())
               .filter(l => l.length > 0);
-            // Parse Q/A style entries
             const qa = [];
             let currentQ = null;
-            for (const line of allLines) {
+            let currentA = [];
+            const pushQA = () => {
+              if (currentQ && currentA.length) {
+                qa.push({ q: currentQ, a: currentA.join(' ') });
+              }
+              currentQ = null;
+              currentA = [];
+            };
+            for (const line of lines) {
               const qMatch = line.match(/^Q:\s*(.+)$/i);
-              const aMatch = line.match(/^A:\s*(.+)$/i);
               if (qMatch) {
+                pushQA();
                 currentQ = qMatch[1].trim();
                 continue;
               }
-              if (aMatch && currentQ) {
-                qa.push({ q: currentQ, a: aMatch[1].trim() });
-                currentQ = null;
+              const aMatch = line.match(/^A:\s*(.+)$/i);
+              if (aMatch) {
+                currentA.push(aMatch[1].trim());
                 continue;
               }
-              // key: value fallback
+              if (currentQ) {
+                currentA.push(line);
+                continue;
+              }
               const kv = line.match(/^(.+?):\s*(.+)$/);
               if (kv && !line.startsWith('http')) {
                 qa.push({ q: kv[1].trim(), a: kv[2].trim() });
               }
             }
+            pushQA();
             if (qa.length > 0) setKbQA(qa);
-            if (allLines.length > 0) setKnowledgeBase(allLines);
+            if (lines.length > 0) setKnowledgeBase(lines);
         } catch (e) {
             console.warn("Could not load knowledge files:", e);
         }
@@ -79,50 +90,49 @@ export default function ChatBot() {
   const findBestMatch = (query) => {
     const hasKB = knowledgeBase.length > 0 || kbQA.length > 0;
     if (!hasKB) return null;
-
     const clean = query.toLowerCase().replace(/[^a-z0-9\\s]/g, ' ');
-    const queryTerms = clean.split(/\\s+/).filter(term => term.length >= 2);
-    if (queryTerms.length === 0) return null;
-
-    // First, try structured Q/A
+    const terms = clean.split(/\\s+/).filter(t => t.length >= 2);
+    if (!terms.length) return null;
+    const intentSynonyms = {
+      payment: ['pay','payment','opay','account','transfer','number','bank'],
+      owner: ['owner','founder','who','created','founder'],
+      contact: ['contact','reach','whatsapp','phone','email','instagram'],
+      customize: ['custom','customize','personalize','design','own collection'],
+      trend: ['trend','trending','in vogue','fashion'],
+    };
+    const intentScores = {};
+    Object.keys(intentSynonyms).forEach(k => {
+      intentScores[k] = terms.reduce((s,t) => s + (intentSynonyms[k].some(x => x.includes(t)) ? 1 : 0), 0);
+    });
+    const topIntent = Object.entries(intentScores).sort((a,b)=>b[1]-a[1])[0];
     if (kbQA.length) {
       let bestQA = null;
       let bestScore = 0;
       kbQA.forEach(({ q, a }) => {
-        const lowerQ = q.toLowerCase();
-        let score = 0;
-        queryTerms.forEach(term => {
-          if (lowerQ.includes(term)) score += 1;
-        });
-        if (score > bestScore) {
-          bestScore = score;
-          bestQA = { q, a, score };
+        const lowQ = q.toLowerCase();
+        let s = 0;
+        terms.forEach(t => { if (lowQ.includes(t)) s++; });
+        if (topIntent && topIntent[1] > 0) {
+          const syns = intentSynonyms[topIntent[0]];
+          syns.forEach(t => { if (lowQ.includes(t)) s+=0.5; });
         }
+        if (s > bestScore) { bestScore = s; bestQA = { q, a }; }
       });
-      if (bestScore > 0) return bestQA.a;
+      if (bestScore > 0.5) return bestQA.a;
     }
-
-    // Fallback: match individual lines
-    let bestMatch = null;
-    let maxScore = 0;
-    knowledgeBase.forEach(text => {
-      let score = 0;
-      const lowerText = text.toLowerCase();
-      
-      queryTerms.forEach(term => {
-        if (lowerText.includes(term)) {
-          score += 1;
-        }
-      });
-
-      if (score > maxScore) {
-        maxScore = score;
-        bestMatch = text;
+    let best = null;
+    let score = 0;
+    knowledgeBase.forEach(line => {
+      const low = line.toLowerCase();
+      let s = 0;
+      terms.forEach(t => { if (low.includes(t)) s++; });
+      if (topIntent && topIntent[1] > 0) {
+        const syns = intentSynonyms[topIntent[0]];
+        syns.forEach(t => { if (low.includes(t)) s+=0.5; });
       }
+      if (s > score) { score = s; best = line; }
     });
-
-    // Threshold for relevance
-    return maxScore > 0 ? bestMatch : null;
+    return score > 0.5 ? best : null;
   };
 
   const handleSend = async (e) => {
