@@ -26,41 +26,45 @@ export default function ChatBot() {
 
         // Attempt to load from files
         try {
-            const modules = import.meta.glob('../data/knowledge/*.txt', { as: 'raw' });
-            const rawTexts = [];
-            for (const p in modules) {
-              const txt = await modules[p]();
-              rawTexts.push(String(txt));
-            }
-            const textCombined = rawTexts.join('\n');
-            const lines = textCombined
-              .split('\n')
-              .map(l => l.trim())
-              .filter(l => l.length > 0);
+            const modules = import.meta.glob('../data/knowledge/*.txt', { as: 'raw', eager: true });
+            const texts = Object.values(modules).map(t => String(t));
+            const content = texts.join('\n');
+            const rawLines = content.split('\n');
             const qa = [];
             let currentQ = null;
             let currentA = [];
             const pushQA = () => {
               if (currentQ && currentA.length) {
-                qa.push({ q: currentQ, a: currentA.join(' ') });
+                qa.push({ q: currentQ, a: currentA.join(' ').trim() });
               }
               currentQ = null;
               currentA = [];
             };
-            for (const line of lines) {
+            for (let i=0; i<rawLines.length; i++) {
+              const orig = rawLines[i];
+              const line = orig.trim();
               const qMatch = line.match(/^Q:\s*(.+)$/i);
-              if (qMatch) {
-                pushQA();
-                currentQ = qMatch[1].trim();
-                continue;
-              }
+              if (qMatch) { pushQA(); currentQ = qMatch[1].trim(); continue; }
               const aMatch = line.match(/^A:\s*(.+)$/i);
-              if (aMatch) {
-                currentA.push(aMatch[1].trim());
-                continue;
+              if (aMatch) { currentA.push(aMatch[1].trim()); continue; }
+              if (currentQ) { 
+                if (line.length === 0) { pushQA(); continue; }
+                currentA.push(line); 
+                continue; 
               }
-              if (currentQ) {
-                currentA.push(line);
+              const headingMatch = line.match(/^([A-Za-z0-9].*?):\s*$/);
+              if (headingMatch) {
+                let block = [];
+                let j = i+1;
+                while (j < rawLines.length) {
+                  const look = rawLines[j].trim();
+                  if (look.match(/^Q:\s*/i) || look.match(/^A:\s*/i) || look.match(/^([A-Za-z0-9].*?):\s*$/)) break;
+                  block.push(look);
+                  j++;
+                }
+                i = j-1;
+                const ans = block.join(' ').trim();
+                if (ans.length) qa.push({ q: headingMatch[1].trim(), a: ans });
                 continue;
               }
               const kv = line.match(/^(.+?):\s*(.+)$/);
@@ -69,8 +73,9 @@ export default function ChatBot() {
               }
             }
             pushQA();
+            const flatLines = rawLines.map(l => l.trim()).filter(l => l.length > 0);
             if (qa.length > 0) setKbQA(qa);
-            if (lines.length > 0) setKnowledgeBase(lines);
+            if (flatLines.length > 0) setKnowledgeBase(flatLines);
         } catch (e) {
             console.warn("Could not load knowledge files:", e);
         }
@@ -95,10 +100,12 @@ export default function ChatBot() {
     if (!terms.length) return null;
     const intentSynonyms = {
       payment: ['pay','payment','opay','account','transfer','number','bank'],
-      owner: ['owner','founder','who','created','founder'],
+      owner: ['owner','founder','who','created'],
       contact: ['contact','reach','whatsapp','phone','email','instagram'],
-      customize: ['custom','customize','personalize','design','own collection'],
-      trend: ['trend','trending','in vogue','fashion'],
+      customize: ['custom','customize','personalize','design','collection'],
+      trend: ['trend','trending','vogue','fashion','latest'],
+      brand: ['what','is','about','brand','23'],
+      policies: ['policy','policies','rules','terms','shipping','returns'],
     };
     const intentScores = {};
     Object.keys(intentSynonyms).forEach(k => {
@@ -118,7 +125,7 @@ export default function ChatBot() {
         }
         if (s > bestScore) { bestScore = s; bestQA = { q, a }; }
       });
-      if (bestScore > 0.5) return bestQA.a;
+      if (bestScore > 0) return bestQA.a;
     }
     let best = null;
     let score = 0;
@@ -132,7 +139,7 @@ export default function ChatBot() {
       }
       if (s > score) { score = s; best = line; }
     });
-    return score > 0.5 ? best : null;
+    return score > 0 ? best : null;
   };
 
   const handleSend = async (e) => {
