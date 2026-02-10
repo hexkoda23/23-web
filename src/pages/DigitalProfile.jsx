@@ -102,25 +102,53 @@ export default function DigitalProfile() {
                             {profile.igHandle && (
                                 <div className="group flex items-center justify-between">
                                     <span className="text-gray-400">Instagram</span>
-                                    <span className="text-xl font-medium group-hover:text-gray-300 transition-colors">
-                                        @{profile.igHandle.replace('@', '')}
-                                    </span>
+                                    <a
+                                      href={`https://instagram.com/${profile.igHandle.replace('@', '')}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xl font-medium group-hover:text-gray-300 transition-colors"
+                                    >
+                                      @{profile.igHandle.replace('@', '')}
+                                    </a>
                                 </div>
                             )}
                             {profile.xHandle && (
                                 <div className="group flex items-center justify-between">
                                     <span className="text-gray-400">X (Twitter)</span>
-                                    <span className="text-xl font-medium group-hover:text-gray-300 transition-colors">
-                                        @{profile.xHandle.replace('@', '')}
-                                    </span>
+                                    <a
+                                      href={`https://x.com/${profile.xHandle.replace('@', '')}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xl font-medium group-hover:text-gray-300 transition-colors"
+                                    >
+                                      @{profile.xHandle.replace('@', '')}
+                                    </a>
+                                </div>
+                            )}
+                            {profile.tiktok && (
+                                <div className="group flex items-center justify-between">
+                                    <span className="text-gray-400">TikTok</span>
+                                    <a
+                                      href={`https://www.tiktok.com/@${profile.tiktok.replace('@', '')}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xl font-medium group-hover:text-gray-300 transition-colors"
+                                    >
+                                      @{profile.tiktok.replace('@', '')}
+                                    </a>
                                 </div>
                             )}
                             {profile.snapchat && (
                                 <div className="group flex items-center justify-between">
                                     <span className="text-gray-400">Snapchat</span>
-                                    <span className="text-xl font-medium group-hover:text-gray-300 transition-colors">
-                                        {profile.snapchat}
-                                    </span>
+                                    <a
+                                      href={`https://www.snapchat.com/add/${profile.snapchat.replace('@', '')}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xl font-medium group-hover:text-gray-300 transition-colors"
+                                    >
+                                      {profile.snapchat}
+                                    </a>
                                 </div>
                             )}
                              {profile.phone && (
@@ -140,7 +168,13 @@ export default function DigitalProfile() {
                                 Digital Signature
                             </h2>
                             <div className="bg-white p-4 inline-block rounded-lg">
-                                <img src={profile.qrCodeUrl} alt="QR Code" className="w-32 h-32 md:w-48 md:h-48" />
+                                {profile.profileUrl ? (
+                                  <a href={profile.profileUrl} target="_blank" rel="noopener noreferrer">
+                                    <img src={profile.qrCodeUrl} alt="QR Code" className="w-32 h-32 md:w-48 md:h-48" />
+                                  </a>
+                                ) : (
+                                    <img src={profile.qrCodeUrl} alt="QR Code" className="w-32 h-32 md:w-48 md:h-48" />
+                                )}
                             </div>
                         </section>
                     )}

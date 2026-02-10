@@ -32,6 +32,7 @@ function IdentityForge() {
     xHandle: "",
     phone: "",
     snapchat: "",
+    tiktok: "",
     craftFiles: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -370,6 +371,17 @@ function IdentityForge() {
                     className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
                   />
                 </div>
+              </div>
+              
+              <div className="group relative">
+                <input
+                  type="text"
+                  name="tiktok"
+                  value={formData.tiktok}
+                  onChange={handleInputChange}
+                  placeholder="TikTok Handle"
+                  className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                />
               </div>
 
               <div className="space-y-4">
