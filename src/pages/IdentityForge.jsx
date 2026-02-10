@@ -33,6 +33,7 @@ function IdentityForge() {
     phone: "",
     snapchat: "",
     tiktok: "",
+    website: "",
     craftFiles: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -244,7 +245,8 @@ function IdentityForge() {
       // Update the doc with the QR code and URL
       await setDoc(doc(db, "digitalProfiles", profileId), {
         qrCodeUrl: qrUrl,
-        profileUrl: profileUrl
+        profileUrl: profileUrl,
+        website: formData.website || ""
       }, { merge: true });
 
       // If we have product data, add to cart with the customization
@@ -380,6 +382,17 @@ function IdentityForge() {
                   value={formData.tiktok}
                   onChange={handleInputChange}
                   placeholder="TikTok Handle"
+                  className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                />
+              </div>
+              
+              <div className="group relative">
+                <input
+                  type="text"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
+                  placeholder="Website (https://...)"
                   className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
                 />
               </div>

@@ -151,6 +151,19 @@ export default function DigitalProfile() {
                                     </a>
                                 </div>
                             )}
+                            {profile.website && (
+                                <div className="group flex items-center justify-between">
+                                    <span className="text-gray-400">Website</span>
+                                    <a
+                                      href={(profile.website.startsWith('http://') || profile.website.startsWith('https://')) ? profile.website : `https://${profile.website}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xl font-medium group-hover:text-gray-300 transition-colors"
+                                    >
+                                      {profile.website}
+                                    </a>
+                                </div>
+                            )}
                              {profile.phone && (
                                 <div className="group flex items-center justify-between">
                                     <span className="text-gray-400">Contact</span>
@@ -196,7 +209,7 @@ export default function DigitalProfile() {
                                     className="aspect-square bg-neutral-900 rounded-lg overflow-hidden border border-gray-800"
                                 >
                                     <img 
-                                        src={file.data} 
+                                        src={file.url || file.data} 
                                         alt={`Asset ${idx}`} 
                                         className="w-full h-full object-cover"
                                     />
