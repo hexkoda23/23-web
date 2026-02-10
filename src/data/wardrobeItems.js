@@ -8,7 +8,7 @@ export const WARDROBE_CATEGORIES = {
     { id: "top-4", name: "23 X Ashante", category: "tops", image: "/wardrobe/23xashante.jpg" },
     { id: "top-5", name: "23 X ITL2", category: "tops", image: "/wardrobe/23xITL2.jpg" },
     { id: "top-6", name: "23 x Racing", category: "tops", image: "/wardrobe/23xracing.jpg" },
-    { id: "top-7", name: "23 x GreenPolo", category: "tops", image: "/wardrobe/23xpolo.jpg" },
+    { id: "top-7", name: "23 x Groove", category: "tops", image: "/wardrobe/23xpolo.jpg" },
     { id: "top-8", name: "23 x Special Edition", category: "tops", image: "/wardrobe/23xlongbrown.jpg" },
     { id: "top-9", name: "White T-Shirt", category: "tops", image: "/wardrobe/whitefront.jpg" },
     { id: "top-10", name: "Black T-Shirt", category: "tops", image: "/wardrobe/blackshirt.jpg" },

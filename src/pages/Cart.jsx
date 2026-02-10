@@ -48,8 +48,8 @@ export default function Cart() {
           <div className="lg:col-span-2 space-y-8">
             {cart.map((item) => (
               <div key={`${item.id}-${item.size}`} className="flex gap-6 py-6 border-b border-gray-100">
-                <div className="w-24 h-32 bg-gray-100 flex-shrink-0">
-                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                <div className="w-24 h-32 bg-white flex-shrink-0 flex items-center justify-center">
+                  <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
                 </div>
                 
                 <div className="flex-1 flex flex-col justify-between">

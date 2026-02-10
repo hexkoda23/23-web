@@ -22,7 +22,8 @@ export default function ChatBot() {
         setKnowledgeBase([
             "23 is a luxury fashion brand founded in Lagos.",
             "We offer worldwide shipping.",
-            "Ask me about payments (OPay), policies, owner, customization, or trends."
+            "Ask me about payments (OPay), policies, owner, customization, or trends.",
+            " "
         ]);
 
         // Attempt to load from files
@@ -162,7 +163,7 @@ export default function ChatBot() {
       const greetTerms = ['hi','hello','hey','yo','sup'];
       const qLow = userMessage.toLowerCase().trim();
       if (greetTerms.includes(qLow)) {
-        const greet = "Hi! Ask me about 23, payments, policies, trends, or customization.";
+        const greet = "How are you doing? I'm 23, your fashion assistant. How can I help?";
         setMessages(prev => [...prev, { role: 'bot', content: greet }]);
         setIsTyping(false);
         return;

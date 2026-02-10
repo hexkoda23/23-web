@@ -6,7 +6,7 @@ import ProductCard from '../components/ProductCard';
 import { PRODUCTS } from '../data/products';
 
 export default function Home() {
-  const featuredProducts = PRODUCTS.slice(0, 4);
+  const unreleasedProducts = PRODUCTS.filter(p => p.category === 'unreleased').slice(0, 4);
 
   return (
     <div className="w-full">
@@ -64,7 +64,7 @@ export default function Home() {
             </Link>
             <Link to="/shop?category=unreleased" className="relative group overflow-hidden aspect-[4/5] md:aspect-auto md:h-[600px]">
               <img 
-                src="/wardrobe/23xpolo.jpg" 
+                src="/wardrobe/red f.jpg" 
                 alt="Unreleased" 
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
@@ -91,7 +91,7 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
-            {featuredProducts.map((product) => (
+            {unreleasedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

@@ -12,8 +12,8 @@ export default function Lookbook() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {IMAGES.map((src, idx) => (
               <div key={src} className="relative overflow-hidden">
-                <div className="aspect-[3/4] bg-gray-100">
-                  <img src={src} alt={`Look ${idx + 1}`} className="w-full h-full object-cover" />
+                <div className="aspect-[3/4] bg-white flex items-center justify-center">
+                  <img src={src} alt={`Look ${idx + 1}`} className="w-full h-full object-contain" />
                 </div>
               </div>
             ))}

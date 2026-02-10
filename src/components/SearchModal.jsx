@@ -70,8 +70,8 @@ export default function SearchModal({ open, onClose }) {
                     onClick={onClose}
                     className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="w-12 h-12 bg-gray-100 flex-shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <div className="w-12 h-12 bg-white flex-shrink-0 flex items-center justify-center">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium uppercase tracking-wide">{item.name}</p>

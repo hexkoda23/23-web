@@ -5,13 +5,13 @@ import { motion } from 'framer-motion';
 export default function ProductCard({ product }) {
   return (
     <Link to={`/product/${product.id}`} className="group block">
-      <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-4">
+      <div className="relative aspect-[3/4] overflow-hidden bg-white mb-4 flex items-center justify-center">
         <motion.img
           whileHover={{ scale: 1.05 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-contain object-center"
         />
         {product.category === 'unreleased' && (
           <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 text-[10px] uppercase font-bold tracking-widest">

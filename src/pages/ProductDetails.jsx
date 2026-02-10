@@ -18,6 +18,7 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const isUnreleased = product?.category === 'unreleased';
 
   useEffect(() => {
@@ -113,14 +114,25 @@ export default function ProductDetails() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="aspect-[3/4] bg-gray-100 overflow-hidden"
+              className="aspect-[3/4] bg-white overflow-hidden flex items-center justify-center"
             >
               <img 
-                src={product.image} 
+                src={(product.images && product.images[selectedImageIndex]) || product.image} 
                 alt={product.name} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </motion.div>
+            <div className="flex gap-3 overflow-x-auto">
+              {(product.images || [product.image]).map((img, idx) => (
+                <button
+                  key={img + idx}
+                  onClick={() => setSelectedImageIndex(idx)}
+                  className={`w-20 h-24 border ${selectedImageIndex === idx ? 'border-black' : 'border-gray-200'}`}
+                >
+                  <img src={img} alt={product.name + ' alt ' + idx} className="w-full h-full object-contain bg-white" />
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Product Info */}

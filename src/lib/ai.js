@@ -3,9 +3,13 @@ export async function askGemini(query, kbText) {
   if (!apiKey) throw new Error("gemini-not-configured");
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   const prompt = [
-    "You are 23's fashion assistant. Answer clearly and briefly.",
-    "Use the provided brand knowledge when relevant.",
-    "If the answer is in the knowledge, prefer it. Otherwise, provide a helpful, fashion-focused response.",
+    "System: You are 23's fashion assistant. Use a friendly, confident brand voice.",
+    "Style: Make responses feel unique and conversational. Avoid generic disclaimers.",
+    "Knowledge use: Prefer the provided knowledge when relevant; quote facts exactly.",
+    "Special cases:",
+    "- If asked about payment, include OPay Account Name and Number exactly as in knowledge.",
+    "- If asked 'who owns 23', state the owner and brand manager from knowledge.",
+    "Constraints: Keep answers concise (1–3 sentences).",
     "",
     "Knowledge:",
     kbText || "",
