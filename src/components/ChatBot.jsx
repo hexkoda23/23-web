@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, User } from 'lucide-react';
-import { askGemini } from '../lib/ai';
+import { askGroq } from '../lib/ai';
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -173,10 +173,10 @@ export default function ChatBot() {
         ...knowledgeBase
       ].join('\n');
       let response = null;
-      const hasGemini = Boolean(import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GEMINI_KEY);
-      if (hasGemini) {
+      const hasGroq = Boolean(import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_KEY);
+      if (hasGroq) {
         try {
-          response = await askGemini(userMessage, kbText);
+          response = await askGroq(userMessage, kbText, messages);
         } catch (err) {
           response = null;
         }

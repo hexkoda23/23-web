@@ -1,35 +1,44 @@
-export async function askGemini(query, kbText) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GEMINI_KEY;
-  if (!apiKey) throw new Error("gemini-not-configured");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const prompt = [
-    "System: You are 23's fashion assistant. Use a friendly, confident brand voice.",
-    "Style: Make responses feel unique and conversational. Avoid generic disclaimers.",
-    "Knowledge use: Prefer the provided knowledge when relevant; quote facts exactly.",
-    "Special cases:",
-    "- If asked about payment, include OPay Account Name and Number exactly as in knowledge.",
-    "- If asked 'who owns 23', state the owner and brand manager from knowledge.",
-    "Constraints: Keep answers concise (1–3 sentences).",
-    "",
-    "Knowledge:",
-    kbText || "",
-    "",
-    "User question:",
-    query
+export async function askGroq(query, kbText, history = []) {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_KEY;
+  const model = import.meta.env.VITE_GROQ_MODEL || "llama-3.1-8b-instant";
+  if (!apiKey) throw new Error("groq-not-configured");
+  const url = "https://api.groq.com/openai/v1/chat/completions";
+  const system = [
+    "You are 23's fashion assistant. Be friendly, confident, and concise.",
+    "Prefer provided brand knowledge when relevant; quote facts exactly.",
+    "If asked about payment, include OPay Account Name and Number exactly as in knowledge.",
+    "If asked 'who owns 23', state owner and brand manager from knowledge.",
+    "Keep answers short (1–3 sentences). Avoid disclaimers.",
+    kbText ? `\nKnowledge:\n${kbText}` : ""
   ].join("\n");
+  const mappedHistory = history.slice(-8).map(m => ({
+    role: m.role === "bot" ? "assistant" : (m.role === "user" ? "user" : "assistant"),
+    content: String(m.content || "")
+  }));
+  const messages = [
+    { role: "system", content: system },
+    ...mappedHistory,
+    { role: "user", content: query }
+  ];
   const body = {
-    contents: [{ parts: [{ text: prompt }]}]
+    model,
+    messages,
+    temperature: 0.2,
+    max_tokens: 512
   };
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
     body: JSON.stringify(body)
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`gemini-error: ${text}`);
+    throw new Error(`groq-error: ${text}`);
   }
   const data = await res.json();
-  const output = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  const output = data?.choices?.[0]?.message?.content || "";
   return output.trim();
 }
