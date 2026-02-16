@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { AlertTriangle } from "lucide-react";
 import PageTransition from "../components/PageTransition";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -79,6 +80,18 @@ export default function Checkout() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div className="lg:col-span-2 space-y-8">
+              <div className="rounded-md bg-yellow-50 border border-yellow-200 p-4 flex items-start gap-3">
+                <AlertTriangle size={18} className="text-yellow-700 mt-0.5" />
+                <div className="text-xs text-yellow-800">
+                  <p className="font-semibold uppercase tracking-widest">Delivery Fee Notice</p>
+                  <p className="mt-1">
+                    Delivery fee is estimated separately based on your location. It is not included in the clothing price shown here.
+                  </p>
+                  <p className="mt-1">
+                    We will calculate and communicate your delivery fee after confirming your address, and before delivery.
+                  </p>
+                </div>
+              </div>
               <div className="bg-gray-50 p-8">
                 <h2 className="text-lg font-bold uppercase tracking-widest mb-6">Order Summary</h2>
                 <div className="space-y-4">
