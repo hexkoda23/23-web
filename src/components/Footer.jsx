@@ -1,73 +1,96 @@
-
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Twitter, Mail } from 'lucide-react';
-import BrandLogo from './BrandLogo';
+import { Instagram, Twitter, Facebook } from 'lucide-react';
+
+const shopLinks = [
+  { label: 'New Arrivals', to: '/shop?category=new' },
+  { label: 'Unreleased', to: '/shop?category=unreleased' },
+  { label: 'Outerwear', to: '/shop?category=outerwear' },
+  { label: 'Footwear', to: '/shop?category=shoes' },
+];
+const infoLinks = [
+  { label: 'Our Story', to: '/about' },
+  { label: 'Lookbook', to: '/lookbook' },
+  { label: 'FAQ', to: '/faq' },
+  { label: 'Contact', to: '/contact' },
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-50 pt-20 pb-10 border-t border-gray-200">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          {/* Brand */}
-          <div className="space-y-6">
-            <div className="h-10">
-              <BrandLogo className="h-full" />
+    <footer className="bg-[#0A0A0A] text-white rounded-t-[2.5rem] mt-[-2.5rem] relative z-10 pt-20 pb-10">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+
+          {/* Brand — col-span-5 */}
+          <div className="md:col-span-5">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 border border-white/20 flex items-center justify-center">
+                <span className="font-mono font-bold text-sm text-white">23</span>
+              </div>
+              <span className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-white/40">
+                The Brand
+              </span>
             </div>
-            <p className="text-gray-500 text-sm leading-relaxed">
-              Defining modern luxury through minimalist design and premium craftsmanship.
-              Born in 2023.
+            <p className="text-white/35 text-sm font-light leading-relaxed max-w-xs mb-6">
+              Defining modern luxury through personalized streetwear. Born in Lagos. Made for the world.
             </p>
+            <div className="flex items-center gap-5 mb-8">
+              <a href="#" className="text-white/30 hover:text-[var(--accent)] transition-colors"><Instagram size={18} /></a>
+              <a href="#" className="text-white/30 hover:text-[var(--accent)] transition-colors"><Twitter size={18} /></a>
+              <a href="#" className="text-white/30 hover:text-[var(--accent)] transition-colors"><Facebook size={18} /></a>
+            </div>
           </div>
 
-          {/* Shop */}
-          <div className="space-y-6">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-gray-900">Shop</h4>
-            <ul className="space-y-4 text-sm text-gray-500">
-              <li><Link to="/shop?category=tops" className="hover:text-black transition-colors">Tops</Link></li>
-              <li><Link to="/shop?category=bottoms" className="hover:text-black transition-colors">Bottoms</Link></li>
-              <li><Link to="/shop?category=outerwear" className="hover:text-black transition-colors">Outerwear</Link></li>
-              <li><Link to="/shop?category=shoes" className="hover:text-black transition-colors">Footwear</Link></li>
+          {/* Shop — col-span-3 */}
+          <div className="md:col-span-3">
+            <h4 className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-[var(--accent)] mb-6">Shop</h4>
+            <ul className="space-y-4">
+              {shopLinks.map(link => (
+                <li key={link.to}>
+                  <Link to={link.to} className="font-mono text-[0.62rem] tracking-[0.12em] uppercase text-white/35 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Support */}
-          <div className="space-y-6">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-gray-900">Support</h4>
-            <ul className="space-y-4 text-sm text-gray-500">
-              <li><Link to="/faq" className="hover:text-black transition-colors">FAQ</Link></li>
-              <li><Link to="/contact" className="hover:text-black transition-colors">Contact Us</Link></li>
-              <li><Link to="/shipping" className="hover:text-black transition-colors">Shipping & Returns</Link></li>
-              <li><Link to="/privacy" className="hover:text-black transition-colors">Privacy Policy</Link></li>
+          {/* Info — col-span-4 */}
+          <div className="md:col-span-4">
+            <h4 className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-[var(--accent)] mb-6">Info</h4>
+            <ul className="space-y-4 mb-10">
+              {infoLinks.map(link => (
+                <li key={link.to}>
+                  <Link to={link.to} className="font-mono text-[0.62rem] tracking-[0.12em] uppercase text-white/35 hover:text-white transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div className="space-y-6">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-gray-900">Newsletter</h4>
-            <p className="text-sm text-gray-500">Subscribe for exclusive drops and early access.</p>
-            <form className="flex border-b border-black pb-2">
-              <input 
-                type="email" 
-                placeholder="EMAIL ADDRESS" 
-                className="bg-transparent w-full outline-none text-sm placeholder-gray-400"
-              />
-              <button type="submit" className="text-xs font-bold uppercase hover:text-gray-500">
-                Join
-              </button>
-            </form>
-            <div className="flex space-x-6 pt-4">
-              <a href="#" className="text-gray-400 hover:text-black transition-colors"><Instagram size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-black transition-colors"><Twitter size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-black transition-colors"><Facebook size={20} /></a>
+            {/* Newsletter mini */}
+            <div>
+              <p className="font-mono text-[0.58rem] tracking-[0.15em] uppercase text-white/30 mb-3">Subscribe for exclusive drops</p>
+              <form className="flex border-b border-white/10 pb-2 focus-within:border-[var(--accent)]/50 transition-colors">
+                <input
+                  type="email"
+                  placeholder="EMAIL ADDRESS"
+                  className="bg-transparent flex-1 font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white placeholder-white/20 outline-none"
+                />
+                <button type="submit" className="font-mono text-[0.58rem] tracking-[0.15em] uppercase text-[var(--accent)] hover:text-white transition-colors">
+                  →
+                </button>
+              </form>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-200 text-xs text-gray-400">
-          <p>&copy; 2025 23Look. All rights reserved.</p>
-          <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link to="/terms">Terms</Link>
-            <Link to="/privacy">Privacy</Link>
+        {/* Bottom bar */}
+        <div className="pt-8 border-t border-white/[0.06] flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white/20">
+            © {new Date().getFullYear()} 23 Look. All rights reserved.
+          </p>
+          <div className="flex items-center gap-8">
+            <Link to="/terms" className="font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white/20 hover:text-white/50 transition-colors">Terms</Link>
+            <Link to="/privacy" className="font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white/20 hover:text-white/50 transition-colors">Privacy</Link>
           </div>
         </div>
       </div>

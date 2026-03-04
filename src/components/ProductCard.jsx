@@ -1,49 +1,57 @@
-
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 export default function ProductCard({ product }) {
   return (
     <Link to={`/product/${product.id}`} className="group block">
-      <div className="relative aspect-[3/4] overflow-hidden bg-white mb-4 flex items-center justify-center">
+      {/* Image container */}
+      <div className="relative overflow-hidden bg-[#F5F5F5] mb-4" style={{ aspectRatio: '3/4' }}>
         <motion.img
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
+          whileHover={{ scale: 1.04 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           src={product.image}
           alt={product.name}
           className="w-full h-full object-contain object-center"
         />
+        {/* Status badge — THCO style */}
         {product.category === 'unreleased' && (
-          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 text-[10px] uppercase font-bold tracking-widest">
+          <div className="absolute top-3 left-3 bg-black text-white font-mono text-[0.55rem] tracking-[0.18em] uppercase px-2.5 py-1.5">
             Unreleased
           </div>
         )}
         {product.comingSoon && (
-          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 text-[10px] uppercase font-bold tracking-widest">
+          <div className="absolute top-3 left-3 bg-[var(--accent)] text-black font-mono text-[0.55rem] tracking-[0.18em] uppercase px-2.5 py-1.5 font-bold">
             Coming Soon
           </div>
         )}
-        {!product.inStock && (
-          <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm px-2 py-1 text-[10px] uppercase font-bold tracking-widest">
+        {!product.inStock && !product.comingSoon && (
+          <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-black font-mono text-[0.55rem] tracking-[0.18em] uppercase px-2.5 py-1.5">
             Sold Out
           </div>
         )}
+        {/* Quick view on hover */}
+        <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-black/90 backdrop-blur-sm py-3 text-center">
+          <span className="font-mono text-[0.58rem] tracking-[0.2em] uppercase text-white">
+            {product.category === 'unreleased' ? 'Contact to Order' : 'Quick View'}
+          </span>
+        </div>
       </div>
-      <div className="flex justify-between items-start">
+
+      {/* Info */}
+      <div className="flex justify-between items-start gap-2">
         <div>
-          <h3 className="text-sm font-medium text-gray-900 uppercase tracking-wide group-hover:text-gray-600 transition-colors">
+          <h3 className="font-mono text-[0.7rem] tracking-[0.12em] uppercase text-black group-hover:text-black/60 transition-colors">
             {product.name}
           </h3>
-          <p className="mt-1 text-xs text-gray-500 capitalize">{product.category}</p>
-          {product.comingSoon && product.preorderAvailable && (
-            <p className="mt-1 text-[10px] uppercase text-gray-700">Pre-Order Available</p>
-          )}
-          {product.category === 'unreleased' && (
-            <p className="mt-1 text-[10px] uppercase text-gray-700">Contact to Customize</p>
+          <p className="mt-1 font-mono text-[0.58rem] tracking-[0.1em] uppercase text-black/30">
+            {product.category}
+          </p>
+          {(product.comingSoon && product.preorderAvailable) && (
+            <p className="mt-1 font-mono text-[0.55rem] uppercase tracking-wider text-[var(--accent)]">Pre-Order</p>
           )}
         </div>
-        <p className="text-sm font-medium text-gray-900">
-          {product.category === 'unreleased' ? 'XX' : `₦${Number(product.price).toLocaleString('en-NG')}`}
+        <p className="font-mono text-[0.7rem] text-black font-medium whitespace-nowrap">
+          {product.category === 'unreleased' ? '—' : `₦${Number(product.price).toLocaleString('en-NG')}`}
         </p>
       </div>
     </Link>

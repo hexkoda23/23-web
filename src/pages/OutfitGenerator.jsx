@@ -19,21 +19,21 @@ export default function OutfitGenerator() {
   // Initialize data
   useEffect(() => {
     window.scrollTo(0, 0);
-    
+
     // Load custom items
     const savedCustom = getUserData(storageUserId, "customWardrobeItems", []);
     if (savedCustom) setCustomItems(savedCustom);
-    
+
     // Load selected wardrobe items
     const savedSelected = getUserData(storageUserId, "selectedWardrobe", []);
     if (savedSelected && savedSelected.length > 0) {
       const savedSet = new Set(savedSelected);
       setSelectedItems(savedSet);
-      
+
       // Load daily outfits
       const savedOutfits = getUserData(storageUserId, "dailyOutfits", {});
       setDailyOutfits(savedOutfits);
-      
+
       const dateKey = new Date().toDateString();
       if (savedOutfits[dateKey]) {
         setGeneratedOutfit(savedOutfits[dateKey]);
@@ -53,12 +53,12 @@ export default function OutfitGenerator() {
 
   const generateOutfitAuto = (items = selectedItems, date = currentDate, outfitsData = dailyOutfits, forceNew = false) => {
     if (items.size === 0) return;
-    
+
     setIsGenerating(true);
-    
+
     setTimeout(() => {
       const dateKey = date.toDateString();
-      
+
       // Use existing if available and not forced
       if (!forceNew && outfitsData[dateKey]) {
         setGeneratedOutfit(outfitsData[dateKey]);
@@ -95,9 +95,7 @@ export default function OutfitGenerator() {
         bottom: bottoms.length ? bottoms[Math.floor(random(seed + 1) * bottoms.length)] : null,
         outerwear: (outerwear.length && random(seed + 2) > 0.5) ? outerwear[Math.floor(random(seed + 2) * outerwear.length)] : null,
         shoes: shoes.length ? shoes[Math.floor(random(seed + 3) * shoes.length)] : null,
-        accessory: (!outerwear.length && accessories.length && random(seed + 4) > 0.4)
-          ? accessories[Math.floor(random(seed + 4) * accessories.length)]
-          : (outerwear.length === 0 && accessories.length ? accessories[0] : null),
+        accessory: accessories.length ? accessories[Math.floor(random(seed + 4) * accessories.length)] : null,
       };
 
       const newOutfits = { ...outfitsData, [dateKey]: outfit };
@@ -112,7 +110,7 @@ export default function OutfitGenerator() {
     const newDate = new Date(currentDate);
     newDate.setDate(newDate.getDate() + days);
     setCurrentDate(newDate);
-    
+
     const dateKey = newDate.toDateString();
     if (dailyOutfits[dateKey]) {
       setGeneratedOutfit(dailyOutfits[dateKey]);
@@ -125,7 +123,7 @@ export default function OutfitGenerator() {
     const newSet = new Set(selectedItems);
     if (newSet.has(id)) newSet.delete(id);
     else newSet.add(id);
-    
+
     setSelectedItems(newSet);
     setUserData(storageUserId, "selectedWardrobe", [...newSet]);
   };
@@ -155,17 +153,16 @@ export default function OutfitGenerator() {
                   <span>My Wardrobe</span>
                   <span className="text-xs text-gray-400">{selectedItems.size} items active</span>
                 </h2>
-                
+
                 <div className="flex space-x-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
                   {['tops', 'bottoms', 'outerwear', 'shoes', 'accessories'].map(cat => (
                     <button
                       key={cat}
                       onClick={() => setActiveCategory(cat)}
-                      className={`px-4 py-2 text-xs uppercase tracking-wider whitespace-nowrap transition-colors ${
-                        activeCategory === cat 
-                          ? 'bg-black text-white' 
+                      className={`px-4 py-2 text-xs uppercase tracking-wider whitespace-nowrap transition-colors ${activeCategory === cat
+                          ? 'bg-black text-white'
                           : 'bg-white text-gray-500 border border-gray-200 hover:border-black'
-                      }`}
+                        }`}
                     >
                       {cat}
                     </button>
@@ -174,16 +171,15 @@ export default function OutfitGenerator() {
 
                 <div className="grid grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                   {WARDROBE_CATEGORIES[activeCategory]?.map(item => (
-                    <div 
+                    <div
                       key={item.id}
                       onClick={() => toggleItemSelection(item.id)}
-                      className={`relative aspect-[3/4] cursor-pointer group transition-all duration-300 ${
-                        selectedItems.has(item.id) ? 'opacity-100 ring-1 ring-black' : 'opacity-40 hover:opacity-70'
-                      }`}
+                      className={`relative aspect-[3/4] cursor-pointer group transition-all duration-300 ${selectedItems.has(item.id) ? 'opacity-100 ring-1 ring-black' : 'opacity-40 hover:opacity-70'
+                        }`}
                     >
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
+                      <img
+                        src={item.image}
+                        alt={item.name}
                         className="w-full h-full object-cover bg-gray-200"
                       />
                       {selectedItems.has(item.id) && (
@@ -234,30 +230,45 @@ export default function OutfitGenerator() {
                     >
                       {/* Top Left: Top */}
                       <div className="col-span-1 space-y-2">
-                         <span className="text-[10px] uppercase tracking-widest text-gray-400">Top</span>
-                         <div className="aspect-[3/4] bg-white shadow-sm p-2">
-                           {generatedOutfit.top ? (
-                             <img src={generatedOutfit.top.image} className="w-full h-full object-cover" alt="Top" />
-                           ) : (
-                             <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><Shirt /></div>
-                           )}
-                         </div>
-                         <p className="text-xs uppercase font-bold truncate">{generatedOutfit.top?.name || "None"}</p>
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400">Top</span>
+                        <div className="aspect-[3/4] bg-white shadow-sm p-2">
+                          {generatedOutfit.top ? (
+                            <img src={generatedOutfit.top.image} className="w-full h-full object-cover" alt="Top" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><Shirt /></div>
+                          )}
+                        </div>
+                        <p className="text-xs uppercase font-bold truncate">{generatedOutfit.top?.name || "None"}</p>
                       </div>
 
-                      {/* Top Right: Outerwear (if exists) or Accessory */}
+                      {/* Top Right: Outerwear */}
                       <div className="col-span-1 space-y-2 pt-12">
-                        <span className="text-[10px] uppercase tracking-widest text-gray-400">{generatedOutfit.outerwear ? 'Layer' : (generatedOutfit.accessory ? 'Accessory' : 'Layer')}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400">Layer</span>
                         <div className="aspect-[3/4] bg-white shadow-sm p-2">
                           {generatedOutfit.outerwear ? (
                             <img src={generatedOutfit.outerwear.image} className="w-full h-full object-cover" alt="Outerwear" />
-                          ) : generatedOutfit.accessory ? (
-                            <img src={generatedOutfit.accessory.image} className="w-full h-full object-cover" alt="Accessory" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 text-xs uppercase">No Layer</div>
                           )}
                         </div>
-                        <p className="text-xs uppercase font-bold truncate">{generatedOutfit.outerwear?.name || generatedOutfit.accessory?.name || "-"}</p>
+                        <p className="text-xs uppercase font-bold truncate">{generatedOutfit.outerwear?.name || "-"}</p>
+                      </div>
+
+                      {/* Middle: Accessory */}
+                      <div className="col-span-2 space-y-2 -mt-4 mb-4">
+                        <div className="flex items-center gap-4 bg-white p-3 shadow-sm border border-gray-100">
+                          <div className="w-16 h-16 bg-gray-50 flex-shrink-0">
+                            {generatedOutfit.accessory ? (
+                              <img src={generatedOutfit.accessory.image} className="w-full h-full object-cover" alt="Accessory" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300">?</div>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400 block mb-1">Accessory</span>
+                            <p className="text-xs uppercase font-bold">{generatedOutfit.accessory?.name || "None Selected"}</p>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Bottom Left: Bottom */}

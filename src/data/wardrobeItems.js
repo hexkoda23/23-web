@@ -20,7 +20,10 @@ export const WARDROBE_CATEGORIES = {
     { id: "top-16", name: "Gray T-Shirt", category: "tops", image: "/wardrobe/greytshirt.jpg" },
     { id: "top-17", name: "Black Shirt", category: "tops", image: "/wardrobe/blackshirt.jpg" },
     { id: "top-18", name: "Pink T-Shirt", category: "tops", image: "/wardrobe/pinktshirt.jpg" },
-    
+    { id: "gym-1", name: "23 X Gym Black", category: "tops", image: "/wardrobe/23gymblack.jpg" },
+    { id: "gym-2", name: "23 X Gym Blue", category: "tops", image: "/wardrobe/23gymblue.jpg" },
+    { id: "gym-3", name: "23 X Gym Pink", category: "tops", image: "/wardrobe/23gympink.jpg" },
+    { id: "gym-4", name: "23 X Gym Yellow", category: "tops", image: "/wardrobe/23gymyellow.jpg" },
   ],
   bottoms: [
     { id: "bottom-1", name: "Black Jeans", category: "bottoms", image: "/wardrobe/blackjean.jpg" },
@@ -32,12 +35,13 @@ export const WARDROBE_CATEGORIES = {
     { id: "bottom-7", name: "Ash Joggers", category: "bottoms", image: "/wardrobe/ashjoggers.jpg" },
     { id: "bottom-8", name: "Black Joggers", category: "bottoms", image: "/wardrobe/blackjoggers.jpg" },
     { id: "bottom-9", name: "Ash Jeans", category: "bottoms", image: "/wardrobe/ashjean.jpg" },
-    
+    { id: "bottom-10", name: "23 X Short Denim", category: "bottoms", image: "/wardrobe/23shortdenim.jpg" },
+    { id: "bottom-11", name: "23 X Long Denim", category: "bottoms", image: "/wardrobe/23longdenim.jpg" },
   ],
   outerwear: [
     { id: "outer-1", name: "Blue Denim Jacket", category: "outerwear", image: "/wardrobe/bluedenimjacket.jpg" },
     { id: "outer-2", name: "Black Denim Jacket", category: "outerwear", image: "/wardrobe/blackdenimjacket.jpg" },
-    
+
   ],
   shoes: [
     { id: "shoe-1", name: "Dress Shoes", category: "shoes", image: "/wardrobe/dressshoe.jpg" },
@@ -52,16 +56,16 @@ export const WARDROBE_CATEGORIES = {
 };
 
 // 23 Lookbook items for recommendations
-export const LOOKBOOK_ITEMS = [    { id: "outer-3", name: "Black Leather Jacket", category: "outerwear", image: "/wardrobe/blackleatherjacket.jpg" },
+export const LOOKBOOK_ITEMS = [{ id: "outer-3", name: "Black Leather Jacket", category: "outerwear", image: "/wardrobe/blackleatherjacket.jpg" },
 
-  { id: 1, imageUrl: '/lookbook/1.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766706015607-m77', name: '23 x Italawa' },
-  { id: 2, imageUrl: '/lookbook/2.jpg', href: 'https://catlog.shop/products/23-x-sober-1766706198646-yl1', name: '23 x Sober' },
-  { id: 3, imageUrl: '/lookbook/3.jpg', href: 'https://catlog.shop/products/23-x-itl-1766706523775-x6p', name: '23 x ITL' },
-  { id: 4, imageUrl: '/lookbook/4.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej', name: '23 x Italawa' },
-  { id: 5, imageUrl: '/lookbook/5.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej', name: '23 x Italawa' },
-  { id: 6, imageUrl: '/lookbook/6.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej', name: '23 x Italawa' },
-  { id: 7, imageUrl: '/lookbook/7.jpg', href: 'https://catlog.shop/products/23-x-ashante-1766706425607-swh', name: '23 x Ashante' },
-  { id: 8, imageUrl: '/lookbook/8.jpg', href: 'https://catlog.shop/products/23-x-itl-1766706523775-x6p', name: '23 x ITL' },
-  { id: 9, imageUrl: '/lookbook/9.jpg', href: 'https://catlog.shop/products/23-x-itl-1766706523775-x6p', name: '23 x ITL' },
-  { id: 10, imageUrl: '/lookbook/10.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej', name: '23 x Italawa' },
+{ id: 1, imageUrl: '/lookbook/1.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766706015607-m77', name: '23 x Italawa' },
+{ id: 2, imageUrl: '/lookbook/2.jpg', href: 'https://catlog.shop/products/23-x-sober-1766706198646-yl1', name: '23 x Sober' },
+{ id: 3, imageUrl: '/lookbook/3.jpg', href: 'https://catlog.shop/products/23-x-itl-1766706523775-x6p', name: '23 x ITL' },
+{ id: 4, imageUrl: '/lookbook/4.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej', name: '23 x Italawa' },
+{ id: 5, imageUrl: '/lookbook/5.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej', name: '23 x Italawa' },
+{ id: 6, imageUrl: '/lookbook/6.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej', name: '23 x Italawa' },
+{ id: 7, imageUrl: '/lookbook/7.jpg', href: 'https://catlog.shop/products/23-x-ashante-1766706425607-swh', name: '23 x Ashante' },
+{ id: 8, imageUrl: '/lookbook/8.jpg', href: 'https://catlog.shop/products/23-x-itl-1766706523775-x6p', name: '23 x ITL' },
+{ id: 9, imageUrl: '/lookbook/9.jpg', href: 'https://catlog.shop/products/23-x-itl-1766706523775-x6p', name: '23 x ITL' },
+{ id: 10, imageUrl: '/lookbook/10.jpg', href: 'https://catlog.shop/products/23-x-italawa-1766705289691-3ej', name: '23 x Italawa' },
 ];
