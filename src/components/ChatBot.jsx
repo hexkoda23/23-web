@@ -208,7 +208,7 @@ export default function ChatBot() {
 
       // 3. Final Default Response
       if (!response) {
-        response = "Try asking a specific question about 23, like 'How do I pay?' or 'Who owns 23?'";
+        response = "I'm not quite sure about that one yet — reach out to us on Instagram @twentythreepreppy or WhatsApp and we'll help you out! 📩";
       }
       setMessages(prev => [...prev, { role: 'bot', content: response }]);
     } finally {
