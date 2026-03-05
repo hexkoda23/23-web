@@ -186,30 +186,33 @@ export default function ChatBot() {
         setIsTyping(false);
         return;
       }
-      // 1. Try Keyword Match first (High Confidence)
-      let response = findBestMatch(userMessage);
+      // 1. Try AI First (Highly Reliable with Context)
+      const hasGroq = Boolean(import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_KEY);
+      let response = null;
 
-      // 2. AI Fallback for natural language / complex queries
-      if (!response) {
-        const hasGroq = Boolean(import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_KEY);
-        if (hasGroq) {
-          const kbText = [
-            ...kbQA.map(({ q, a }) => `Q: ${q}\nA: ${a}`),
-            ...knowledgeBase
-          ].join('\n');
-          try {
-            response = await askGroq(userMessage, kbText, messages);
-          } catch (err) {
-            console.warn("AI bridge failed:", err);
-            response = null;
-          }
+      if (hasGroq) {
+        const kbText = [
+          ...kbQA.map(({ q, a }) => `Q: ${q}\nA: ${a}`),
+          ...knowledgeBase
+        ].join('\n');
+        try {
+          response = await askGroq(userMessage, kbText, messages);
+        } catch (err) {
+          console.warn("AI bridge failed, falling back to keywords:", err);
+          response = null;
         }
       }
 
-      // 3. Final Default Response
+      // 2. Fallback to Keyword Match if AI failed or is missing
+      if (!response) {
+        response = findBestMatch(userMessage);
+      }
+
+      // 3. Final Multi-layered Fallback
       if (!response) {
         response = "I'm not quite sure about that one yet — reach out to us on Instagram @twentythreepreppy or WhatsApp and we'll help you out! 📩";
       }
+
       setMessages(prev => [...prev, { role: 'bot', content: response }]);
     } finally {
       setIsTyping(false);
