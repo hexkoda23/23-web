@@ -9,7 +9,7 @@ import SearchModal from './SearchModal';
 const navLinks = [
   { label: 'Lookbook', to: '/lookbook' },
   { label: 'Shop', to: '/shop' },
-  { label: 'Outfit AI', to: '/outfit-generator' },
+  { label: 'Generate Fit', to: '/outfit-generator' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ];
@@ -63,8 +63,8 @@ export default function Navbar() {
                 key={link.to}
                 to={link.to}
                 className={`font-mono text-[0.62rem] tracking-[0.18em] uppercase transition-all duration-200 relative group ${location.pathname === link.to
-                    ? isScrolled || isDarkPage ? 'text-white' : 'text-black'
-                    : isScrolled || isDarkPage ? 'text-white/50 hover:text-white' : 'text-black/45 hover:text-black'
+                  ? isScrolled || isDarkPage ? 'text-white' : 'text-black'
+                  : isScrolled || isDarkPage ? 'text-white/50 hover:text-white' : 'text-black/45 hover:text-black'
                   }`}
               >
                 {link.label}
