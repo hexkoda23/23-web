@@ -81,6 +81,12 @@ function MannequinRotator() {
 }
 
 
+const HERO_IMAGES = [
+  '/lookbook/18.jpg',
+  '/lookbook/6.jpg',
+  '/lookbook/1.jpg',
+];
+
 const MARQUEE_ITEMS = [
   'LUXURY WEAR', '— BORN 2025 —', 'PERSONALIZED FOR YOU',
   '— LAGOS NIGERIA —', 'WEAR YOUR IDENTITY', '— COLLECTION 26 —',
@@ -121,19 +127,31 @@ export default function Home() {
   const statsRef = useRef(null);
   const statsInView = useInView(statsRef, { once: true, margin: '-100px' });
 
+  const [heroIndex, setHeroIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroIndex(prev => (prev + 1) % HERO_IMAGES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div className="w-full bg-white">
 
       {/* ── HERO — Full dark, THCO dramatic ── */}
       <section className="relative h-screen w-full overflow-hidden bg-[#0A0A0A]">
         <div className="absolute inset-0">
-          <img
-            src="/lookbook/18.jpg"
-            alt="23 Collection"
-            className="w-full h-full object-cover opacity-50"
-          />
+          {HERO_IMAGES.map((src, i) => (
+            <img
+              key={src}
+              src={src}
+              alt="23 Collection"
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === heroIndex ? 'opacity-90' : 'opacity-0'}`}
+            />
+          ))}
           {/* Gradient vignette */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/70" />
         </div>
 
         {/* Dot grid overlay — THCO pattern */}
