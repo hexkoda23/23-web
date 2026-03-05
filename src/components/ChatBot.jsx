@@ -143,6 +143,8 @@ export default function ChatBot() {
       });
       if (bestScore > 0) return bestQA.a;
     }
+    let best = null;
+    let score = 0;
     knowledgeBase.forEach(line => {
       const low = line.toLowerCase();
       let s = 0;
