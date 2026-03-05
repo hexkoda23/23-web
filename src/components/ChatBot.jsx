@@ -103,64 +103,69 @@ export default function ChatBot() {
   const findBestMatch = (query) => {
     const hasKB = knowledgeBase.length > 0 || kbQA.length > 0;
     if (!hasKB) return null;
+
     const clean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-    const STOP_WORDS = new Set(['to', 'if', 'or', 'and', 'the', 'is', 'it', 'for', 'in', 'on', 'at', 'by', 'this', 'that', 'with', 'from', 'my']);
+    const STOP_WORDS = new Set(['to', 'if', 'or', 'and', 'the', 'is', 'it', 'for', 'in', 'on', 'at', 'by', 'this', 'that', 'with', 'from', 'my', 'how', 'what', 'where', 'who', 'does', 'do', 'can', 'take', 'has', 'am']);
     const terms = clean.split(/\s+/).filter(t => t.length >= 2 && !STOP_WORDS.has(t));
     if (!terms.length) return null;
+
     const intentSynonyms = {
       payment: ['pay', 'payment', 'opay', 'account', 'transfer', 'number', 'bank'],
       owner: ['owner', 'founder', 'who', 'created', 'owns'],
       contact: ['contact', 'reach', 'whatsapp', 'phone', 'email', 'instagram'],
       customize: ['custom', 'customize', 'personalize', 'design', 'collection'],
       trend: ['trend', 'trending', 'vogue', 'fashion', 'latest'],
-      brand: ['what', 'is', 'about', 'brand', '23'],
+      brand: ['what', 'is', 'about', 'brand', '23', 'meaning', 'identity'],
       policies: ['policy', 'policies', 'rules', 'terms', 'shipping', 'returns'],
-      shipping: ['delivery', 'ship', 'shipping', 'time', 'days', 'eta', 'long', 'when', 'arrives'],
+      shipping: ['delivery', 'ship', 'shipping', 'time', 'days', 'eta', 'long', 'arrives'],
     };
+
     const intentScores = {};
     Object.keys(intentSynonyms).forEach(k => {
       intentScores[k] = terms.reduce((s, t) => s + (intentSynonyms[k].some(x => x.includes(t)) ? 1 : 0), 0);
     });
-    const topIntent = Object.entries(intentScores).sort((a, b) => b[1] - a[1])[0];
-    if (kbQA.length) {
-      let bestQA = null;
-      let bestScore = 0;
-      kbQA.forEach(({ q, a }) => {
-        const lowQ = q.toLowerCase();
-        let s = 0;
-        terms.forEach(t => {
-          if (lowQ.includes(t)) {
-            // Check if it's a whole word match (more points) or just substring
-            const isMatch = lowQ === t || lowQ.split(/\s+/).includes(t);
-            s += isMatch ? 3 : 1;
-          }
-        });
-        if (topIntent && topIntent[1] > 0) {
-          const syns = intentSynonyms[topIntent[0]];
-          syns.forEach(t => { if (lowQ.includes(t)) s += 2.5; });
-        }
-        if (s > bestScore) { bestScore = s; bestQA = { q, a }; }
-      });
-      if (bestScore > 0) return bestQA.a;
-    }
-    let best = null;
-    let score = 0;
-    knowledgeBase.forEach(line => {
-      const low = line.toLowerCase();
+    const sortedIntents = Object.entries(intentScores).sort((a, b) => b[1] - a[1]);
+    const topIntent = sortedIntents[0][1] > 0 ? sortedIntents[0] : null;
+
+    let bestAnswer = null;
+    let maxOverallScore = 0;
+
+    // Check Question-Answer pairs
+    kbQA.forEach(({ q, a }) => {
       let s = 0;
+      const lowQ = q.toLowerCase();
       terms.forEach(t => {
-        if (low.includes(t)) {
-          const isMatch = low === t || low.split(/\s+/).includes(t);
-          s += isMatch ? 3 : 1;
+        if (lowQ.includes(t)) {
+          const isMatch = lowQ.split(/\s+/).includes(t);
+          s += isMatch ? 5 : 2;
         }
       });
-      if (topIntent && topIntent[1] > 0) {
+      if (topIntent) {
         const syns = intentSynonyms[topIntent[0]];
-        syns.forEach(t => { if (low.includes(t)) s += 2.5; });
+        syns.forEach(t => { if (lowQ.includes(t)) s += 3; });
       }
-      if (s > score) { score = s; best = line; }
+      if (s > maxOverallScore) { maxOverallScore = s; bestAnswer = a; }
     });
-    return (score > 2.5 || (bestScore > 0 && bestScore >= score)) ? (bestScore >= score ? bestQA.a : best) : null;
+
+    // Check raw lines fallback
+    knowledgeBase.forEach(line => {
+      let s = 0;
+      const lowL = line.toLowerCase();
+      if (lowL.startsWith('q:') || lowL.startsWith('a:')) return;
+      terms.forEach(t => {
+        if (lowL.includes(t)) {
+          const isMatch = lowL.split(/\s+/).includes(t);
+          s += isMatch ? 5 : 2;
+        }
+      });
+      if (topIntent) {
+        const syns = intentSynonyms[topIntent[0]];
+        syns.forEach(t => { if (lowL.includes(t)) s += 3; });
+      }
+      if (s > maxOverallScore) { maxOverallScore = s; bestAnswer = line; }
+    });
+
+    return maxOverallScore > 5 ? bestAnswer : null;
   };
 
   const handleSend = async (e) => {
@@ -173,7 +178,7 @@ export default function ChatBot() {
     setIsTyping(true);
 
     try {
-      const greetTerms = ['hi', 'hello', 'hey', 'yo', 'sup'];
+      const greetTerms = ['hi', 'hello', 'hey', 'yo', 'sup', 'howfar', 'wassup'];
       const qLow = userMessage.toLowerCase().trim();
       if (greetTerms.includes(qLow)) {
         const greet = "How are you doing? I'm 23, your fashion assistant. How can I help?";
@@ -181,22 +186,29 @@ export default function ChatBot() {
         setIsTyping(false);
         return;
       }
-      const kbText = [
-        ...kbQA.map(({ q, a }) => `Q: ${q}\nA: ${a}`),
-        ...knowledgeBase
-      ].join('\n');
-      let response = null;
-      const hasGroq = Boolean(import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_KEY);
-      if (hasGroq) {
-        try {
-          response = await askGroq(userMessage, kbText, messages);
-        } catch (err) {
-          response = null;
+      // 1. Try Keyword Match first (High Confidence)
+      let response = findBestMatch(userMessage);
+
+      // 2. AI Fallback for natural language / complex queries
+      if (!response) {
+        const hasGroq = Boolean(import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_KEY);
+        if (hasGroq) {
+          const kbText = [
+            ...kbQA.map(({ q, a }) => `Q: ${q}\nA: ${a}`),
+            ...knowledgeBase
+          ].join('\n');
+          try {
+            response = await askGroq(userMessage, kbText, messages);
+          } catch (err) {
+            console.warn("AI bridge failed:", err);
+            response = null;
+          }
         }
       }
+
+      // 3. Final Default Response
       if (!response) {
-        const match = findBestMatch(userMessage);
-        response = match || "Try asking a specific question about 23, like 'How do I pay?' or 'Who owns 23?'";
+        response = "Try asking a specific question about 23, like 'How do I pay?' or 'Who owns 23?'";
       }
       setMessages(prev => [...prev, { role: 'bot', content: response }]);
     } finally {
