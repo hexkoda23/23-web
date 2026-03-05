@@ -104,7 +104,8 @@ export default function ChatBot() {
     const hasKB = knowledgeBase.length > 0 || kbQA.length > 0;
     if (!hasKB) return null;
     const clean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-    const terms = clean.split(/\s+/).filter(t => t.length >= 2);
+    const STOP_WORDS = new Set(['to', 'if', 'or', 'and', 'the', 'is', 'it', 'for', 'in', 'on', 'at', 'by', 'this', 'that', 'with', 'from', 'my']);
+    const terms = clean.split(/\s+/).filter(t => t.length >= 2 && !STOP_WORDS.has(t));
     if (!terms.length) return null;
     const intentSynonyms = {
       payment: ['pay', 'payment', 'opay', 'account', 'transfer', 'number', 'bank'],
@@ -127,28 +128,37 @@ export default function ChatBot() {
       kbQA.forEach(({ q, a }) => {
         const lowQ = q.toLowerCase();
         let s = 0;
-        terms.forEach(t => { if (lowQ.includes(t)) s += 1.5; });
+        terms.forEach(t => {
+          if (lowQ.includes(t)) {
+            // Check if it's a whole word match (more points) or just substring
+            const isMatch = lowQ === t || lowQ.split(/\s+/).includes(t);
+            s += isMatch ? 3 : 1;
+          }
+        });
         if (topIntent && topIntent[1] > 0) {
           const syns = intentSynonyms[topIntent[0]];
-          syns.forEach(t => { if (lowQ.includes(t)) s += 0.8; });
+          syns.forEach(t => { if (lowQ.includes(t)) s += 2.5; });
         }
         if (s > bestScore) { bestScore = s; bestQA = { q, a }; }
       });
       if (bestScore > 0) return bestQA.a;
     }
-    let best = null;
-    let score = 0;
     knowledgeBase.forEach(line => {
       const low = line.toLowerCase();
       let s = 0;
-      terms.forEach(t => { if (low.includes(t)) s++; });
+      terms.forEach(t => {
+        if (low.includes(t)) {
+          const isMatch = low === t || low.split(/\s+/).includes(t);
+          s += isMatch ? 3 : 1;
+        }
+      });
       if (topIntent && topIntent[1] > 0) {
         const syns = intentSynonyms[topIntent[0]];
-        syns.forEach(t => { if (low.includes(t)) s += 0.5; });
+        syns.forEach(t => { if (low.includes(t)) s += 2.5; });
       }
       if (s > score) { score = s; best = line; }
     });
-    return score > 0 ? best : null;
+    return (score > 2.5 || (bestScore > 0 && bestScore >= score)) ? (bestScore >= score ? bestQA.a : best) : null;
   };
 
   const handleSend = async (e) => {
@@ -237,8 +247,8 @@ export default function ChatBot() {
                 >
                   <div
                     className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
-                        ? 'bg-black text-white rounded-tr-none'
-                        : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-none'
+                      ? 'bg-black text-white rounded-tr-none'
+                      : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-none'
                       }`}
                   >
                     {msg.content}

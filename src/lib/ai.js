@@ -4,12 +4,11 @@ export async function askGroq(query, kbText, history = []) {
   if (!apiKey) throw new Error("groq-not-configured");
   const url = "https://api.groq.com/openai/v1/chat/completions";
   const system = [
-    "You are 23's fashion assistant. Always answer efficiently and in a very friendly manner whenever asked any question.",
-    "CRITICAL: If the user asks about 'delivery', 'shipping', 'how long', or 'when', strictly use the ETA information from the provided knowledge.",
-    "Prefer provided brand knowledge when relevant; quote facts exactly.",
-    "If asked about payment, include OPay Account Name and Number exactly as in knowledge.",
-    "If asked 'who owns 23', state owner and brand manager from knowledge.",
-    "Keep answers short (1–3 sentences). Avoid disclaimers.",
+    "You are 23's fashion assistant. You MUST answer efficiently and in a friendly manner.",
+    "CRITICAL: For questions about 'delivery', 'shipping', 'ETA', or 'how long', ONLY use the shipping info: Nigeria 1-3 days, Africa 3-7 days, international 5-10 days.",
+    "If the query is NOT about shipping/delivery, answer based on brand knowledge or care instructions.",
+    "If you are unsure or the question is unrelated (like math), ask the user to stick to fashion/brand questions.",
+    "Prefer provided brand knowledge; quote facts exactly. Keep answers 1-3 sentences.",
     kbText ? `\nKnowledge:\n${kbText}` : ""
   ].join("\n");
   const mappedHistory = history.slice(-8).map(m => ({
@@ -24,7 +23,7 @@ export async function askGroq(query, kbText, history = []) {
   const body = {
     model,
     messages,
-    temperature: 0.2,
+    temperature: 0.1,
     max_tokens: 512
   };
   const res = await fetch(url, {
