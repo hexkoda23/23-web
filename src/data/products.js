@@ -96,6 +96,12 @@ export const PRODUCTS = [
     category: "new",
     price: 30000,
     image: "/wardrobe/23xashante.jpg",
+    images: [
+      "/wardrobe/23xashante.jpg",
+      "/wardrobe/23xashante1.jpg",
+      "/wardrobe/23xashante2.jpg",
+      "/wardrobe/23xashante3.jpg"
+    ],
     description: "A staple of modern luxury. Premium cotton with our signature detailing.",
     sizes: ["XS", "S", "M", "L", "XL"],
     inStock: true,
@@ -106,6 +112,11 @@ export const PRODUCTS = [
     category: "new",
     price: 30000,
     image: "/wardrobe/23xsober.jpg",
+    images: [
+      "/wardrobe/23xsober.jpg",
+      "/wardrobe/23xsober1.jpg",
+      "/wardrobe/23xsober2.jpeg"
+    ],
     description: "Crisp and timeless. Elevated craftsmanship for everyday wear.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
@@ -116,6 +127,12 @@ export const PRODUCTS = [
     category: "new",
     price: 25000,
     image: "/wardrobe/23xITL.jpg",
+    images: [
+      "/wardrobe/23xITL.jpg",
+      "/wardrobe/23xITLr1.jpg",
+      "/wardrobe/23xITLr2.jpg",
+      "/wardrobe/23xITLr3.jpg"
+    ],
     description: "Oversized comfort meets streetwear sophistication.",
     sizes: ["M", "L", "XL"],
     inStock: true,
@@ -126,6 +143,11 @@ export const PRODUCTS = [
     category: "new",
     price: 25000,
     image: "/wardrobe/23xitalawa.jpg",
+    images: [
+      "/wardrobe/23xitalawa.jpg",
+      "/wardrobe/23xitalawa1.jpg",
+      "/wardrobe/23xitalawa2.jpg"
+    ],
     description: "Essential monochrome luxury with structured silhouette.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
@@ -136,7 +158,27 @@ export const PRODUCTS = [
     category: "new",
     price: 25000,
     image: "/wardrobe/23xITL2.jpg",
+    images: [
+      "/wardrobe/23xITL2.jpg",
+      "/wardrobe/23xITLw1.jpg",
+      "/wardrobe/23xITLw2.jpg",
+      "/wardrobe/23xITLw3.jpg"
+    ],
     description: "Limited variant of the ITL series in premium jersey.",
+    sizes: ["S", "M", "L", "XL"],
+    inStock: true,
+  },
+  {
+    id: "top-25",
+    name: "23 X Don",
+    category: "new",
+    price: 25000,
+    image: "/wardrobe/23xdon1.jpg",
+    images: [
+      "/wardrobe/23xdon1.jpg",
+      "/wardrobe/23xdon2.jpg"
+    ],
+    description: "Signature Don series tee with alternate views.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
   },

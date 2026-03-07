@@ -1,15 +1,80 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useEffect, useState, useMemo, useRef } from 'react';
 
 export default function ProductCard({ product }) {
+  const images = useMemo(() => {
+    const arr = Array.isArray(product.images) && product.images.length > 0
+      ? product.images
+      : [product.image];
+    return arr.filter(Boolean);
+  }, [product.images, product.image]);
+
+  const [index, setIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (!playing || images.length <= 1) return;
+    const id = setInterval(() => {
+      setIndex(i => (i + 1) % images.length);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [playing, images.length]);
+
+  const start = () => {
+    if (images.length > 1) setPlaying(true);
+  };
+  const stop = () => {
+    setPlaying(false);
+    setIndex(0);
+  };
+  const touchStart = () => {
+    if (images.length <= 1) return;
+    setPlaying(true);
+    setTimeout(() => {
+      stop();
+    }, 2500);
+  };
+
+  useEffect(() => {
+    const isTouch = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: none)').matches;
+    if (!isTouch) return;
+    if (!cardRef.current) return;
+    if (images.length <= 1) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setPlaying(true);
+          } else {
+            setPlaying(false);
+            setIndex(0);
+          }
+        }
+      },
+      { threshold: 0.6 }
+    );
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [images.length]);
+
   return (
     <Link to={`/product/${product.id}`} className="group block">
       {/* Image container */}
-      <div className="relative overflow-hidden bg-[#F5F5F5] mb-4" style={{ aspectRatio: '3/4' }}>
+      <div
+        className="relative overflow-hidden bg-[#F5F5F5] mb-4"
+        style={{ aspectRatio: '3/4' }}
+        onMouseEnter={start}
+        onMouseLeave={stop}
+        onTouchStart={touchStart}
+        onTouchEnd={stop}
+        ref={cardRef}
+      >
         <motion.img
           whileHover={{ scale: 1.04 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          src={product.image}
+          src={images[index]}
           alt={product.name}
           className="w-full h-full object-contain object-center"
         />
