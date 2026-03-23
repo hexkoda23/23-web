@@ -20,6 +20,9 @@ export default function ProductDetails() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const isUnreleased = product?.category === 'unreleased';
+  const siblingVariants = product?.variantGroup
+    ? PRODUCTS.filter(p => p.variantGroup === product.variantGroup && p.id !== product.id)
+    : [];
 
   useEffect(() => {
     if (!product) {
@@ -133,6 +136,25 @@ export default function ProductDetails() {
                 </button>
               ))}
             </div>
+          {siblingVariants.length > 0 && (
+            <div className="pt-2">
+              <h4 className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-700">
+                Other Options
+              </h4>
+              <div className="flex gap-3 overflow-x-auto">
+                {siblingVariants.map(v => (
+                  <button
+                    key={v.id}
+                    onClick={() => navigate(`/product/${v.id}`)}
+                    className="w-16 h-20 border border-gray-200 hover:border-black transition-colors flex-shrink-0"
+                    title={v.name}
+                  >
+                    <img src={v.image} alt={v.name} className="w-full h-full object-contain bg-white" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           </div>
 
           {/* Product Info */}

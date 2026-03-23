@@ -23,12 +23,43 @@ export default function Shop() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [priceRange, setPriceRange] = useState(100000);
 
+  const REPRESENTATIVE_BY_GROUP = {
+    '23x-color': 'top-21',
+    '23x-gym': 'gym-1',
+    '23x-denim': 'bottom-10',
+    '23x-xxiii': 'top-20',
+    '23x-motion': 'top-29',
+    '23x-ascend': 'top-33',
+    '23x-hoodie': 'top-11',
+  };
+
+  const compressByVariantGroup = (list) => {
+    const out = [];
+    const seen = new Set();
+    const indexById = new Map(list.map(p => [p.id, p]));
+    for (const p of list) {
+      if (p.variantGroup) {
+        if (seen.has(p.variantGroup)) continue;
+        const preferredId = REPRESENTATIVE_BY_GROUP[p.variantGroup];
+        const preferred = preferredId && indexById.get(preferredId);
+        out.push(preferred || p);
+        seen.add(p.variantGroup);
+      } else {
+        out.push(p);
+      }
+    }
+    return out;
+  };
+
   const newProducts = useMemo(() => {
-    return PRODUCTS.filter(p => p.category === 'new' && p.price <= priceRange);
+    return PRODUCTS.filter(p => p.category === 'new' && !p.hidden && p.price <= priceRange);
   }, [priceRange]);
   const unreleasedProducts = useMemo(() => {
-    return PRODUCTS.filter(p => p.category === 'unreleased' && p.price <= priceRange);
+    return PRODUCTS.filter(p => p.category === 'unreleased' && !p.hidden && p.price <= priceRange);
   }, [priceRange]);
+  const unreleasedDisplay = useMemo(() => {
+    return compressByVariantGroup(unreleasedProducts);
+  }, [unreleasedProducts]);
   const filteredProducts = useMemo(() => {
     const matchCategory = (product) => {
       if (currentCategory === 'all') return true;
@@ -53,7 +84,7 @@ export default function Shop() {
       }
       return product.category === currentCategory;
     };
-    return PRODUCTS.filter(product => matchCategory(product) && product.price <= priceRange);
+    return PRODUCTS.filter(product => matchCategory(product) && !product.hidden && product.price <= priceRange);
   }, [currentCategory, priceRange]);
 
   const handleCategoryChange = (category) => {
@@ -150,7 +181,7 @@ export default function Shop() {
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase mb-6">Unreleased</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
-                  {unreleasedProducts.map(product => (
+                  {unreleasedDisplay.map(product => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
@@ -174,7 +205,7 @@ export default function Shop() {
           <>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase mb-6">Unreleased</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
-              {unreleasedProducts.map(product => (
+              {unreleasedDisplay.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
