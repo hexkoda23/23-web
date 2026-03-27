@@ -82,6 +82,13 @@ function MannequinRotator() {
 
 
 const HERO_IMAGES = [
+  '/lookbook/JF-1.JPG',
+  '/lookbook/JF-6.JPG',
+  '/lookbook/JF-8.JPG',
+  '/lookbook/JF-11.JPG',
+  '/lookbook/JF-15.JPG',
+  '/lookbook/JF-22.JPG',
+  '/lookbook/JF-25.JPG',
   '/lookbook/18.jpg',
   '/lookbook/6.jpg',
   '/lookbook/1.jpg',
@@ -132,7 +139,7 @@ export default function Home() {
   useEffect(() => {
     const timer = setInterval(() => {
       setHeroIndex(prev => (prev + 1) % HERO_IMAGES.length);
-    }, 4000);
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
