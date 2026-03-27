@@ -34,9 +34,9 @@ export default function Footer() {
               Defining modern luxury through personalized streetwear. Born in Lagos. Made for the world.
             </p>
             <div className="flex items-center gap-5 mb-8">
-              <a href="#" className="text-white/30 hover:text-[var(--accent)] transition-colors"><Instagram size={18} /></a>
-              <a href="#" className="text-white/30 hover:text-[var(--accent)] transition-colors"><Twitter size={18} /></a>
-              <a href="#" className="text-white/30 hover:text-[var(--accent)] transition-colors"><Facebook size={18} /></a>
+              <a href="https://www.instagram.com/twentythreepreppy" target="_blank" rel="noopener noreferrer" className="text-white/30 hover:text-[var(--accent)] transition-colors"><Instagram size={18} /></a>
+              <button onClick={() => alert('Coming soon')} className="text-white/30 hover:text-[var(--accent)] transition-colors"><Twitter size={18} /></button>
+              <button onClick={() => alert('Coming soon')} className="text-white/30 hover:text-[var(--accent)] transition-colors"><Facebook size={18} /></button>
             </div>
           </div>
 
@@ -69,9 +69,20 @@ export default function Footer() {
             {/* Newsletter mini */}
             <div>
               <p className="font-mono text-[0.58rem] tracking-[0.15em] uppercase text-white/30 mb-3">Subscribe for exclusive drops</p>
-              <form className="flex border-b border-white/10 pb-2 focus-within:border-[var(--accent)]/50 transition-colors">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const email = e.target.email.value;
+                  if (email) {
+                    window.open(`https://wa.me/2348107869063?text=I'd like to subscribe with my email: ${email}`, '_blank');
+                  }
+                }}
+                className="flex border-b border-white/10 pb-2 focus-within:border-[var(--accent)]/50 transition-colors"
+              >
                 <input
                   type="email"
+                  name="email"
+                  required
                   placeholder="EMAIL ADDRESS"
                   className="bg-transparent flex-1 font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white placeholder-white/20 outline-none"
                 />

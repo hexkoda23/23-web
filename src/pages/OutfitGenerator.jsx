@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, RefreshCw, Plus, Trash2, Check, X, Shirt, Scissors } from "lucide-react";
 import { getUserData, setUserData } from "../utils/userStorage";
-import { WARDROBE_CATEGORIES } from "../data/wardrobeItems";
+import { PRODUCTS } from "../data/products";
 import PageTransition from "../components/PageTransition";
 
 export default function OutfitGenerator() {
@@ -15,6 +15,45 @@ export default function OutfitGenerator() {
   const [activeCategory, setActiveCategory] = useState("tops");
   const [isGenerating, setIsGenerating] = useState(false);
   const [dailyOutfits, setDailyOutfits] = useState({});
+
+  // Helper to map products to functional categories regardless of their "unreleased/new" tag
+  const getProductCategory = (p) => {
+    const id = p.id.toLowerCase();
+    const name = p.name.toLowerCase();
+    const img = p.image.toLowerCase();
+
+    if (p.isSet) return 'fullFit';
+    if (id.includes('acc') || p.category === 'accessories') return 'accessories';
+    if (id.includes('shoe') || p.category === 'shoes' || p.category === 'footwear') return 'shoes';
+    if (id.includes('outer') || p.category === 'outerwear') return 'outerwear';
+
+    // Bottoms: check for specific IDs, names or image keywords
+    if (
+      id.includes('bottom') ||
+      id.includes('trouser') ||
+      name.includes('jean') ||
+      name.includes('pant') ||
+      name.includes('short') ||
+      name.includes('denim') ||
+      name.includes('noir') || // User specifically mentioned Noir
+      name.includes('groovy') ||
+      name.includes('tea') ||
+      img.includes('jean') ||
+      img.includes('pant')
+    ) return 'bottoms';
+
+    return 'tops';
+  };
+
+  // Categorize all products for the UI
+  const WARDROBE_CATEGORIES = {
+    tops: PRODUCTS.filter(p => getProductCategory(p) === 'tops'),
+    bottoms: PRODUCTS.filter(p => getProductCategory(p) === 'bottoms'),
+    fullFit: PRODUCTS.filter(p => getProductCategory(p) === 'fullFit'),
+    outerwear: PRODUCTS.filter(p => getProductCategory(p) === 'outerwear'),
+    shoes: PRODUCTS.filter(p => getProductCategory(p) === 'shoes'),
+    accessories: PRODUCTS.filter(p => getProductCategory(p) === 'accessories'),
+  };
 
   // Initialize data
   useEffect(() => {
@@ -43,9 +82,7 @@ export default function OutfitGenerator() {
     } else {
       // Select all default items initially if nothing saved
       const allIds = new Set();
-      Object.values(WARDROBE_CATEGORIES).forEach(cat => {
-        cat.forEach(item => allIds.add(item.id));
-      });
+      PRODUCTS.forEach(p => allIds.add(p.id));
       setSelectedItems(allIds);
       generateOutfitAuto(allIds, new Date(), {});
     }
@@ -67,22 +104,18 @@ export default function OutfitGenerator() {
       }
 
       // Gather all available items
-      const allItems = [];
-      Object.values(WARDROBE_CATEGORIES).forEach(cat => {
-        cat.forEach(item => {
-          if (items.has(item.id)) allItems.push(item);
-        });
-      });
+      const allItems = PRODUCTS.filter(p => items.has(p.id));
       customItems.forEach(item => {
         if (items.has(item.id)) allItems.push(item);
       });
 
-      // Categorize
-      const tops = allItems.filter(i => i.category === "tops");
-      const bottoms = allItems.filter(i => i.category === "bottoms");
-      const outerwear = allItems.filter(i => i.category === "outerwear");
-      const shoes = allItems.filter(i => i.category === "shoes");
-      const accessories = allItems.filter(i => i.category === "accessories");
+      // Categorize using the same helper
+      const fullFits = allItems.filter(i => getProductCategory(i) === "fullFit");
+      const tops = allItems.filter(i => getProductCategory(i) === "tops");
+      const bottoms = allItems.filter(i => getProductCategory(i) === "bottoms");
+      const outerwear = allItems.filter(i => getProductCategory(i) === "outerwear");
+      const shoes = allItems.filter(i => getProductCategory(i) === "shoes");
+      const accessories = allItems.filter(i => getProductCategory(i) === "accessories");
 
       const seed = forceNew ? Math.random() * 1000000 : date.getTime();
       const random = (s) => {
@@ -90,13 +123,28 @@ export default function OutfitGenerator() {
         return x - Math.floor(x);
       };
 
-      const outfit = {
-        top: tops.length ? tops[Math.floor(random(seed) * tops.length)] : null,
-        bottom: bottoms.length ? bottoms[Math.floor(random(seed + 1) * bottoms.length)] : null,
-        outerwear: (outerwear.length && random(seed + 2) > 0.5) ? outerwear[Math.floor(random(seed + 2) * outerwear.length)] : null,
-        shoes: shoes.length ? shoes[Math.floor(random(seed + 3) * shoes.length)] : null,
-        accessory: accessories.length ? accessories[Math.floor(random(seed + 4) * accessories.length)] : null,
-      };
+      let outfit = {};
+      const useFullFit = fullFits.length > 0 && random(seed + 10) > 0.6; // 40% chance for full fit if available
+
+      if (useFullFit) {
+        outfit = {
+          fullFit: fullFits[Math.floor(random(seed) * fullFits.length)],
+          top: null,
+          bottom: null,
+          outerwear: null,
+          shoes: shoes.length ? shoes[Math.floor(random(seed + 3) * shoes.length)] : null,
+          accessory: accessories.length ? accessories[Math.floor(random(seed + 4) * accessories.length)] : null,
+        };
+      } else {
+        outfit = {
+          fullFit: null,
+          top: tops.length ? tops[Math.floor(random(seed) * tops.length)] : null,
+          bottom: bottoms.length ? bottoms[Math.floor(random(seed + 1) * bottoms.length)] : null,
+          outerwear: (outerwear.length && random(seed + 2) > 0.5) ? outerwear[Math.floor(random(seed + 2) * outerwear.length)] : null,
+          shoes: shoes.length ? shoes[Math.floor(random(seed + 3) * shoes.length)] : null,
+          accessory: accessories.length ? accessories[Math.floor(random(seed + 4) * accessories.length)] : null,
+        };
+      }
 
       const newOutfits = { ...outfitsData, [dateKey]: outfit };
       setDailyOutfits(newOutfits);
@@ -155,16 +203,16 @@ export default function OutfitGenerator() {
                 </h2>
 
                 <div className="flex space-x-2 overflow-x-auto pb-4 mb-4 scrollbar-hide">
-                  {['tops', 'bottoms', 'outerwear', 'shoes', 'accessories'].map(cat => (
+                  {['tops', 'bottoms', 'fullFit', 'outerwear', 'shoes', 'accessories'].map(cat => (
                     <button
                       key={cat}
                       onClick={() => setActiveCategory(cat)}
                       className={`px-4 py-2 text-xs uppercase tracking-wider whitespace-nowrap transition-colors ${activeCategory === cat
-                          ? 'bg-black text-white'
-                          : 'bg-white text-gray-500 border border-gray-200 hover:border-black'
+                        ? 'bg-black text-white'
+                        : 'bg-white text-gray-500 border border-gray-200 hover:border-black'
                         }`}
                     >
-                      {cat}
+                      {cat === 'fullFit' ? 'Full Fit' : cat}
                     </button>
                   ))}
                 </div>
@@ -228,33 +276,61 @@ export default function OutfitGenerator() {
                       transition={{ duration: 0.5 }}
                       className="w-full max-w-2xl grid grid-cols-2 gap-8"
                     >
-                      {/* Top Left: Top */}
-                      <div className="col-span-1 space-y-2">
-                        <span className="text-[10px] uppercase tracking-widest text-gray-400">Top</span>
-                        <div className="aspect-[3/4] bg-white shadow-sm p-2">
-                          {generatedOutfit.top ? (
-                            <img src={generatedOutfit.top.image} className="w-full h-full object-cover" alt="Top" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><Shirt /></div>
-                          )}
+                      {generatedOutfit.fullFit ? (
+                        /* FULL FIT DISPLAY — spans both columns for the main body */
+                        <div className="col-span-2 space-y-4">
+                          <div className="flex flex-col items-center">
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400 mb-2">Full Fit</span>
+                            <div className="aspect-[3/4] w-full max-w-[400px] bg-white shadow-xl p-3 border border-gray-100">
+                              <img src={generatedOutfit.fullFit.image} className="w-full h-full object-cover" alt="Full Fit" />
+                            </div>
+                            <p className="text-sm uppercase font-black mt-4 tracking-tighter">{generatedOutfit.fullFit.name}</p>
+                          </div>
                         </div>
-                        <p className="text-xs uppercase font-bold truncate">{generatedOutfit.top?.name || "None"}</p>
-                      </div>
+                      ) : (
+                        <>
+                          {/* Top Left: Top */}
+                          <div className="col-span-1 space-y-2">
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400">Top</span>
+                            <div className="aspect-[3/4] bg-white shadow-sm p-2">
+                              {generatedOutfit.top ? (
+                                <img src={generatedOutfit.top.image} className="w-full h-full object-cover" alt="Top" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><Shirt /></div>
+                              )}
+                            </div>
+                            <p className="text-xs uppercase font-bold truncate">{generatedOutfit.top?.name || "None"}</p>
+                          </div>
 
-                      {/* Top Right: Outerwear */}
-                      <div className="col-span-1 space-y-2 pt-12">
-                        <span className="text-[10px] uppercase tracking-widest text-gray-400">Layer</span>
-                        <div className="aspect-[3/4] bg-white shadow-sm p-2">
-                          {generatedOutfit.outerwear ? (
-                            <img src={generatedOutfit.outerwear.image} className="w-full h-full object-cover" alt="Outerwear" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 text-xs uppercase">No Layer</div>
-                          )}
-                        </div>
-                        <p className="text-xs uppercase font-bold truncate">{generatedOutfit.outerwear?.name || "-"}</p>
-                      </div>
+                          {/* Top Right: Outerwear */}
+                          <div className="col-span-1 space-y-2 pt-12">
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400">Layer</span>
+                            <div className="aspect-[3/4] bg-white shadow-sm p-2">
+                              {generatedOutfit.outerwear ? (
+                                <img src={generatedOutfit.outerwear.image} className="w-full h-full object-cover" alt="Outerwear" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 text-xs uppercase">No Layer</div>
+                              )}
+                            </div>
+                            <p className="text-xs uppercase font-bold truncate">{generatedOutfit.outerwear?.name || "-"}</p>
+                          </div>
 
-                      {/* Middle: Accessory */}
+                          {/* Bottom Left: Bottom */}
+                          <div className="col-span-1 space-y-2 -mt-12">
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400">Bottom</span>
+                            <div className="aspect-[3/4] bg-white shadow-sm p-2">
+                              {generatedOutfit.bottom ? (
+                                <img src={generatedOutfit.bottom.image} className="w-full h-full object-cover" alt="Bottom" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><Scissors /></div>
+                              )}
+                            </div>
+                            <p className="text-xs uppercase font-bold truncate">{generatedOutfit.bottom?.name || "None"}</p>
+                          </div>
+                        </>
+                      )}
+
+                      {/* Accessories & Shoes — Always visible */}
                       <div className="col-span-2 space-y-2 -mt-4 mb-4">
                         <div className="flex items-center gap-4 bg-white p-3 shadow-sm border border-gray-100">
                           <div className="w-16 h-16 bg-gray-50 flex-shrink-0">
@@ -271,20 +347,6 @@ export default function OutfitGenerator() {
                         </div>
                       </div>
 
-                      {/* Bottom Left: Bottom */}
-                      <div className="col-span-1 space-y-2 -mt-12">
-                        <span className="text-[10px] uppercase tracking-widest text-gray-400">Bottom</span>
-                        <div className="aspect-[3/4] bg-white shadow-sm p-2">
-                          {generatedOutfit.bottom ? (
-                            <img src={generatedOutfit.bottom.image} className="w-full h-full object-cover" alt="Bottom" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><Scissors /></div>
-                          )}
-                        </div>
-                        <p className="text-xs uppercase font-bold truncate">{generatedOutfit.bottom?.name || "None"}</p>
-                      </div>
-
-                      {/* Bottom Right: Shoes */}
                       <div className="col-span-1 space-y-2">
                         <span className="text-[10px] uppercase tracking-widest text-gray-400">Footwear</span>
                         <div className="aspect-[3/4] bg-white shadow-sm p-2">

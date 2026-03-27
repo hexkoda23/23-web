@@ -4,6 +4,29 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { PRODUCTS } from '../data/products';
+import { X, Play, Pause, Grid, Layers, Film, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Replace the static <h2> with this:
+function WordReveal({ text, className }) {
+  const words = text.split(' ');
+  return (
+    <h2 className={className}>
+      {words.map((word, i) => (
+        <span key={i} className="inline-block overflow-hidden mr-[0.25em]">
+          <motion.span
+            className="inline-block"
+            initial={{ y: '100%', opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.08, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {word}
+          </motion.span>
+        </span>
+      ))}
+    </h2>
+  );
+}
 
 // Animated counter hook — THCO style rolling numbers
 function useCounter(target, duration = 2000, start = false) {
@@ -136,10 +159,37 @@ export default function Home() {
 
   const [heroIndex, setHeroIndex] = useState(0);
 
+  // Feature 2: Cursor Spotlight Effect on Hero Section
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const heroRef = useRef(null);
+
+  const handleMouseMove = (e) => {
+    const rect = heroRef.current?.getBoundingClientRect();
+    if (rect) setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
+  // Feature 3: Horizontal Scroll "Featured Drop" Strip
+  const stripRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const onMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - stripRef.current.offsetLeft);
+    setScrollLeft(stripRef.current.scrollLeft);
+  };
+  const onMouseMoveDrag = (e) => {
+    if (!isDragging) return;
+    const x = e.pageX - stripRef.current.offsetLeft;
+    stripRef.current.scrollLeft = scrollLeft - (x - startX) * 1.5;
+  };
+  const onMouseUp = () => setIsDragging(false);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setHeroIndex(prev => (prev + 1) % HERO_IMAGES.length);
-    }, 1000);
+    }, 2000); // Changed to 2s
     return () => clearInterval(timer);
   }, []);
 
@@ -147,7 +197,24 @@ export default function Home() {
     <div className="w-full bg-white">
 
       {/* ── HERO — Full dark, THCO dramatic ── */}
-      <section className="relative h-screen w-full overflow-hidden bg-[#0A0A0A]">
+      <section
+        ref={heroRef}
+        onMouseMove={handleMouseMove}
+        className="relative h-screen w-full overflow-hidden bg-[#0A0A0A]"
+      >
+        {/* Spotlight Effect */}
+        <div
+          className="absolute pointer-events-none z-20 transition-opacity duration-300"
+          style={{
+            left: mousePos.x,
+            top: mousePos.y,
+            transform: 'translate(-50%, -50%)',
+            width: '400px',
+            height: '400px',
+            background: 'radial-gradient(circle, rgba(200,169,110,0.08) 0%, transparent 70%)',
+            borderRadius: '50%',
+          }}
+        />
         <div className="absolute inset-0">
           {HERO_IMAGES.map((src, i) => (
             <img
@@ -309,12 +376,155 @@ export default function Home() {
         </div>
       </section>
 
+      {/* FEATURE 3: Horizontal Scroll "Featured Drop" Strip */}
+      <section className="py-20 bg-[#111111] overflow-hidden">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 mb-10">
+          <div className="flex items-end justify-between">
+            <div>
+              <div className="section-tag mb-3">Latest Drop</div>
+              <h2 className="font-black text-white uppercase" style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)' }}>
+                Featured<br />Pieces
+              </h2>
+            </div>
+            {/* Drag hint */}
+            <p className="font-mono text-[0.58rem] tracking-[0.18em] text-white/20 uppercase hidden md:block">
+              ← Drag to explore →
+            </p>
+          </div>
+        </div>
+
+        <div
+          ref={stripRef}
+          className="flex gap-6 px-6 lg:px-10 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing select-none"
+          style={{ scrollSnapType: 'x mandatory' }}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMoveDrag}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseUp}
+        >
+          {/* Show first 6 products from PRODUCTS array */}
+          {PRODUCTS.slice(0, 6).map((product, i) => (
+            <motion.div
+              key={product.id}
+              className="flex-shrink-0 w-[280px] md:w-[320px] group"
+              style={{ scrollSnapAlign: 'start' }}
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08, duration: 0.6 }}
+            >
+              {/* Card image — tall portrait */}
+              <div className="relative overflow-hidden aspect-[3/4] bg-[#1A1A1A] mb-4">
+                <img
+                  src={product.image || product.images?.[0]}
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700"
+                  draggable={false}
+                />
+                {/* Price badge */}
+                <div className="absolute top-4 right-4 glass-dark px-3 py-1.5 rounded-full">
+                  <span className="font-mono text-[0.6rem] text-white/80 tracking-wider">
+                    ₦{product.price?.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              {/* Card info */}
+              <div>
+                <p className="font-mono text-[0.58rem] tracking-[0.16em] uppercase text-[var(--accent)] mb-1">
+                  {product.category}
+                </p>
+                <h4 className="font-bold text-white text-sm uppercase tracking-tight">{product.name}</h4>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
       {/* ── STATS STRIP — THCO animated numbers ── */}
       <section ref={statsRef} className="py-20 bg-[#111111] border-y border-white/[0.06]">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, i) => (
               <StatCard key={stat.label} stat={stat} statsInView={statsInView} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURE 1: Linear-Style "Why 23" Feature Cards Section */}
+      <section className="py-24 lg:py-36 bg-[#0A0A0A] border-t border-white/[0.06]">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+          {/* Section header */}
+          <div className="mb-20 flex items-end justify-between">
+            <div>
+              <div className="section-tag mb-4">The 23 Difference</div>
+              <h2 className="font-black text-white uppercase leading-[0.9] tracking-[-0.02em]"
+                style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)' }}>
+                What Makes<br />23 Different
+              </h2>
+            </div>
+          </div>
+          {/* 3 col grid with dividers */}
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-white/[0.06]">
+            {[
+              {
+                title: "Built for You",
+                subtitle: "Every piece is crafted around your identity. No two pieces alike.",
+                svg: (
+                  <svg width="200" height="200" viewBox="0 0 200 200" className="svg-draw">
+                    <path d="M40 60 L160 60 L160 140 L40 140 Z" fill="none" stroke="white" strokeWidth="1" />
+                    <path d="M50 70 L170 70 L170 150 L50 150 Z" fill="none" stroke="white" strokeWidth="1" />
+                    <path d="M60 80 L180 80 L180 160 L60 160 Z" fill="none" stroke="white" strokeWidth="1" />
+                  </svg>
+                )
+              },
+              {
+                title: "Lagos Born",
+                subtitle: "Designed from the streets of Lagos. Worn by those who define culture.",
+                svg: (
+                  <svg width="200" height="200" viewBox="0 0 200 200" className="svg-draw">
+                    <path d="M100 60 L140 80 L140 120 L100 140 L60 120 L60 80 Z" fill="none" stroke="white" strokeWidth="1" />
+                    <path d="M100 60 L100 100 L140 120 M100 100 L60 120" fill="none" stroke="white" strokeWidth="1" />
+                  </svg>
+                )
+              },
+              {
+                title: "Limited Always",
+                subtitle: "Every drop is finite. Once it's gone, it's gone forever.",
+                svg: (
+                  <svg width="200" height="200" viewBox="0 0 200 200" className="svg-draw">
+                    <path d="M60 60 L140 60 L120 140 L40 140 Z" fill="none" stroke="white" strokeWidth="1" />
+                    <path d="M80 70 L160 70 L140 150 L60 150 Z" fill="none" stroke="white" strokeWidth="1" />
+                  </svg>
+                )
+              }
+            ].map((card, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="px-8 py-12 flex flex-col gap-16 group"
+              >
+                {/* Fig label removed as per user request */}
+
+                {/* SVG illustration — centered, 200x200, white strokes */}
+                <div className="flex justify-center">
+                  <motion.div
+                    whileHover={{ scale: 1.2, rotate: 12, y: -20 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+                  >
+                    {card.svg}
+                  </motion.div>
+                </div>
+
+                {/* Bottom text */}
+                <div>
+                  <h3 className="font-black text-white text-xl uppercase tracking-tight mb-3">{card.title}</h3>
+                  <p className="text-white/40 font-light text-sm leading-relaxed">{card.subtitle}</p>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -378,13 +588,11 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
               <div className="section-tag mb-6">Our Philosophy</div>
-              <h2
+              <WordReveal
+                text="Fashion Isn't What You Wear."
                 className="font-black text-white uppercase leading-[0.95] tracking-[-0.02em] mb-8"
                 style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)' }}
-              >
-                Fashion<br />Isn't What<br />
-                <span style={{ color: 'var(--accent)' }}>You Wear.</span>
-              </h2>
+              />
               <p className="text-white/50 leading-relaxed mb-6 font-light text-base">
                 23 is luxury personalized for you. Born from the bold spirit of Lagos, we craft exclusive pieces where style meets identity. Every item carries a unique mark, making it truly yours.
               </p>
@@ -459,9 +667,20 @@ export default function Home() {
                 <p className="text-white/40 leading-relaxed mb-8 font-light">
                   Be first to know about new drops, exclusive events, and behind-the-scenes content from 23.
                 </p>
-                <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto lg:mx-0">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const email = e.target.email.value;
+                    if (email) {
+                      window.open(`https://wa.me/2348107869063?text=I'd like to subscribe with my email: ${email}`, '_blank');
+                    }
+                  }}
+                  className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto lg:mx-0"
+                >
                   <input
                     type="email"
+                    name="email"
+                    required
                     placeholder="YOUR EMAIL ADDRESS"
                     className="flex-1 bg-white/[0.05] border border-white/10 px-5 py-3.5 font-mono text-[0.6rem] tracking-[0.15em] uppercase text-white placeholder-white/20 outline-none focus:border-[var(--accent)]/50 transition-colors"
                   />

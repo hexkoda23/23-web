@@ -10,6 +10,7 @@ export const PRODUCTS = [
     description: "High-performance gym wear in sleek all-black. Built for movement, designed for style.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "gym-2",
@@ -21,6 +22,7 @@ export const PRODUCTS = [
     description: "Electric blue gym set. Lightweight, breathable, and unmistakably 23.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "gym-3",
@@ -32,6 +34,7 @@ export const PRODUCTS = [
     description: "Bold pink gym set. Make a statement every rep.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "gym-4",
@@ -43,6 +46,7 @@ export const PRODUCTS = [
     description: "Vibrant yellow gym set. Energy meets exclusivity.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "bottom-10",
@@ -54,6 +58,7 @@ export const PRODUCTS = [
     description: "Premium short denim cut. Clean lines, luxury finish.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "bottom-11",
@@ -65,6 +70,7 @@ export const PRODUCTS = [
     description: "Full-length premium denim. Sharp silhouette, Lagos crafted.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "acc-5",
@@ -243,6 +249,7 @@ export const PRODUCTS = [
     description: "Ascend series in classic black finish.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "top-31",
@@ -254,6 +261,7 @@ export const PRODUCTS = [
     description: "Ascend series in deep blue tone.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "top-32",
@@ -265,6 +273,7 @@ export const PRODUCTS = [
     description: "Ascend series in bright pink.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "top-33",
@@ -276,6 +285,7 @@ export const PRODUCTS = [
     description: "Ascend series in rich wine hue.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
+    isSet: true,
   },
   {
     id: "top-19",
@@ -478,17 +488,6 @@ export const PRODUCTS = [
     inStock: true,
   },
   {
-    id: "bottom-12",
-    name: "23 X Ash Jean",
-    category: "unreleased",
-    price: 24000,
-    image: "/wardrobe/ashjean.jpg",
-    variantGroup: "23x-denim",
-    description: "Distressed ash grey denim with a relaxed luxury fit.",
-    sizes: ["S", "M", "L", "XL"],
-    inStock: true,
-  },
-  {
     id: "top-24",
     name: "23 X Black Cardigan",
     category: "unreleased",
@@ -496,17 +495,6 @@ export const PRODUCTS = [
     image: "/wardrobe/blackcardigan.jpg",
     hidden: true,
     description: "Premium knit cardigan in deep black. Essential layering piece.",
-    sizes: ["S", "M", "L", "XL"],
-    inStock: true,
-  },
-  {
-    id: "outer-3",
-    name: "23 X Black Leather Jacket",
-    category: "unreleased",
-    price: 55000,
-    image: "/wardrobe/blackleatherjacket.jpg",
-    hidden: true,
-    description: "High-grade leather jacket. A timeless statement of luxury.",
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
   },
@@ -530,5 +518,14 @@ export const PRODUCTS = [
     sizes: ["One Size"],
     inStock: true,
   },
-
+  {
+    id: "shoe-1",
+    name: "Dress Shoes",
+    category: "shoes",
+    price: 45000,
+    image: "/wardrobe/dressshoe.jpg",
+    description: "Premium handcrafted dress shoes for a sharp, sophisticated look.",
+    sizes: ["40", "41", "42", "43", "44", "45"],
+    inStock: true,
+  },
 ];
