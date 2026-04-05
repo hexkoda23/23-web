@@ -152,6 +152,15 @@ function StatCard({ stat, statsInView, index }) {
 }
 
 export default function Home() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const arrivalIds = ['top-7', 'gym-1', 'acc-5', 'bottom-10'];
   const newArrivals = arrivalIds.map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
   const statsRef = useRef(null);
@@ -512,8 +521,12 @@ export default function Home() {
                 {/* SVG illustration — centered, 200x200, white strokes */}
                 <div className="flex justify-center">
                   <motion.div
-                    whileHover={{ scale: 1.2, rotate: 12, y: -20 }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+                    whileHover={!isMobile ? { scale: 1.2, rotate: 12, y: -20 } : {}}
+                    animate={isMobile ? { rotate: 360 } : {}}
+                    transition={isMobile
+                      ? { repeat: Infinity, duration: 20, ease: "linear" }
+                      : { type: 'spring', stiffness: 200, damping: 10 }
+                    }
                   >
                     {card.svg}
                   </motion.div>

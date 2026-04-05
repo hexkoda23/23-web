@@ -29,8 +29,9 @@ export default function Shop() {
     '23x-denim': 'bottom-10',
     '23x-xxiii': 'top-20',
     '23x-motion': 'top-29',
-    '23x-ascend': 'top-33',
+    '23x-ascend': 'top-30',
     '23x-hoodie': 'top-11',
+    '23x-sweats': 'top-37',
   };
 
   const compressByVariantGroup = (list) => {
@@ -52,7 +53,8 @@ export default function Shop() {
   };
 
   const newProducts = useMemo(() => {
-    return PRODUCTS.filter(p => p.category === 'new' && !p.hidden && p.price <= priceRange);
+    const list = PRODUCTS.filter(p => p.category === 'new' && !p.hidden && p.price <= priceRange);
+    return compressByVariantGroup(list);
   }, [priceRange]);
   const unreleasedProducts = useMemo(() => {
     return PRODUCTS.filter(p => p.category === 'unreleased' && !p.hidden && p.price <= priceRange);
@@ -73,7 +75,7 @@ export default function Shop() {
         const id = product.id || '';
         const name = (product.name || '').toLowerCase();
         return id.startsWith('bottom-') || id.startsWith('bpttom-') || id.startsWith('trouser-') ||
-               name.includes('pant') || name.includes('jean') || name.includes('jogger');
+          name.includes('pant') || name.includes('jean') || name.includes('jogger');
       }
       if (currentCategory === 'outerwear') {
         const name = (product.name || '').toLowerCase();
@@ -95,7 +97,7 @@ export default function Shop() {
   return (
     <div className="pt-24 pb-20 min-h-screen">
       <div className="container mx-auto px-6">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12">
           <div>
@@ -104,8 +106,8 @@ export default function Shop() {
               Discover our latest collection of premium essentials, crafted for the modern individual.
             </p>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className="mt-6 md:mt-0 flex items-center space-x-2 text-sm font-bold uppercase tracking-widest hover:text-gray-500 transition-colors"
           >
@@ -131,11 +133,10 @@ export default function Shop() {
                       <button
                         key={cat.id}
                         onClick={() => handleCategoryChange(cat.id)}
-                        className={`text-sm transition-colors ${
-                          currentCategory === cat.id 
-                            ? 'text-black font-bold underline underline-offset-4' 
-                            : 'text-gray-500 hover:text-black'
-                        }`}
+                        className={`text-sm transition-colors ${currentCategory === cat.id
+                          ? 'text-black font-bold underline underline-offset-4'
+                          : 'text-gray-500 hover:text-black'
+                          }`}
                       >
                         {cat.name}
                       </button>
@@ -221,23 +222,23 @@ export default function Shop() {
         )}
 
         {(currentCategory === 'all' && newProducts.length === 0 && unreleasedProducts.length === 0) ||
-         (currentCategory === 'new' && newProducts.length === 0) ||
-         (currentCategory === 'unreleased' && unreleasedProducts.length === 0) ||
-         (currentCategory !== 'all' && currentCategory !== 'new' && currentCategory !== 'unreleased' && filteredProducts.length === 0)
-        ? (
-          <div className="text-center py-20">
-            <p className="text-gray-500">No products found matching your criteria.</p>
-            <button 
-              onClick={() => {
-                setSearchParams({});
-                setPriceRange(100000);
-              }}
-              className="mt-4 text-sm font-bold uppercase tracking-widest border-b border-black pb-1"
-            >
-              Clear Filters
-            </button>
-          </div>
-        ) : null}
+          (currentCategory === 'new' && newProducts.length === 0) ||
+          (currentCategory === 'unreleased' && unreleasedProducts.length === 0) ||
+          (currentCategory !== 'all' && currentCategory !== 'new' && currentCategory !== 'unreleased' && filteredProducts.length === 0)
+          ? (
+            <div className="text-center py-20">
+              <p className="text-gray-500">No products found matching your criteria.</p>
+              <button
+                onClick={() => {
+                  setSearchParams({});
+                  setPriceRange(100000);
+                }}
+                className="mt-4 text-sm font-bold uppercase tracking-widest border-b border-black pb-1"
+              >
+                Clear Filters
+              </button>
+            </div>
+          ) : null}
       </div>
     </div>
   );

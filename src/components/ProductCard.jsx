@@ -116,7 +116,7 @@ export default function ProductCard({ product }) {
           )}
         </div>
         <p className="font-mono text-[0.7rem] text-black font-medium whitespace-nowrap">
-          {product.category === 'unreleased' ? '—' : `₦${Number(product.price).toLocaleString('en-NG')}`}
+          {`₦${Number(product.price).toLocaleString('en-NG')}`}
         </p>
       </div>
     </Link>
