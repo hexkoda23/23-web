@@ -12,7 +12,7 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { currentUser } = useAuth();
-  
+
   const product = PRODUCTS.find(p => p.id === id);
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -33,11 +33,7 @@ export default function ProductDetails() {
   if (!product) return null;
 
   const handleAddToCart = () => {
-    if (isUnreleased) {
-      navigate('/contact');
-      return;
-    }
-    if (!selectedSize && product.sizes.length > 0) {
+    if (!selectedSize && product.sizes.length > 0 && product.sizes[0] !== 'coming soon') {
       setError('Please select a size');
       return;
     }
@@ -51,7 +47,7 @@ export default function ProductDetails() {
       if (!currentUser) {
         try {
           localStorage.setItem('pendingCustomization', JSON.stringify(productData));
-        } catch (e) {}
+        } catch (e) { }
         navigate('/login?redirect=/identity-forge');
         return;
       }
@@ -67,7 +63,7 @@ export default function ProductDetails() {
       {/* Customization Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white p-8 max-w-md w-full shadow-2xl space-y-6 text-center"
@@ -76,7 +72,7 @@ export default function ProductDetails() {
             <p className="text-gray-600 text-sm">
               Would you like to customize your barcode with your personal digital signature, or proceed with the standard 23 barcode?
             </p>
-            
+
             <div className="space-y-3 pt-4">
               <button
                 onClick={() => confirmAddToCart(true)}
@@ -91,8 +87,8 @@ export default function ProductDetails() {
                 Use Initial Barcode
               </button>
             </div>
-            
-            <button 
+
+            <button
               onClick={() => setIsModalOpen(false)}
               className="text-xs text-gray-400 hover:text-black uppercase tracking-widest mt-4"
             >
@@ -103,8 +99,8 @@ export default function ProductDetails() {
       )}
 
       <div className="container mx-auto px-6">
-        <button 
-          onClick={() => navigate(-1)} 
+        <button
+          onClick={() => navigate(-1)}
           className="mb-8 flex items-center text-xs font-bold uppercase tracking-widest hover:text-gray-500 transition-colors"
         >
           <ArrowLeft size={16} className="mr-2" /> Back
@@ -113,15 +109,15 @@ export default function ProductDetails() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
           {/* Image Gallery */}
           <div className="space-y-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
               className="aspect-[3/4] bg-white overflow-hidden flex items-center justify-center"
             >
-              <img 
-                src={(product.images && product.images[selectedImageIndex]) || product.image} 
-                alt={product.name} 
+              <img
+                src={(product.images && product.images[selectedImageIndex]) || product.image}
+                alt={product.name}
                 className="w-full h-full object-contain"
               />
             </motion.div>
@@ -136,25 +132,25 @@ export default function ProductDetails() {
                 </button>
               ))}
             </div>
-          {siblingVariants.length > 0 && (
-            <div className="pt-2">
-              <h4 className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-700">
-                Other Options
-              </h4>
-              <div className="flex gap-3 overflow-x-auto">
-                {siblingVariants.map(v => (
-                  <button
-                    key={v.id}
-                    onClick={() => navigate(`/product/${v.id}`)}
-                    className="w-16 h-20 border border-gray-200 hover:border-black transition-colors flex-shrink-0"
-                    title={v.name}
-                  >
-                    <img src={v.image} alt={v.name} className="w-full h-full object-contain bg-white" />
-                  </button>
-                ))}
+            {siblingVariants.length > 0 && (
+              <div className="pt-2">
+                <h4 className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-700">
+                  Other Options
+                </h4>
+                <div className="flex gap-3 overflow-x-auto">
+                  {siblingVariants.map(v => (
+                    <button
+                      key={v.id}
+                      onClick={() => navigate(`/product/${v.id}`)}
+                      className="w-16 h-20 border border-gray-200 hover:border-black transition-colors flex-shrink-0"
+                      title={v.name}
+                    >
+                      <img src={v.image} alt={v.name} className="w-full h-full object-contain bg-white" />
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
           </div>
 
           {/* Product Info */}
@@ -170,6 +166,15 @@ export default function ProductDetails() {
               {product.description}
             </p>
 
+            {product.writeUp && (
+              <div className="pt-4 border-t border-gray-100 mt-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-900 italic">The Story</h3>
+                <p className="text-gray-700 leading-relaxed text-sm italic font-serif">
+                  "{product.writeUp}"
+                </p>
+              </div>
+            )}
+
             {/* Sizes */}
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-gray-900">Size</h3>
@@ -181,11 +186,10 @@ export default function ProductDetails() {
                       setSelectedSize(size);
                       setError('');
                     }}
-                    className={`w-12 h-12 flex items-center justify-center border text-sm transition-all ${
-                      selectedSize === size 
-                        ? 'border-black bg-black text-white' 
-                        : 'border-gray-200 hover:border-black'
-                    }`}
+                    className={`w-12 h-12 flex items-center justify-center border text-sm transition-all ${selectedSize === size
+                      ? 'border-black bg-black text-white'
+                      : 'border-gray-200 hover:border-black'
+                      }`}
                   >
                     {size}
                   </button>
@@ -198,14 +202,14 @@ export default function ProductDetails() {
             <div>
               <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-gray-900">Quantity</h3>
               <div className="flex items-center border border-gray-200 w-32">
-                <button 
+                <button
                   onClick={() => setQuantity(q => Math.max(1, q - 1))}
                   className="w-10 h-10 flex items-center justify-center hover:bg-gray-50"
                 >
                   <Minus size={16} />
                 </button>
                 <div className="flex-1 text-center text-sm">{quantity}</div>
-                <button 
+                <button
                   onClick={() => setQuantity(q => q + 1)}
                   className="w-10 h-10 flex items-center justify-center hover:bg-gray-50"
                 >
@@ -221,9 +225,9 @@ export default function ProductDetails() {
               </div>
             )}
             {isUnreleased && (
-              <div className="rounded-md bg-yellow-50 border border-yellow-200 p-3 text-xs text-yellow-800">
-                This item is not yet available. It can be customized for you, but delivery may take longer.
-                Please send a message on the <button onClick={() => navigate('/contact')} className="underline font-semibold">Contact</button> page.
+              <div className="rounded-md bg-amber-50 border border-amber-300 p-4 text-sm text-amber-900 space-y-1">
+                <p className="font-bold uppercase tracking-wide text-xs">⚠️ Unreleased Item</p>
+                <p>This item is not yet in full production. You can still order it, but delivery may take <strong>1 week</strong> as it will be specially crafted for you. We appreciate your patience.</p>
               </div>
             )}
             <button
@@ -232,11 +236,11 @@ export default function ProductDetails() {
               className="w-full bg-black text-white py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               {isUnreleased
-                ? 'Contact to Customize'
-                : product.comingSoon && product.preorderAvailable 
-                  ? 'Pre-Order' 
-                  : product.inStock 
-                    ? 'Add to Cart' 
+                ? 'Add to Cart'
+                : product.comingSoon && product.preorderAvailable
+                  ? 'Pre-Order'
+                  : product.inStock
+                    ? 'Add to Cart'
                     : 'Out of Stock'}
             </button>
 

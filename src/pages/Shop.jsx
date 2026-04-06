@@ -27,6 +27,7 @@ export default function Shop() {
     '23x-color': 'top-21',
     '23x-gym': 'gym-1',
     '23x-denim': 'bottom-10',
+    '23x-twentythree': 'top-xxiii-coll',
     '23x-xxiii': 'top-20',
     '23x-motion': 'top-29',
     '23x-ascend': 'top-30',
