@@ -486,7 +486,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.15, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="w-[85vw] md:w-auto px-8 py-16 flex flex-col gap-12 group hover:bg-white transition-colors duration-500 border-x border-transparent md:border-black/10 flex-shrink-0"
+                className="w-[280px] md:w-auto px-8 py-16 flex flex-col gap-12 group hover:bg-white transition-colors duration-500 border-x border-transparent md:border-black/10 flex-shrink-0"
               >
                 <div className="flex justify-center">
                   <motion.div
