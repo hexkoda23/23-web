@@ -23,7 +23,7 @@ const Marquee = memo(({ text, children, speed = '25s', reverse = false, classNam
             onPointerLeave={() => setIsFast(false)}
         >
             <div
-                className="marquee-track flex items-center min-w-[200%]"
+                className="marquee-track flex items-center w-max"
                 style={{
                     animationDirection: reverse ? 'reverse' : 'normal',
                     animationDuration: currentSpeed,
@@ -32,11 +32,11 @@ const Marquee = memo(({ text, children, speed = '25s', reverse = false, classNam
                 }}
             >
                 {/* 1st set */}
-                <div className="flex w-1/2 justify-around shrink-0">
+                <div className="flex flex-shrink-0 justify-around min-w-[100vw] gap-8 px-4">
                     {content}
                 </div>
                 {/* 2nd set for seamless -50% translation */}
-                <div className="flex w-1/2 justify-around shrink-0">
+                <div className="flex flex-shrink-0 justify-around min-w-[100vw] gap-8 px-4">
                     {content}
                 </div>
             </div>
