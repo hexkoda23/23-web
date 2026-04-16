@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Instagram, Twitter, Facebook } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 
 const shopLinks = [
   { label: 'New Arrivals', to: '/shop?category=new' },
@@ -10,43 +10,43 @@ const shopLinks = [
 const infoLinks = [
   { label: 'Our Story', to: '/about' },
   { label: 'Lookbook', to: '/lookbook' },
+  { label: 'Generative AI', to: '/outfit-generator' },
   { label: 'FAQ', to: '/faq' },
-  { label: 'Contact', to: '/contact' },
 ];
 
 export default function Footer() {
-  return (
-    <footer className="bg-[#0A0A0A] text-white rounded-t-[2.5rem] mt-[-2.5rem] relative z-10 pt-20 pb-10">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  };
 
-          {/* Brand — col-span-5 */}
-          <div className="md:col-span-5">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 border border-white/20 flex items-center justify-center">
-                <span className="font-mono font-bold text-sm text-white">23</span>
-              </div>
-              <span className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-white/40">
-                The Brand
-              </span>
-            </div>
-            <p className="text-white/35 text-sm font-light leading-relaxed max-w-xs mb-6">
-              Defining modern luxury through personalized streetwear. Born in Lagos. Made for the world.
-            </p>
-            <div className="flex items-center gap-5 mb-8">
-              <a href="https://www.instagram.com/twentythreepreppy" target="_blank" rel="noopener noreferrer" className="text-white/30 hover:text-[var(--accent)] transition-colors"><Instagram size={18} /></a>
-              <button onClick={() => alert('Coming soon')} className="text-white/30 hover:text-[var(--accent)] transition-colors"><Twitter size={18} /></button>
-              <button onClick={() => alert('Coming soon')} className="text-white/30 hover:text-[var(--accent)] transition-colors"><Facebook size={18} /></button>
-            </div>
-          </div>
+  return (
+    <footer className="bg-[#0A0A0A] text-white pt-24 pb-12 relative z-10 overflow-hidden rounded-t-[40px] mt-[-40px]">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
+
+        {/* Giant "FROM23" Top Treatment */}
+        <div className="mb-20 text-center select-none overflow-hidden" data-cursor="DRAG">
+          <h2
+            className="font-display uppercase tracking-[-0.04em] font-black w-full"
+            style={{
+              fontSize: 'clamp(5rem, 25vw, 25rem)',
+              lineHeight: 0.8,
+              WebkitTextStroke: '1px rgba(255,255,255,0.15)',
+              color: 'transparent'
+            }}
+          >
+            23
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16 items-start">
 
           {/* Shop — col-span-3 */}
           <div className="md:col-span-3">
-            <h4 className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-[var(--accent)] mb-6">Shop</h4>
+            <h4 className="font-mono text-[10px] tracking-[0.2em] font-bold uppercase text-[var(--accent)] mb-6">Shop</h4>
             <ul className="space-y-4">
               {shopLinks.map(link => (
                 <li key={link.to}>
-                  <Link to={link.to} className="font-mono text-[0.62rem] tracking-[0.12em] uppercase text-white/35 hover:text-white transition-colors">
+                  <Link to={link.to} className="nav-link font-mono text-[11px] tracking-[0.12em] uppercase text-white/50 hover:text-[var(--accent)] transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -54,55 +54,78 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Info — col-span-4 */}
-          <div className="md:col-span-4">
-            <h4 className="font-mono text-[0.6rem] tracking-[0.2em] uppercase text-[var(--accent)] mb-6">Info</h4>
-            <ul className="space-y-4 mb-10">
+          {/* Info — col-span-3 */}
+          <div className="md:col-span-3">
+            <h4 className="font-mono text-[10px] tracking-[0.2em] font-bold uppercase text-[var(--accent)] mb-6">Info</h4>
+            <ul className="space-y-4">
               {infoLinks.map(link => (
                 <li key={link.to}>
-                  <Link to={link.to} className="font-mono text-[0.62rem] tracking-[0.12em] uppercase text-white/35 hover:text-white transition-colors">
+                  <Link to={link.to} className="nav-link font-mono text-[11px] tracking-[0.12em] uppercase text-white/50 hover:text-[var(--accent)] transition-colors">
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
-            {/* Newsletter mini */}
-            <div>
-              <p className="font-mono text-[0.58rem] tracking-[0.15em] uppercase text-white/30 mb-3">Subscribe for exclusive drops</p>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const email = e.target.email.value;
-                  if (email) {
-                    window.open(`https://wa.me/2348107869063?text=I'd like to subscribe with my email: ${email}`, '_blank');
-                  }
-                }}
-                className="flex border-b border-white/10 pb-2 focus-within:border-[var(--accent)]/50 transition-colors"
-              >
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  placeholder="EMAIL ADDRESS"
-                  className="bg-transparent flex-1 font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white placeholder-white/20 outline-none"
-                />
-                <button type="submit" className="font-mono text-[0.58rem] tracking-[0.15em] uppercase text-[var(--accent)] hover:text-white transition-colors">
-                  →
-                </button>
-              </form>
+          </div>
+
+          {/* Company — col-span-3 */}
+          <div className="md:col-span-3">
+            <h4 className="font-mono text-[10px] tracking-[0.2em] font-bold uppercase text-[var(--accent)] mb-6">Company</h4>
+            <ul className="space-y-4 border-l border-white/10 pl-6 h-full">
+              <li>
+                <p className="font-mono text-[11px] tracking-[0.12em] text-white/30 uppercase leading-relaxed max-w-[200px]">
+                  Based in Lagos, Nigeria.<br />Shipping Worldwide.
+                </p>
+              </li>
+              <li className="pt-4">
+                <Link to="/contact" className="nav-link font-mono text-[11px] tracking-[0.12em] uppercase text-white hover:text-[var(--accent)] transition-colors">
+                  Contact Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Connect / Payments — col-span-3 */}
+          <div className="md:col-span-3 flex flex-col justify-start">
+            <h4 className="font-mono text-[10px] tracking-[0.2em] font-bold uppercase text-[var(--accent)] mb-6">Connect</h4>
+            <div className="flex flex-col gap-6">
+              <a href="https://instagram.com/shop23" target="_blank" className="nav-link font-mono text-[11px] tracking-[0.12em] uppercase text-white hover:text-[var(--accent)] w-max">
+                Instagram ↗
+              </a>
+              <a href="#" className="nav-link font-mono text-[11px] tracking-[0.12em] uppercase text-white hover:text-[var(--accent)] w-max">
+                Twitter ↗
+              </a>
+
+              <div className="mt-8">
+                <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-white/30 mb-4">Secure Payment</p>
+                <div className="flex gap-3 items-center opacity-30 invert">
+                  {/* Simplistic Payment Icons via Unicode or SVG */}
+                  <span className="text-2xl" title="Visa">💳</span>
+                  <span className="text-2xl" title="Mastercard">💵</span>
+                  <span className="font-bold tracking-tighter" title="Paystack">P</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-8 border-t border-white/[0.06] flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white/20">
-            © {new Date().getFullYear()} 23 Look. All rights reserved.
+        <div className="pt-8 border-t border-white/[0.06] flex flex-col-reverse md:flex-row justify-between items-center gap-6">
+          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-white/30">
+            © {new Date().getFullYear()} 23. All rights reserved.
           </p>
           <div className="flex items-center gap-8">
-            <Link to="/terms" className="font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white/20 hover:text-white/50 transition-colors">Terms</Link>
-            <Link to="/privacy" className="font-mono text-[0.58rem] tracking-[0.12em] uppercase text-white/20 hover:text-white/50 transition-colors">Privacy</Link>
+            <Link to="/terms" className="nav-link font-mono text-[10px] tracking-[0.12em] uppercase text-white/60 hover:text-[var(--accent)] transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="nav-link font-mono text-[10px] tracking-[0.12em] uppercase text-white/60 hover:text-[var(--accent)] transition-colors">Privacy Policy</Link>
           </div>
+
+          <button
+            onClick={scrollToTop}
+            className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center text-white/60 hover:text-black hover:bg-[var(--accent)] hover:border-[var(--accent)] transition-all duration-300"
+            title="Back to top"
+          >
+            <ArrowUp size={16} />
+          </button>
         </div>
       </div>
     </footer>

@@ -110,25 +110,36 @@ export default function ChatBot() {
     if (!terms.length) return null;
 
     const intentSynonyms = {
-      payment: ['pay', 'payment', 'opay', 'account', 'transfer', 'number', 'bank'],
-      owner: ['owner', 'founder', 'who', 'created', 'owns'],
-      contact: ['contact', 'reach', 'whatsapp', 'phone', 'email', 'instagram'],
-      customize: ['custom', 'customize', 'personalize', 'design', 'collection'],
-      trend: ['trend', 'trending', 'vogue', 'fashion', 'latest'],
-      brand: ['what', 'is', 'about', 'brand', '23', 'meaning', 'identity'],
-      policies: ['policy', 'policies', 'rules', 'terms', 'shipping', 'returns'],
-      shipping: ['delivery', 'ship', 'shipping', 'time', 'days', 'eta', 'long', 'arrives'],
+      payment: ['pay', 'payment', 'opay', 'account', 'transfer', 'number', 'bank', 'cash', 'money'],
+      owner: ['owner', 'founder', 'who', 'created', 'owns', 'ceo', 'boss'],
+      contact: ['contact', 'reach', 'whatsapp', 'phone', 'email', 'instagram', 'twitter', 'dm', 'message'],
+      customize: ['custom', 'customize', 'personalize', 'design', 'collection', 'bespoke', 'tailor'],
+      trend: ['trend', 'trending', 'vogue', 'fashion', 'latest', 'new', 'upcoming'],
+      brand: ['what', 'is', 'about', 'brand', '23', 'meaning', 'identity', 'story', 'history'],
+      policies: ['policy', 'policies', 'rules', 'terms', 'shipping', 'returns', 'refund', 'exchange'],
+      shipping: ['delivery', 'ship', 'shipping', 'time', 'days', 'eta', 'long', 'arrives', 'when', 'track'],
+      price: ['cost', 'price', 'how much', 'expensive', 'cheap', 'budget'],
+      greeting: ['hi', 'hello', 'hey', 'yo', 'sup', 'howfar', 'wassup', 'morning', 'afternoon', 'evening'],
+      howareyou: ['how are', 'doing', 'good', 'well', 'what\'s up']
     };
 
     const intentScores = {};
     Object.keys(intentSynonyms).forEach(k => {
-      intentScores[k] = terms.reduce((s, t) => s + (intentSynonyms[k].some(x => x.includes(t)) ? 1 : 0), 0);
+      intentScores[k] = terms.reduce((s, t) => s + (intentSynonyms[k].some(x => x.includes(t) || t.includes(x)) ? 1 : 0), 0);
     });
     const sortedIntents = Object.entries(intentScores).sort((a, b) => b[1] - a[1]);
     const topIntent = sortedIntents[0][1] > 0 ? sortedIntents[0] : null;
 
-    let bestAnswer = null;
-    let maxOverallScore = 0;
+    // Hardcoded highly intelligent generic responses based on pure intent if no deep match
+    const genericIntentResponses = {
+      greeting: "Hello there! I'm 23. What can I help you discover today?",
+      howareyou: "I'm doing beautifully, thank you for asking! I'm here to help you upgrade your aesthetic. What are you looking for?",
+      price: "Our pieces are premium but accessibly priced for the value of Lagos craftsmanship. Most tees and caps start around ₦25,000, while our exclusive sets hover around ₦50,000.",
+      shipping: "We ship worldwide! Within Nigeria, it takes about 1-3 days. International delivery usually arrives within 5-10 business days."
+    };
+
+    let bestAnswer = topIntent && genericIntentResponses[topIntent[0]] ? genericIntentResponses[topIntent[0]] : null;
+    let maxOverallScore = topIntent && genericIntentResponses[topIntent[0]] ? 4 : 0;
 
     // Check Question-Answer pairs
     kbQA.forEach(({ q, a }) => {
@@ -178,11 +189,26 @@ export default function ChatBot() {
     setIsTyping(true);
 
     try {
-      const greetTerms = ['hi', 'hello', 'hey', 'yo', 'sup', 'howfar', 'wassup'];
+      // Direct smart chat handling for super short requests before heavy logic
+      const greetTerms = ['hi', 'hello', 'hey', 'yo', 'sup', 'howfar', 'wassup', 'morning'];
       const qLow = userMessage.toLowerCase().trim();
       if (greetTerms.includes(qLow)) {
-        const greet = "How are you doing? I'm 23, your fashion assistant. How can I help?";
+        const greet = "Hey! I'm 23, your personal fashion assistant. Ask me anything about our latest collections, pricing, or the story behind our brand.";
         setMessages(prev => [...prev, { role: 'bot', content: greet }]);
+        setIsTyping(false);
+        return;
+      }
+
+      if (qLow.includes('how much') || qLow.includes('price')) {
+        const resp = "Our premium pieces vary depending on the collection. Classic t-shirts are typically ₦25,000, while full tracksuits and premium denim are ₦50,000. You can browse the Shop page for specific items!";
+        setMessages(prev => [...prev, { role: 'bot', content: resp }]);
+        setIsTyping(false);
+        return;
+      }
+
+      if (qLow.includes('who are you') || qLow.includes('what is 23')) {
+        const resp = "I am the digital intelligence behind 23. Born in Lagos, we craft high-end luxury streetwear that moves as fast as you do. How can I style you today?";
+        setMessages(prev => [...prev, { role: 'bot', content: resp }]);
         setIsTyping(false);
         return;
       }
@@ -221,13 +247,17 @@ export default function ChatBot() {
 
   return (
     <>
-      {/* Floating Icon */}
+      {/* Floating Icon — NEW LUXURIOUS DESIGN */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-8 right-8 z-40 bg-black text-white px-4 py-3 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 ${isOpen ? 'hidden' : 'flex'} items-center gap-2`}
+        className={`fixed bottom-8 right-8 z-40 w-16 h-16 rounded-full bg-black text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:scale-110 active:scale-95 transition-all duration-300 border border-white/10 flex items-center justify-center group/chat overflow-hidden ${isOpen ? 'hidden' : 'flex'}`}
       >
-        <MessageSquare size={24} />
-        <span className="text-xs font-bold uppercase tracking-widest">Chat with 23</span>
+        <div className="absolute inset-0 bg-[var(--accent)] translate-y-full group-hover/chat:translate-y-0 transition-transform duration-500" />
+        <div className="relative z-10 font-display font-black text-xl group-hover/chat:text-black transition-colors duration-500">
+          23
+        </div>
+        {/* Subtle dot */}
+        <div className="absolute top-4 right-4 w-1.5 h-1.5 bg-[var(--accent)] rounded-full group-hover/chat:bg-black transition-colors" />
       </button>
 
       {/* Chat Window */}

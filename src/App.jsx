@@ -1,6 +1,5 @@
-
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -23,6 +22,7 @@ import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import IdentityForge from './pages/IdentityForge';
 import DigitalProfile from './pages/DigitalProfile';
+import LoadingScreen from './components/LoadingScreen';
 
 // ScrollToTop component
 function ScrollToTop() {
@@ -36,13 +36,19 @@ function ScrollToTop() {
 }
 
 function App() {
+  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+  const isDarkPage = ['/', '/lookbook'].includes(location.pathname);
+
   return (
     <CartProvider>
-      <div className="min-h-screen flex flex-col bg-white text-black font-sans antialiased selection:bg-black selection:text-white">
+      <div className="min-h-screen flex flex-col bg-white text-black font-body antialiased selection:bg-[var(--accent)] selection:text-black">
+        {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
+
         <ScrollToTop />
         <Navbar />
         <CartDrawer />
-        <main className="flex-grow">
+        <main className={`flex-grow overflow-x-hidden ${isDarkPage ? '' : 'pt-[76px] lg:pt-[82px]'}`}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/shop" element={<Shop />} />

@@ -1,18 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
 @import "tailwindcss";
 
 :root {
   --black: #0A0A0A;
   --off-black: #111111;
-  --card-dark: #1A1A1A;
-  --border-dark: rgba(255, 255, 255, 0.08);
-  --border-light: rgba(0, 0, 0, 0.08);
+  --cream: #F5F0E8;
   --white: #FFFFFF;
-  --off-white: #FAFAFA;
   --muted: #888888;
-  --accent: #C8A96E;
-  --accent-2: #8B6914;
-  --font-display: 'Inter', sans-serif;
+  --accent: #C8F000;
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;
 }
 
@@ -25,15 +22,26 @@
   }
 
   body {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     background: var(--white);
     color: var(--black);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    cursor: none;
+    /* Hide default cursor since we have a custom one */
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
   }
 }
 
-/* THCO section tag */
+/* THCO Section Tag - Updated for new style */
 .section-tag {
   display: inline-flex;
   align-items: center;
@@ -43,7 +51,11 @@
   font-weight: 500;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--black);
+}
+
+.section-tag.dark {
+  color: var(--white);
 }
 
 .section-tag::before {
@@ -51,11 +63,11 @@
   display: block;
   width: 20px;
   height: 1px;
-  background: var(--accent);
+  background: currentColor;
   flex-shrink: 0;
 }
 
-/* Marquee */
+/* Base Marquee Animation */
 @keyframes marquee {
   0% {
     transform: translateX(0);
@@ -67,62 +79,88 @@
 }
 
 .marquee-track {
-  animation: marquee 18s linear infinite;
+  display: flex;
+  width: 200%;
+  /* Important for smooth loop */
+  animation: marquee 25s linear infinite;
+  will-change: transform;
 }
 
-/* Fade up */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.marquee-track:hover {
+  animation-play-state: paused;
 }
 
-.fade-up {
-  animation: fadeUp 0.7s ease-out both;
-}
-
-/* Editorial image card */
-.editorial-card {
+/* CTA Wipe Fill Button */
+.wipe-btn {
   position: relative;
   overflow: hidden;
-  cursor: pointer;
+  z-index: 1;
 }
 
-.editorial-card .overlay {
+.wipe-btn::after {
+  content: '';
   position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.2);
-  transition: background 0.4s ease;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: -1;
 }
 
-.editorial-card:hover .overlay {
-  background: rgba(0, 0, 0, 0.05);
+.wipe-btn:hover::after {
+  transform: scaleX(1);
 }
 
-.editorial-card img {
-  transition: transform 0.7s ease;
+.wipe-btn:hover {
+  border-color: var(--accent);
+  color: var(--black) !important;
 }
 
-.editorial-card:hover img {
-  transform: scale(1.04);
+/* Nav Link Underline */
+.nav-link {
+  position: relative;
 }
 
-/* Glass dark card */
-.glass-dark {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Product Card Elements */
+.product-card {
+  position: relative;
+  background: transparent;
+  overflow: hidden;
 }
 
 @layer utilities {
   .font-mono {
     font-family: var(--font-mono);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-body {
+    font-family: var(--font-body);
   }
 
   .scrollbar-hide::-webkit-scrollbar {
@@ -132,6 +170,15 @@
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Utilities for clip-path split reveal etc. */
+  .clip-path-inset-0 {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .clip-path-inset-bottom {
+    clip-path: inset(100% 0 0 0);
   }
 }
 
@@ -165,4 +212,9 @@
 
 .svg-draw path:nth-child(4) {
   animation-delay: 0.6s;
+}
+
+/* Let's reset default a tag hover effects for better control */
+a {
+  transition: color 0.3s ease;
 }
