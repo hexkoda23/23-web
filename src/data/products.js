@@ -397,12 +397,11 @@ export const PRODUCTS = [
     name: "23 X ITL2",
     category: "new",
     price: 25000,
-    image: "/wardrobe/23xITL2.jpg",
+    image: "/wardrobe/23xwhiteITL.jpg",
     images: [
-      "/wardrobe/23xITL2.jpg",
-      "/wardrobe/23xITLw1.jpg",
-      "/wardrobe/23xITLw2.jpg",
-      "/wardrobe/23xITLw3.jpg"
+      "/wardrobe/23xwhiteITL.jpg",
+      "/wardrobe/23xwhiteITLback.jpg",
+      "/wardrobe/23xITL2.jpg"
     ],
     description: "The sequel to ITL. Because one life isn't enough to imagine. Now with 10% more 'What if?' energy.",
     writeUp: "The ITL2 continues the legacy of imagining a life better than the one where you forgot your password for the third time today. Premium jersey, premium vibes, and a fit that keeps you guessing (in a good way).",
