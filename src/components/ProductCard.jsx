@@ -1,17 +1,49 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
 
 export default function ProductCard({ product }) {
-  // Select first and second images (fallback to single image logic if second isn't available)
-  const image1 = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : product.image;
-  const image2 = Array.isArray(product.images) && product.images.length > 1 ? product.images[1] : image1;
+  // All images available for this product
+  const allImages = Array.isArray(product.images) && product.images.length > 0
+    ? product.images
+    : [product.image];
 
-  // Format price
+  const image1 = allImages[0];
+  const image2 = allImages.length > 1 ? allImages[1] : image1;
+
+  // Mobile carousel state
+  const [mobileIndex, setMobileIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const intervalRef = useRef(null);
+
   const formattedPrice = `₦${Number(product.price).toLocaleString('en-NG')}`;
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Auto-cycle images on mobile if there are multiple
+  useEffect(() => {
+    if (isMobile && allImages.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setMobileIndex(prev => (prev + 1) % allImages.length);
+      }, 1800);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [isMobile, allImages.length]);
+
+  // Reset index when product changes
+  useEffect(() => {
+    setMobileIndex(0);
+  }, [product.id]);
 
   return (
     <Link to={`/product/${product.id}`} className="group block product-card" data-cursor="VIEW">
-      <div className="relative aspect-[3/4] bg-[var(--cream)] overflow-hidden">
+      <div className="relative aspect-[3/4] bg-white overflow-hidden">
         {/* Badges */}
         <div className="absolute top-3 left-3 z-20 flex flex-col gap-1.5">
           {product.category === 'unreleased' ? (
@@ -30,23 +62,57 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        {/* Media */}
-        <div className="w-full h-full relative overflow-hidden">
-          <motion.img
-            src={image1}
-            alt={product.name}
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-350 ease-in-out group-hover:opacity-0"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.4 }}
-          />
-          <motion.img
-            src={image2}
-            alt={`${product.name} alternate`}
-            className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-350 ease-in-out group-hover:opacity-100"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.4 }}
-          />
-        </div>
+        {/* Mobile: image dots indicator */}
+        {isMobile && allImages.length > 1 && (
+          <div className="absolute bottom-[98px] left-0 right-0 z-30 flex justify-center gap-1.5 pointer-events-none">
+            {allImages.map((_, idx) => (
+              <span
+                key={idx}
+                className={`block rounded-full transition-all duration-300 ${
+                  idx === mobileIndex
+                    ? 'w-4 h-1.5 bg-black'
+                    : 'w-1.5 h-1.5 bg-black/30'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* MOBILE: animated image carousel */}
+        {isMobile ? (
+          <div className="w-full h-full relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={mobileIndex}
+                src={allImages[mobileIndex]}
+                alt={`${product.name} view ${mobileIndex + 1}`}
+                className="absolute inset-0 w-full h-full object-contain bg-white"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.45, ease: 'easeInOut' }}
+              />
+            </AnimatePresence>
+          </div>
+        ) : (
+          /* DESKTOP: hover swap */
+          <div className="w-full h-full relative overflow-hidden">
+            <motion.img
+              src={image1}
+              alt={product.name}
+              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-350 ease-in-out group-hover:opacity-0"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.4 }}
+            />
+            <motion.img
+              src={image2}
+              alt={`${product.name} alternate`}
+              className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-350 ease-in-out group-hover:opacity-100"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.4 }}
+            />
+          </div>
+        )}
 
         {/* Slide Up Drawer */}
         <div className="absolute bottom-0 left-0 right-0 h-[90px] bg-white translate-y-full transition-transform duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 p-4 flex flex-col justify-between border-t border-black/5 z-20">
@@ -71,7 +137,7 @@ export default function ProductCard({ product }) {
         </div>
       </div>
 
-      {/* Default text underneath product (only visible before hover or on mobile) */}
+      {/* Default text underneath product */}
       <div className="mt-3 flex justify-between items-start group-hover:-translate-y-2 group-hover:opacity-0 transition-all duration-300">
         <div>
           <h3 className="font-body font-medium text-[15px] leading-tight text-black">

@@ -164,25 +164,25 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Desktop Asymmetric Grid, Mobile Single Col */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-12 md:gap-y-16">
+          {/* Desktop Asymmetric Grid, Mobile 2-Col */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 md:gap-x-6 gap-y-8 md:gap-y-16">
             {/* Row 1: Large (Span 2) + Small (Span 1) */}
             {newArrivals[0] && (
               <motion.div
-                className="md:col-span-2"
+                className="col-span-1 md:col-span-2"
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               >
-                <div className="aspect-[4/5] w-full">
+                <div className="aspect-[3/4] md:aspect-[4/5] w-full">
                   <ProductCard product={newArrivals[0]} />
                 </div>
               </motion.div>
             )}
             {newArrivals[1] && (
               <motion.div
-                className="md:col-span-1"
+                className="col-span-1 md:col-span-1"
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -198,7 +198,7 @@ export default function Home() {
             {newArrivals.slice(2, 5).map((product, i) => (
               <motion.div
                 key={product.id}
-                className="md:col-span-1"
+                className="col-span-1 md:col-span-1"
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -263,7 +263,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
             {unreleasedItems.map((product, i) => (
               <motion.div
                 key={product.id}
@@ -357,7 +357,7 @@ export default function Home() {
           {bestsellers.map((product, i) => (
             <motion.div
               key={product.id}
-              className="flex-shrink-0 w-[70vw] md:w-[calc(100vw/3.5)] max-w-[400px] snap-start"
+              className="flex-shrink-0 w-[45vw] md:w-[calc(100vw/3.5)] max-w-[400px] snap-start"
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "0px 100px" }}
