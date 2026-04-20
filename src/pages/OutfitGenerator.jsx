@@ -27,6 +27,10 @@ export default function OutfitGenerator() {
     if (id.includes('shoe') || p.category === 'shoes' || p.category === 'footwear') return 'shoes';
     if (id.includes('outer') || p.category === 'outerwear') return 'outerwear';
 
+    // Explicit overrides
+    if (id === 'top-xxiii-coll' || id === 'top-xxiii-black') return 'tops'; // Ensure Dualité Collective and Noir are tops
+    if (id === 'top-23' || id === 'top-22' || id === 'top-21') return 'bottoms'; // Force Crème Paradox, Verdant Frequency, and Noir Séraphique to be bottoms
+
     // Bottoms: check for specific IDs, names or image keywords
     if (
       id.includes('bottom') ||
@@ -35,9 +39,8 @@ export default function OutfitGenerator() {
       name.includes('pant') ||
       name.includes('short') ||
       name.includes('denim') ||
-      name.includes('noir') || // User specifically mentioned Noir
-      name.includes('groovy') ||
-      name.includes('tea') ||
+      name.includes('crème paradox') ||
+      name.includes('verdant frequency') ||
       img.includes('jean') ||
       img.includes('pant')
     ) return 'bottoms';

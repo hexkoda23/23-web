@@ -322,8 +322,7 @@ export const PRODUCTS = [
     images: [
       "/wardrobe/23xashante.jpg",
       "/wardrobe/23xashante1.jpg",
-      "/wardrobe/23xashante2.jpg",
-      "/wardrobe/23xashante3.jpg"
+      "/wardrobe/23xashante2.jpg"
     ],
     description: "Gratitude made wearable. For the individual who has understood, finally, that being grateful and being powerful are not two different things.",
     writeUp: "Ashante means thank you. Lumière means light. Put them together and you get a shirt that carries both the weight of acknowledgement and the brightness of a person who has chosen to move through the world with intention rather than grievance. This is the companion piece to the Obsidian Credo — where the Credo is a declaration of what you believe, the Lumière is a thank you to every version of yourself that got you here. The 23 branding is precise because gratitude, when it is real, is always precise. One customer reported they wore it to a job they hated and left with a better offer. They said thank you. We said: the shirt knew.",
@@ -355,8 +354,7 @@ export const PRODUCTS = [
     images: [
       "/wardrobe/23xITL.jpg",
       "/wardrobe/23xITLr1.jpg",
-      "/wardrobe/23xITLr2.jpg",
-      "/wardrobe/23xITLr3.jpg"
+      "/wardrobe/23xITLr2.jpg"
     ],
     description: "Oversized by design. Spacious enough to contain your ambitions, your anxiety, and your absolute conviction that things are about to work out.",
     writeUp: "The ITL — 'Imagine The Life' — oversized series was created for the high-resolution dreamer. It is roomy because the life you are imagining requires significant structural space. The premium jersey drapes with a slowness that communicates both comfort and quiet power. One wearer reported that they started a business in this shirt. Another said they wrote a song. A third said they found ₦500 in the pocket, which they had forgotten about, and had, at that precise moment, the best afternoon of the month. Serendipity is stitched in.",
