@@ -1,6 +1,6 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, X, ArrowRight } from 'lucide-react';
+import { Minus, Plus, X, ArrowRight, Sparkles } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,12 +28,20 @@ export default function Cart() {
       <div className="pt-32 pb-20 min-h-screen flex flex-col items-center justify-center text-center px-6">
         <h1 className="text-2xl font-bold uppercase tracking-tighter mb-4">Your Cart is Empty</h1>
         <p className="text-gray-500 mb-8">Looks like you haven't added anything yet.</p>
-        <Link 
-          to="/shop" 
-          className="bg-black text-white px-8 py-3 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
-        >
-          Start Shopping
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            to="/shop"
+            className="bg-black text-white px-8 py-3 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+          >
+            Start Shopping
+          </Link>
+          <Link
+            to="/ai-studio"
+            className="border border-black px-8 py-3 text-sm font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-colors"
+          >
+            Find Your 23 Fit
+          </Link>
+        </div>
       </div>
     );
   }
@@ -116,6 +124,14 @@ export default function Cart() {
               <button onClick={handleCheckout} className="w-full bg-black text-white py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors flex items-center justify-center">
                 Checkout <ArrowRight size={16} className="ml-2" />
               </button>
+
+              <Link
+                to="/ai-studio?tab=stylist"
+                className="mt-3 w-full border border-black/10 bg-white py-4 text-sm font-bold uppercase tracking-widest hover:border-black transition-colors flex items-center justify-center gap-2"
+              >
+                <Sparkles size={16} />
+                Complete the look
+              </Link>
             </div>
           </div>
         </div>

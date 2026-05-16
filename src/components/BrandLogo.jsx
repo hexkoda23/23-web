@@ -5,8 +5,8 @@ export default function BrandLogo({ className = 'h-8 md:h-10' }) {
 
   if (fallback) {
     return (
-      <span className="text-2xl md:text-3xl font-bold tracking-tighter uppercase">
-        23<span className="font-light">Look</span>
+      <span className="font-attention attention-heading text-2xl md:text-3xl uppercase leading-none">
+        23<span className="font-body font-medium normal-case">Look</span>
       </span>
     );
   }

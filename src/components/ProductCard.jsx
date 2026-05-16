@@ -117,7 +117,7 @@ export default function ProductCard({ product }) {
         {/* Slide Up Drawer */}
         <div className="absolute bottom-0 left-0 right-0 h-[90px] bg-white translate-y-full transition-transform duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 p-4 flex flex-col justify-between border-t border-black/5 z-20">
           <div className="flex justify-between items-start gap-4">
-            <h3 className="font-body font-semibold text-sm leading-tight text-black line-clamp-1 flex-1">
+            <h3 className="attention-product text-base text-black line-clamp-1 flex-1">
               {product.name}
             </h3>
             <span className="font-mono text-[11px] font-medium text-[var(--muted)]">
@@ -140,7 +140,7 @@ export default function ProductCard({ product }) {
       {/* Default text underneath product */}
       <div className="mt-3 flex justify-between items-start group-hover:-translate-y-2 group-hover:opacity-0 transition-all duration-300">
         <div>
-          <h3 className="font-body font-medium text-[15px] leading-tight text-black">
+          <h3 className="attention-product text-[15px] text-black max-w-[22ch]">
             {product.name}
           </h3>
           <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-[#888]">

@@ -117,20 +117,26 @@ export default function Home() {
             transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
             <h1
-              className="font-display font-black text-white uppercase leading-[0.85] tracking-[-0.04em] mix-blend-difference mb-4"
-              style={{ fontSize: 'clamp(4.5rem, 12vw, 9.5rem)' }}
+              className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-4 max-w-[10ch]"
+              style={{ fontSize: 'clamp(4.15rem, 11vw, 9.5rem)' }}
             >
               WEAR YOUR<br />WORLD
             </h1>
             <p className="font-mono text-[11px] tracking-[0.2em] font-medium uppercase text-white/80 mb-10 pl-1">
               New Collection · 2026
             </p>
-            <div className="flex pl-1">
+            <div className="flex flex-wrap gap-3 pl-1">
               <Link
                 to="/shop"
-                className="wipe-btn border border-white text-white font-mono text-[11px] font-bold tracking-[0.2em] uppercase px-10 py-5 transition-colors duration-300 hover:text-black hover:border-[var(--accent)]"
+                className="wipe-btn border border-white text-white font-mono text-[11px] font-bold tracking-[0.2em] uppercase px-8 md:px-10 py-5 transition-colors duration-300 hover:text-black hover:border-[var(--accent)]"
               >
                 Shop Now
+              </Link>
+              <Link
+                to="/ai-studio"
+                className="wipe-btn bg-[var(--accent)] border border-[var(--accent)] text-black font-mono text-[11px] font-bold tracking-[0.2em] uppercase px-8 md:px-10 py-5 transition-colors duration-300 hover:text-black hover:border-white"
+              >
+                Find Your 23 Fit
               </Link>
             </div>
           </motion.div>
@@ -154,7 +160,7 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
           <div className="flex items-end justify-between border-b border-black/10 pb-6 mb-12">
             <h2
-              className="font-display font-black text-black uppercase tracking-[-0.03em] leading-none"
+              className="font-display attention-heading text-black uppercase leading-[0.9]"
               style={{ fontSize: 'clamp(3rem, 8vw, 6rem)' }}
             >
               New<br />Arrivals
@@ -223,7 +229,7 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 relative z-10 flex flex-col items-center justify-center text-center">
           <div className="section-tag mb-10 text-white/70 border-white/20">Brand Philosophy</div>
 
-          <h2 className="font-display font-bold text-white leading-[1.05] max-w-4xl tracking-[-0.02em] flex flex-wrap justify-center gap-x-[0.25em] gap-y-1 mb-16" style={{ fontSize: 'clamp(2.5rem, 6vw, 5.5rem)' }}>
+          <h2 className="font-display attention-heading text-white leading-[1.02] max-w-4xl flex flex-wrap justify-center gap-x-[0.25em] gap-y-2 mb-16" style={{ fontSize: 'clamp(2.35rem, 5.8vw, 5.35rem)' }}>
             {words.map((word, i) => (
               <span key={i} className="overflow-hidden inline-block">
                 <motion.span
@@ -254,7 +260,7 @@ export default function Home() {
           <div className="flex items-end justify-between border-b border-black/10 pb-6 mb-12">
             <div>
               <div className="section-tag mb-2">Exclusive Look</div>
-              <h2 className="font-display font-black text-black uppercase tracking-[-0.03em] leading-none" style={{ fontSize: 'clamp(3rem, 7vw, 5rem)' }}>
+              <h2 className="font-display attention-heading text-black uppercase leading-[0.9]" style={{ fontSize: 'clamp(3rem, 7vw, 5rem)' }}>
                 Unreleased<br />Concepts
               </h2>
             </div>
@@ -298,13 +304,13 @@ export default function Home() {
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                 >
-                  <h3 className="font-display font-black text-white text-[8vw] uppercase tracking-tighter mix-blend-overlay">XXIII</h3>
+                  <h3 className="font-display attention-heading text-white text-[8vw] uppercase mix-blend-overlay">XXIII</h3>
                 </motion.div>
               </div>
             </div>
             <div className="lg:col-span-5">
               <div className="section-tag mb-6">Signature Series</div>
-              <h2 className="font-display font-black text-black uppercase tracking-[-0.03em] leading-[0.9] mb-8" style={{ fontSize: 'clamp(3rem, 6vw, 5rem)' }}>
+              <h2 className="font-display attention-heading text-black uppercase leading-[0.92] mb-8" style={{ fontSize: 'clamp(3rem, 6vw, 5rem)' }}>
                 THE<br />IDENTITY<br />COLLECTION
               </h2>
               <p className="font-body text-black/60 text-lg leading-relaxed mb-10">
@@ -322,12 +328,12 @@ export default function Home() {
       <section className="py-24 bg-[var(--black)] text-[var(--accent)] overflow-hidden flex flex-col gap-4 border-y border-white/10" data-cursor="DRAG">
         <Marquee
           text="23 ✦ WEAR YOUR WORLD ✦ AUTHENTICITY ✦ FROM LAGOS TO THE WORLD ✦ "
-          className="font-display font-black text-6xl md:text-8xl lg:text-9xl tracking-[-0.03em] uppercase"
+          className="font-display attention-cream text-6xl md:text-8xl lg:text-9xl uppercase"
           speed="35s"
         />
         <Marquee
           text="NEW COLLECTION ✦ STYLE IS IDENTITY ✦ STREET LUXURY ✦ FROM LAGOS TO THE WORLD ✦ "
-          className="font-display font-black text-6xl md:text-8xl lg:text-9xl tracking-[-0.03em] uppercase text-[var(--accent)] opacity-40 mix-blend-screen"
+          className="font-display attention-heading text-6xl md:text-8xl lg:text-9xl uppercase text-[var(--accent)] opacity-40 mix-blend-screen"
           speed="45s"
           reverse={true}
         />
@@ -336,7 +342,7 @@ export default function Home() {
       {/* 7. BESTSELLERS CAROUSEL */}
       <section className="py-24 lg:py-40 bg-white overflow-hidden relative group/section">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex items-end justify-between border-b border-black/10 pb-6 mb-12">
-          <h2 className="font-display font-black text-black uppercase tracking-[-0.03em] leading-none" style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)' }}>
+          <h2 className="font-display attention-heading text-black uppercase leading-[0.9]" style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)' }}>
             Trending<br />Now
           </h2>
           {/* Arrow navigation handles for desktop hidden until hover */}
@@ -379,14 +385,14 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
             <div className="w-full lg:w-1/2 order-2 lg:order-1">
               <div className="section-tag dark mb-6 border-white/20 text-white/40">Next-Gen curation</div>
-              <h2 className="font-display font-black text-white uppercase tracking-[-0.04em] leading-[0.85] mb-8" style={{ fontSize: 'clamp(3.5rem, 8vw, 6.5rem)' }}>
+              <h2 className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-8" style={{ fontSize: 'clamp(3.4rem, 7.5vw, 6.4rem)' }}>
                 AI<br /><span className="text-[var(--accent)]">STYLING</span>
               </h2>
               <p className="font-body text-white/60 text-lg leading-relaxed mb-12 max-w-lg">
                 Unlock the power of neural styling. Our AI engine analyzes your aesthetic and crafts custom outfit combinations that push the boundaries of your personal identity.
               </p>
               <div className="flex gap-4 flex-wrap">
-                <Link to="/identity-forge" className="wipe-btn bg-[var(--accent)] text-black border-[var(--accent)] font-mono text-[11px] font-bold tracking-[0.2em] uppercase px-10 py-5 hover:bg-white hover:border-white">
+                <Link to="/ai-studio" className="wipe-btn bg-[var(--accent)] text-black border-[var(--accent)] font-mono text-[11px] font-bold tracking-[0.2em] uppercase px-10 py-5 hover:bg-white hover:border-white">
                   Get Styled
                 </Link>
                 <Link to="/outfit-generator" className="wipe-btn border border-white/30 text-white font-mono text-[11px] font-bold tracking-[0.2em] uppercase px-10 py-5 hover:border-white">
@@ -422,14 +428,14 @@ export default function Home() {
       <section className="py-24 lg:py-48 bg-[var(--cream)] overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 mb-24 relative">
           {/* Luxurious background accent text */}
-          <div className="absolute top-0 right-0 hidden lg:block opacity-[0.03] font-display font-black text-[12rem] leading-none -translate-y-1/2">
+          <div className="absolute top-0 right-0 hidden lg:block opacity-[0.03] font-display attention-heading text-[12rem] leading-none -translate-y-1/2">
             BEYOND
           </div>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 border-l border-black/10 pl-8 md:pl-12">
             <div className="max-w-2xl">
               <div className="section-tag mb-6 text-black/40 border-black/10">Brand DNA</div>
-              <h2 className="font-display font-black text-black uppercase tracking-[-0.04em] leading-[0.85] mb-8" style={{ fontSize: 'clamp(3.5rem, 8vw, 6.5rem)' }}>
+              <h2 className="font-display attention-heading text-black uppercase leading-[0.9] mb-8" style={{ fontSize: 'clamp(3.3rem, 7.5vw, 6.3rem)' }}>
                 WHAT MAKES<br />23 DIFFERENT
               </h2>
               <p className="font-body text-lg text-black/70 leading-relaxed mb-8 max-w-lg">
@@ -497,7 +503,7 @@ export default function Home() {
                   </motion.div>
                 </div>
                 <div className="text-center md:text-left">
-                  <h3 className="font-display font-black text-black text-2xl uppercase tracking-tight mb-3">{card.title}</h3>
+                  <h3 className="attention-product text-black text-2xl mb-3">{card.title}</h3>
                   <p className="font-mono text-black/50 text-[11px] leading-relaxed uppercase tracking-widest">{card.subtitle}</p>
                 </div>
               </motion.div>
@@ -559,7 +565,7 @@ export default function Home() {
             transition={{ duration: 0.8 }}
           >
             <div className="section-tag dark mb-8">Newsletter</div>
-            <h2 className="font-display font-black text-white uppercase tracking-[-0.04em] leading-none mb-6" style={{ fontSize: 'clamp(3rem, 10vw, 8rem)' }}>
+            <h2 className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-6" style={{ fontSize: 'clamp(3rem, 9vw, 8rem)' }}>
               EXCLUSIVE ACCESS
             </h2>
             <p className="font-mono text-[11px] tracking-[0.2em] font-medium uppercase text-white/50 mb-12">
@@ -585,7 +591,7 @@ export default function Home() {
 
         {/* Deep background graphic */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-display font-black text-[30vw] text-white/10 select-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 font-display attention-heading text-[30vw] text-white/10 select-none">
             23
           </div>
         </div>
@@ -602,7 +608,7 @@ export default function Home() {
               animate={statsInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: i * 0.1, duration: 0.6 }}
             >
-              <div className="font-display font-black text-[var(--accent)] leading-none mb-2" style={{ fontSize: 'clamp(3rem, 6vw, 5rem)' }}>
+              <div className="font-display attention-heading text-[var(--accent)] leading-[0.9] mb-2" style={{ fontSize: 'clamp(3rem, 6vw, 5rem)' }}>
                 {stat.v}{stat.s}
               </div>
               <div className="font-mono text-[10px] tracking-[0.2em] uppercase font-bold text-white/50">{stat.l}</div>

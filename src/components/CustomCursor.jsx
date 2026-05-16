@@ -73,7 +73,7 @@ export default function CustomCursor() {
                 height: isHovering ? 50 : 12,
                 x: isHovering ? mousePosition.x - 25 : mousePosition.x - 6,
                 y: isHovering ? mousePosition.y - 25 : mousePosition.y - 6,
-                backgroundColor: isHovering ? 'rgba(200, 240, 0, 0.4)' : 'transparent',
+                backgroundColor: isHovering ? 'rgba(241, 236, 225, 0.42)' : 'transparent',
                 borderColor: isHovering ? 'transparent' : 'var(--accent)',
             }}
             initial={{ width: 12, height: 12 }}

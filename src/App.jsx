@@ -10,6 +10,7 @@ import FAQ from './pages/FAQ';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import OutfitGenerator from './pages/OutfitGenerator';
+import AIStudio from './pages/AIStudio';
 import Login from './pages/Login';
 import Signup from './pages/SignUp';
 import Account from './pages/Account';
@@ -39,6 +40,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
   const isDarkPage = ['/', '/lookbook'].includes(location.pathname);
+  const hideChat = location.pathname === '/ai-studio';
 
   return (
     <CartProvider>
@@ -59,6 +61,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/outfit-generator" element={<OutfitGenerator />} />
+            <Route path="/ai-studio" element={<AIStudio />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/account" element={<Account />} />
@@ -69,7 +72,7 @@ function App() {
           </Routes>
         </main>
         <Footer />
-        <ChatBot />
+        {!hideChat && <ChatBot />}
       </div>
     </CartProvider>
   );

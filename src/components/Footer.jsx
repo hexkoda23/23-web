@@ -10,6 +10,7 @@ const shopLinks = [
 const infoLinks = [
   { label: 'Our Story', to: '/about' },
   { label: 'Lookbook', to: '/lookbook' },
+  { label: '23 AI Studio', to: '/ai-studio' },
   { label: 'Generative AI', to: '/outfit-generator' },
   { label: 'FAQ', to: '/faq' },
 ];
@@ -26,12 +27,11 @@ export default function Footer() {
         {/* Giant "FROM23" Top Treatment */}
         <div className="mb-20 text-center select-none overflow-hidden" data-cursor="DRAG">
           <h2
-            className="font-display uppercase tracking-[-0.04em] font-black w-full"
+            className="font-attention attention-heading text-attention-outline uppercase w-full"
             style={{
               fontSize: 'clamp(5rem, 25vw, 25rem)',
-              lineHeight: 0.8,
-              WebkitTextStroke: '1px rgba(255,255,255,0.15)',
-              color: 'transparent'
+              lineHeight: 0.84,
+              color: 'rgba(255,255,255,0.03)'
             }}
           >
             23

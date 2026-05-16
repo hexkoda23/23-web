@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Minus, Plus, ArrowLeft } from 'lucide-react';
+import { Minus, Plus, ArrowLeft, Camera, Sparkles } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { PRODUCTS } from '../data/products';
@@ -114,7 +114,7 @@ export default function ProductDetails() {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="bg-white p-8 max-w-md w-full shadow-2xl space-y-6 text-center"
             >
-              <h2 className="text-2xl font-bold uppercase tracking-tighter">Choose Your Identity</h2>
+              <h2 className="attention-product attention-heading text-3xl">Choose Your Identity</h2>
               <p className="text-gray-600 text-sm">
                 Would you like to customize your barcode with your personal digital signature, or proceed with the standard 23 barcode?
               </p>
@@ -229,7 +229,7 @@ export default function ProductDetails() {
             <div>
               <div className="overflow-hidden mb-2">
                 <motion.h1
-                  className="text-3xl md:text-5xl font-bold tracking-tighter uppercase"
+                  className="attention-product attention-heading text-attention-outline text-black text-[2.35rem] sm:text-5xl lg:text-6xl max-w-[12ch]"
                   initial={{ y: '110%', opacity: 0 }}
                   animate={{ y: '0%', opacity: 1 }}
                   transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
@@ -258,6 +258,34 @@ export default function ProductDetails() {
               <p className="text-gray-600 leading-relaxed text-sm md:text-base">
                 {product.description}
               </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.27 }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+            >
+              <Link
+                to={`/ai-studio?style=${product.id}`}
+                className="border border-black/10 px-4 py-4 flex items-center gap-3 hover:border-black transition-colors"
+              >
+                <Sparkles size={18} />
+                <span>
+                  <span className="block font-mono text-[9px] uppercase tracking-[0.18em] text-gray-400">AI Stylist</span>
+                  <span className="block attention-product text-base">Style this item</span>
+                </span>
+              </Link>
+              <Link
+                to={`/ai-studio?tryOn=${product.id}`}
+                className="border border-black/10 px-4 py-4 flex items-center gap-3 hover:border-black transition-colors"
+              >
+                <Camera size={18} />
+                <span>
+                  <span className="block font-mono text-[9px] uppercase tracking-[0.18em] text-gray-400">Preview</span>
+                  <span className="block attention-product text-base">Try with photo</span>
+                </span>
+              </Link>
             </motion.div>
 
             {/* The Story — animated slide-up with expand toggle */}

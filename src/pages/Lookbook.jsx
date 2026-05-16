@@ -45,8 +45,8 @@ function LookbookHero() {
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="font-black text-white uppercase leading-none tracking-[-0.04em]"
-            style={{ fontSize: 'clamp(5rem, 18vw, 18rem)' }}
+            className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.88]"
+            style={{ fontSize: 'clamp(4.8rem, 17vw, 18rem)' }}
           >
             LOOK
           </motion.h1>
@@ -57,9 +57,9 @@ function LookbookHero() {
             initial={{ y: '-100%' }}
             animate={{ y: 0 }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
-            className="font-black uppercase leading-none tracking-[-0.04em]"
+            className="font-display attention-heading text-attention-outline uppercase leading-[0.88]"
             style={{
-              fontSize: 'clamp(5rem, 18vw, 18rem)',
+              fontSize: 'clamp(4.8rem, 17vw, 18rem)',
               background: 'linear-gradient(135deg, #C8A96E 0%, #F5DFA0 50%, #C8A96E 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -450,7 +450,7 @@ export default function Lookbook() {
           <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
             <div className="mb-14">
               <div className="section-tag mb-4">Editor's Pick</div>
-              <h2 className="font-black text-white uppercase" style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)' }}>
+              <h2 className="font-display attention-heading text-attention-outline text-black uppercase" style={{ fontSize: 'clamp(2.5rem, 5vw, 4.5rem)' }}>
                 The 23 Edit
               </h2>
             </div>
@@ -470,7 +470,7 @@ export default function Lookbook() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-8">
                     <span className="font-mono text-[0.58rem] tracking-[0.2em] text-[var(--accent)] uppercase mb-2 block">{item.tag}</span>
-                    <h3 className="font-black text-white text-2xl uppercase tracking-tight mb-2 relative">
+                    <h3 className="attention-product attention-heading text-white text-2xl mb-2 relative">
                       {item.title}
                       <span className="absolute -bottom-1 left-0 h-[1px] bg-[var(--accent)] w-0 group-hover:w-full transition-all duration-500" />
                     </h3>
@@ -486,7 +486,7 @@ export default function Lookbook() {
         <section className="py-24 bg-[#111111] text-center border-t border-white/[0.06]">
           <div className="max-w-[600px] mx-auto px-6">
             <div className="section-tag justify-center mb-6">Ready to Wear</div>
-            <h2 className="font-black text-white uppercase leading-[0.9] tracking-[-0.02em] mb-6"
+            <h2 className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-6"
               style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)' }}>
               Own the Look
             </h2>

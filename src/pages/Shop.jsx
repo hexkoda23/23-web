@@ -102,7 +102,7 @@ export default function Shop() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-12">
           <div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter uppercase mb-4">Shop</h1>
+            <h1 className="font-display attention-heading text-attention-outline text-black text-5xl md:text-7xl uppercase leading-[0.9] mb-4">Shop</h1>
             <p className="text-gray-500 text-sm md:text-base max-w-md">
               Discover our latest collection of premium essentials, crafted for the modern individual.
             </p>
@@ -171,7 +171,7 @@ export default function Shop() {
           <>
             {newProducts.length > 0 && (
               <div className="mb-16">
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase mb-6">Newly Arrived</h2>
+                <h2 className="attention-product attention-heading text-black text-3xl md:text-5xl mb-6">Newly Arrived</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
                   {newProducts.map(product => (
                     <ProductCard key={product.id} product={product} />
@@ -181,7 +181,7 @@ export default function Shop() {
             )}
             {unreleasedProducts.length > 0 && (
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase mb-6">Unreleased</h2>
+                <h2 className="attention-product attention-heading text-black text-3xl md:text-5xl mb-6">Unreleased</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
                   {unreleasedDisplay.map(product => (
                     <ProductCard key={product.id} product={product} />
@@ -194,7 +194,7 @@ export default function Shop() {
 
         {currentCategory === 'new' && (
           <>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase mb-6">Newly Arrived</h2>
+            <h2 className="attention-product attention-heading text-black text-3xl md:text-5xl mb-6">Newly Arrived</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
               {newProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
@@ -205,7 +205,7 @@ export default function Shop() {
 
         {currentCategory === 'unreleased' && (
           <>
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tighter uppercase mb-6">Unreleased</h2>
+            <h2 className="attention-product attention-heading text-black text-3xl md:text-5xl mb-6">Unreleased</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
               {unreleasedDisplay.map(product => (
                 <ProductCard key={product.id} product={product} />

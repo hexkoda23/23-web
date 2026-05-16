@@ -10,6 +10,7 @@ import Marquee from './Marquee';
 const navLinks = [
   { label: 'Lookbook', to: '/lookbook' },
   { label: 'Shop', to: '/shop' },
+  { label: '23 AI', to: '/ai-studio' },
   { label: 'Generate Fit', to: '/outfit-generator' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
@@ -58,7 +59,7 @@ export default function Navbar() {
             {/* Logo mark */}
             <Link to="/" className="z-50 flex items-center gap-3 group" data-cursor="VIEW">
               <div className={`w-9 h-9 border flex items-center justify-center transition-colors group-hover:border-[var(--accent)] ${isScrolled || isDarkPage ? 'border-white/30 text-white' : 'border-black/30 text-black'}`}>
-                <span className="font-mono font-bold text-sm tracking-tighter">23</span>
+                <span className="font-attention text-base leading-none">23</span>
               </div>
               <span className={`hidden sm:block font-mono text-[0.62rem] tracking-[0.2em] uppercase transition-colors group-hover:text-[var(--accent)] ${isScrolled || isDarkPage ? 'text-white/60' : 'text-black/50'}`}>
                 The Brand
@@ -141,7 +142,7 @@ export default function Navbar() {
             className="fixed inset-0 z-[55] lg:hidden bg-[var(--accent)] flex flex-col pt-32 px-8 pb-12 overflow-hidden"
           >
             {/* Big typographic background texture */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-black/5 font-display font-black text-[25vw] whitespace-nowrap pointer-events-none select-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-black/5 font-display attention-heading text-[25vw] whitespace-nowrap pointer-events-none select-none">
               23
             </div>
 
@@ -155,7 +156,7 @@ export default function Navbar() {
                 >
                   <Link
                     to={link.to}
-                    className="block font-display text-black font-bold text-5xl uppercase tracking-tighter hover:opacity-50 transition-opacity"
+                    className="block font-display attention-heading text-black text-[3.25rem] uppercase leading-[0.95] hover:opacity-50 transition-opacity"
                   >
                     {link.label}
                   </Link>
