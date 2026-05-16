@@ -16,6 +16,12 @@ const HERO_IMAGES = [
   '/lookbook/JF-15.JPG'
 ];
 
+const HERO_DESKTOP_IMAGES = [
+  { src: '/lookbook/JF-11.JPG', className: 'translate-y-10' },
+  { src: '/lookbook/JF-1.JPG', className: '-translate-y-8' },
+  { src: '/lookbook/JF-22.JPG', className: 'translate-y-14' },
+];
+
 const SOCIAL_IMAGES = [
   '/lookbook/1.jpg', '/lookbook/6.jpg', '/lookbook/3.jpg', '/lookbook/JF-22.JPG',
   '/lookbook/JF-15.JPG', '/lookbook/JF-8.JPG', '/lookbook/JF-1.JPG', '/lookbook/18.jpg'
@@ -23,7 +29,6 @@ const SOCIAL_IMAGES = [
 
 export default function Home() {
   const [currentHero, setCurrentHero] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 1000], [0, 400]); // Parallax 60% relative to wrapper
 
@@ -32,13 +37,6 @@ export default function Home() {
       setCurrentHero((prev) => (prev + 1) % HERO_IMAGES.length);
     }, 2500); // 2 seconds + crossfade time
     return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Diversify New Arrivals: Pick from different groups
@@ -93,21 +91,59 @@ export default function Home() {
           className="absolute inset-0 w-full h-[120%]"
           style={{ y: heroY }}
         >
-          {HERO_IMAGES.map((img, idx) => (
+          <div className="absolute inset-0 md:hidden">
+            {HERO_IMAGES.map((img, idx) => (
+              <motion.img
+                key={idx}
+                src={img}
+                alt="23 Collection"
+                className="absolute inset-0 w-full h-full object-cover object-top"
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{
+                  opacity: currentHero === idx ? 0.7 : 0,
+                  scale: currentHero === idx ? 1 : 1.1
+                }}
+                transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+              />
+            ))}
+          </div>
+
+          <div className="absolute inset-0 hidden md:block">
             <motion.img
-              key={idx}
-              src={img}
-              alt="23 Collection"
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{
-                opacity: currentHero === idx ? 0.7 : 0,
-                scale: currentHero === idx ? 1 : 1.1
-              }}
-              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+              src="/lookbook/18.jpg"
+              alt="23 editorial atmosphere"
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-35"
+              initial={{ scale: 1.04 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
             />
-          ))}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 z-0" />
+            <div className="absolute inset-y-8 left-[58%] right-6 lg:right-10 flex items-center justify-end gap-4 lg:gap-5 pointer-events-none">
+              {HERO_DESKTOP_IMAGES.map((item, idx) => {
+                const isActive = currentHero % HERO_DESKTOP_IMAGES.length === idx;
+                return (
+                  <motion.div
+                    key={item.src}
+                    className={`relative h-[66vh] w-[12vw] min-w-[140px] max-w-[210px] overflow-hidden border border-white/15 bg-white/5 shadow-[0_32px_80px_rgba(0,0,0,0.34)] ${item.className}`}
+                    initial={{ opacity: 0, y: 32 }}
+                    animate={{
+                      opacity: isActive ? 1 : 0.62,
+                      scale: isActive ? 1.02 : 0.97,
+                    }}
+                    transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <img
+                      src={item.src}
+                      alt="23 lookbook editorial"
+                      className="h-full w-full object-cover object-top"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-white/5" />
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.58)_38%,rgba(0,0,0,0.14)_66%,rgba(0,0,0,0.48)_100%)] md:bg-[linear-gradient(90deg,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.7)_34%,rgba(0,0,0,0.22)_62%,rgba(0,0,0,0.62)_100%)] z-0" />
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/20 to-transparent z-0" />
         </motion.div>
 
         <div className="absolute inset-0 flex flex-col justify-end pb-24 md:pb-32 px-6 lg:px-10 max-w-[1400px] mx-auto z-10">
@@ -118,7 +154,7 @@ export default function Home() {
           >
             <h1
               className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-4 max-w-[10ch]"
-              style={{ fontSize: 'clamp(4.15rem, 11vw, 9.5rem)' }}
+              style={{ fontSize: 'clamp(4.15rem, 9.2vw, 8.7rem)' }}
             >
               WEAR YOUR<br />WORLD
             </h1>
