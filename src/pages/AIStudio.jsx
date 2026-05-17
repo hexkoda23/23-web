@@ -49,6 +49,21 @@ import {
   trackStyleEvent,
 } from '../lib/styleEngine';
 
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+function readJsonStorage(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonStorage(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
 const loadImage = (src) => new Promise((resolve, reject) => {
   const img = new Image();
   if (!src.startsWith('data:') && !src.startsWith('blob:')) {
@@ -59,56 +74,28 @@ const loadImage = (src) => new Promise((resolve, reject) => {
   img.src = src;
 });
 
-async function createLocalTryOnPreview(photoSrc, productSrc, productName) {
-  const [subjectImage, productImage] = await Promise.all([
-    loadImage(photoSrc),
-    loadImage(productSrc),
-  ]);
-
-  const maxSide = 1080;
-  const scale = Math.min(1, maxSide / Math.max(subjectImage.naturalWidth, subjectImage.naturalHeight));
-  const width = Math.max(420, Math.round(subjectImage.naturalWidth * scale));
-  const height = Math.max(520, Math.round(subjectImage.naturalHeight * scale));
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+function removeLightGarmentBackground(canvas) {
   const ctx = canvas.getContext('2d');
-
-  const drawCover = (image, x, y, targetWidth, targetHeight) => {
-    const sourceRatio = image.naturalWidth / image.naturalHeight;
-    const targetRatio = targetWidth / targetHeight;
-    let sourceWidth = image.naturalWidth;
-    let sourceHeight = image.naturalHeight;
-    let sourceX = 0;
-    let sourceY = 0;
-
-    if (sourceRatio > targetRatio) {
-      sourceWidth = image.naturalHeight * targetRatio;
-      sourceX = (image.naturalWidth - sourceWidth) / 2;
-    } else {
-      sourceHeight = image.naturalWidth / targetRatio;
-      sourceY = (image.naturalHeight - sourceHeight) / 2;
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < pixels.data.length; i += 4) {
+    const r = pixels.data[i];
+    const g = pixels.data[i + 1];
+    const b = pixels.data[i + 2];
+    const isWhiteBackground = r > 236 && g > 236 && b > 232;
+    const isVeryLight = r > 224 && g > 224 && b > 218;
+    if (isWhiteBackground) {
+      pixels.data[i + 3] = 0;
+    } else if (isVeryLight) {
+      pixels.data[i + 3] = Math.min(pixels.data[i + 3], 132);
     }
+  }
+  ctx.putImageData(pixels, 0, 0);
+}
 
-    ctx.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, x, y, targetWidth, targetHeight);
-  };
-
-  drawCover(subjectImage, 0, 0, width, height);
-
-  const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, 'rgba(0,0,0,0.02)');
-  gradient.addColorStop(0.58, 'rgba(0,0,0,0)');
-  gradient.addColorStop(1, 'rgba(0,0,0,0.22)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-
-  const torsoWidth = width * (width < 560 ? 0.64 : 0.5);
-  const torsoHeight = Math.min(height * 0.42, torsoWidth * 1.22);
-  const torsoX = (width - torsoWidth) / 2;
-  const torsoY = height * 0.27;
+function drawProductIntoCanvas(productImage, targetWidth, targetHeight) {
   const garmentCanvas = document.createElement('canvas');
-  garmentCanvas.width = Math.round(torsoWidth);
-  garmentCanvas.height = Math.round(torsoHeight);
+  garmentCanvas.width = Math.round(targetWidth);
+  garmentCanvas.height = Math.round(targetHeight);
   const garmentCtx = garmentCanvas.getContext('2d');
   garmentCtx.clearRect(0, 0, garmentCanvas.width, garmentCanvas.height);
 
@@ -121,6 +108,7 @@ async function createLocalTryOnPreview(photoSrc, productSrc, productName) {
   } else {
     garmentWidth = garmentCanvas.height * productRatio;
   }
+
   garmentCtx.drawImage(
     productImage,
     (garmentCanvas.width - garmentWidth) / 2,
@@ -128,37 +116,248 @@ async function createLocalTryOnPreview(photoSrc, productSrc, productName) {
     garmentWidth,
     garmentHeight
   );
+  removeLightGarmentBackground(garmentCanvas);
+  return garmentCanvas;
+}
 
-  const pixels = garmentCtx.getImageData(0, 0, garmentCanvas.width, garmentCanvas.height);
-  for (let i = 0; i < pixels.data.length; i += 4) {
-    const r = pixels.data[i];
-    const g = pixels.data[i + 1];
-    const b = pixels.data[i + 2];
-    const isWhiteBackground = r > 236 && g > 236 && b > 232;
-    const isVeryLight = r > 224 && g > 224 && b > 218;
-    if (isWhiteBackground) {
-      pixels.data[i + 3] = 0;
-    } else if (isVeryLight) {
-      pixels.data[i + 3] = Math.min(pixels.data[i + 3], 120);
+function getCornerBackgroundColor(ctx, width, height) {
+  const sampleSize = Math.max(16, Math.round(Math.min(width, height) * 0.06));
+  const zones = [
+    [0, 0],
+    [width - sampleSize, 0],
+    [0, height - sampleSize],
+    [width - sampleSize, height - sampleSize],
+  ];
+  const totals = [0, 0, 0];
+  let count = 0;
+
+  zones.forEach(([x, y]) => {
+    const data = ctx.getImageData(x, y, sampleSize, sampleSize).data;
+    for (let i = 0; i < data.length; i += 16) {
+      totals[0] += data[i];
+      totals[1] += data[i + 1];
+      totals[2] += data[i + 2];
+      count += 1;
+    }
+  });
+
+  return totals.map(total => total / Math.max(1, count));
+}
+
+async function detectHumanFit(ctx, canvas) {
+  const { width, height } = canvas;
+  let face = null;
+
+  if ('FaceDetector' in window) {
+    try {
+      const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
+      const faces = await detector.detect(canvas);
+      if (faces?.length) {
+        const box = faces[0].boundingBox;
+        face = {
+          x: box.x,
+          y: box.y,
+          width: box.width,
+          height: box.height,
+        };
+      }
+    } catch {
+      face = null;
     }
   }
-  garmentCtx.putImageData(pixels, 0, 0);
+
+  const data = ctx.getImageData(0, 0, width, height).data;
+  const bg = getCornerBackgroundColor(ctx, width, height);
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  let foreground = 0;
+  let centerForeground = 0;
+  let upperSkin = 0;
+  const stride = Math.max(3, Math.round(Math.min(width, height) / 260));
+
+  for (let y = 0; y < height; y += stride) {
+    for (let x = 0; x < width; x += stride) {
+      const i = (y * width + x) * 4;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const bgDistance = Math.abs(r - bg[0]) + Math.abs(g - bg[1]) + Math.abs(b - bg[2]);
+      const brightness = (r + g + b) / 3;
+      const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+      const skinLike = r > 72 && g > 38 && b > 25 && r > g * 1.05 && r > b * 1.12 && saturation > 18;
+      const subjectPixel = bgDistance > 58 || (saturation > 42 && brightness > 32 && brightness < 235);
+
+      if (subjectPixel) {
+        foreground += 1;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+        if (x > width * 0.22 && x < width * 0.78) centerForeground += 1;
+      }
+      if (skinLike && y < height * 0.48) upperSkin += 1;
+    }
+  }
+
+  const sampleCount = Math.ceil(width / stride) * Math.ceil(height / stride);
+  const foregroundRatio = foreground / Math.max(1, sampleCount);
+  const centerRatio = centerForeground / Math.max(1, foreground);
+  const skinRatio = upperSkin / Math.max(1, sampleCount);
+  const box = foreground > 0
+    ? { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+    : { x: width * 0.2, y: height * 0.12, width: width * 0.6, height: height * 0.76 };
+
+  const personLikeSubject = box.height > height * 0.42 && box.width > width * 0.16 && box.width < width * 0.92 && centerRatio > 0.34;
+  const humanDetected = Boolean(face) || (personLikeSubject && (skinRatio > 0.004 || foregroundRatio > 0.08));
+
+  if (!humanDetected) {
+    return {
+      humanDetected: false,
+      confidence: Math.round(clamp((foregroundRatio + skinRatio * 8) * 100, 8, 55)),
+      reason: 'No clear person was detected. Upload a front-facing human photo from head to hips or full body.',
+      box,
+    };
+  }
+
+  let torso;
+  if (face) {
+    const centerX = face.x + face.width / 2;
+    const shoulderWidth = clamp(face.width * 3.15, width * 0.3, width * 0.74);
+    torso = {
+      x: clamp(centerX - shoulderWidth / 2, width * 0.04, width * 0.96 - shoulderWidth),
+      y: clamp(face.y + face.height * 1.08, height * 0.18, height * 0.54),
+      width: shoulderWidth,
+      height: clamp(shoulderWidth * 1.16, height * 0.24, height * 0.46),
+    };
+  } else {
+    const centerX = box.x + box.width / 2;
+    const torsoWidth = clamp(box.width * 0.78, width * 0.3, width * 0.72);
+    torso = {
+      x: clamp(centerX - torsoWidth / 2, width * 0.04, width * 0.96 - torsoWidth),
+      y: clamp(box.y + box.height * 0.24, height * 0.2, height * 0.58),
+      width: torsoWidth,
+      height: clamp(box.height * 0.4, height * 0.24, height * 0.48),
+    };
+  }
+
+  return {
+    humanDetected: true,
+    confidence: Math.round(clamp((face ? 86 : 64) + foregroundRatio * 30 + skinRatio * 250, 62, 97)),
+    method: face ? 'face + torso scan' : 'person foreground scan',
+    box,
+    face,
+    torso,
+  };
+}
+
+function getGarmentPlacement(scan, product, canvasWidth, canvasHeight) {
+  const category = inferFunctionalCategory(product);
+  const torso = scan.torso;
+  const personBox = scan.box || torso;
+
+  if (category.includes('full')) {
+    const width = clamp(personBox.width * 0.72, canvasWidth * 0.32, canvasWidth * 0.68);
+    const height = clamp(personBox.height * 0.7, canvasHeight * 0.42, canvasHeight * 0.76);
+    return {
+      x: clamp(personBox.x + personBox.width / 2 - width / 2, canvasWidth * 0.04, canvasWidth * 0.96 - width),
+      y: clamp(torso.y, canvasHeight * 0.18, canvasHeight * 0.58),
+      width,
+      height,
+      type: 'full fit',
+    };
+  }
+
+  if (category.includes('bottom') || product.name.toLowerCase().includes('pant') || product.name.toLowerCase().includes('denim') || product.name.toLowerCase().includes('short')) {
+    const width = clamp(personBox.width * 0.62, canvasWidth * 0.22, canvasWidth * 0.52);
+    const height = clamp(personBox.height * 0.44, canvasHeight * 0.2, canvasHeight * 0.46);
+    return {
+      x: clamp(personBox.x + personBox.width / 2 - width / 2, canvasWidth * 0.04, canvasWidth * 0.96 - width),
+      y: clamp(personBox.y + personBox.height * 0.5, canvasHeight * 0.38, canvasHeight * 0.82),
+      width,
+      height,
+      type: 'bottom',
+    };
+  }
+
+  if (category.includes('accessories') || product.name.toLowerCase().includes('cap')) {
+    const head = scan.face || {
+      x: personBox.x + personBox.width * 0.34,
+      y: personBox.y,
+      width: personBox.width * 0.32,
+      height: personBox.height * 0.18,
+    };
+    const width = clamp(head.width * 1.55, canvasWidth * 0.16, canvasWidth * 0.38);
+    const height = width * 0.72;
+    return {
+      x: clamp(head.x + head.width / 2 - width / 2, canvasWidth * 0.04, canvasWidth * 0.96 - width),
+      y: clamp(head.y - height * 0.34, canvasHeight * 0.02, canvasHeight * 0.38),
+      width,
+      height,
+      type: 'accessory',
+    };
+  }
+
+  return {
+    x: torso.x,
+    y: torso.y,
+    width: torso.width,
+    height: torso.height,
+    type: 'top',
+  };
+}
+
+async function createLocalTryOnPreview(photoSrc, product) {
+  const [subjectImage, productImage] = await Promise.all([
+    loadImage(photoSrc),
+    loadImage(product.image),
+  ]);
+
+  const maxSide = 1080;
+  const baseScale = Math.min(1, maxSide / Math.max(subjectImage.naturalWidth, subjectImage.naturalHeight));
+  const minScale = Math.max(1, 420 / Math.max(1, Math.min(subjectImage.naturalWidth, subjectImage.naturalHeight)));
+  const scale = Math.min(1.6, Math.max(baseScale, Math.min(minScale, 1.35)));
+  const width = Math.round(subjectImage.naturalWidth * scale);
+  const height = Math.round(subjectImage.naturalHeight * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(subjectImage, 0, 0, width, height);
+  const scan = await detectHumanFit(ctx, canvas);
+  if (!scan.humanDetected) {
+    const error = new Error(scan.reason);
+    error.scan = scan;
+    throw error;
+  }
+
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, 'rgba(0,0,0,0.02)');
+  gradient.addColorStop(0.58, 'rgba(0,0,0,0)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0.22)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  const placement = getGarmentPlacement(scan, product, width, height);
+  const garmentCanvas = drawProductIntoCanvas(productImage, placement.width, placement.height);
 
   ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,0.38)';
   ctx.shadowBlur = width * 0.035;
   ctx.shadowOffsetY = width * 0.015;
-  ctx.drawImage(garmentCanvas, torsoX, torsoY, torsoWidth, torsoHeight);
+  ctx.drawImage(garmentCanvas, placement.x, placement.y, placement.width, placement.height);
   ctx.restore();
 
   ctx.save();
   ctx.globalAlpha = 0.15;
   ctx.strokeStyle = '#F1ECE1';
   ctx.lineWidth = 2;
-  for (let y = torsoY - 18; y < torsoY + torsoHeight + 18; y += 22) {
+  for (let y = placement.y - 18; y < placement.y + placement.height + 18; y += 22) {
     ctx.beginPath();
-    ctx.moveTo(torsoX - 20, y);
-    ctx.lineTo(torsoX + torsoWidth + 20, y + 8);
+    ctx.moveTo(placement.x - 20, y);
+    ctx.lineTo(placement.x + placement.width + 20, y + 8);
     ctx.stroke();
   }
   ctx.restore();
@@ -169,13 +368,19 @@ async function createLocalTryOnPreview(photoSrc, productSrc, productName) {
   ctx.fillStyle = '#F1ECE1';
   ctx.font = `700 ${Math.max(11, width * 0.018)}px DM Sans, sans-serif`;
   ctx.letterSpacing = '2px';
-  ctx.fillText('23 TRY-ON SCAN COMPLETE', 34, height - 62);
+  ctx.fillText(`23 SCAN ${scan.confidence}% HUMAN FIT`, 34, height - 62);
   ctx.fillStyle = 'rgba(255,255,255,0.84)';
   ctx.font = `600 ${Math.max(10, width * 0.015)}px DM Sans, sans-serif`;
-  ctx.fillText(productName.slice(0, 42).toUpperCase(), 34, height - 40);
+  ctx.fillText(product.name.slice(0, 42).toUpperCase(), 34, height - 40);
   ctx.restore();
 
-  return canvas.toDataURL('image/jpeg', 0.92);
+  return {
+    dataUrl: canvas.toDataURL('image/jpeg', 0.92),
+    scan: {
+      ...scan,
+      placement,
+    },
+  };
 }
 
 const DEFAULT_ANSWERS = {
@@ -228,6 +433,13 @@ const MODULE_GUIDES = {
 };
 
 const CHALLENGE_STORAGE_KEY = '23_ai_challenge_submissions';
+const CHALLENGE_LIKES_KEY = '23_ai_challenge_likes';
+const CHALLENGE_SAVES_KEY = '23_ai_challenge_saves';
+const SUBMISSION_SAVES_KEY = '23_ai_submission_saves';
+const TREND_SAVES_KEY = '23_ai_trend_saves';
+const TREND_WATCH_KEY = '23_ai_trend_watchlist';
+const DESIGN_CONCEPTS_KEY = '23_ai_design_concepts';
+const DESIGN_SAVES_KEY = '23_ai_design_saves';
 
 function getStoredSubmissions() {
   try {
@@ -640,6 +852,7 @@ function TryOnLab({ initialProduct }) {
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState('idle');
   const [uploadError, setUploadError] = useState('');
+  const [scanResult, setScanResult] = useState(null);
   const selectedProduct = PRODUCTS.find(product => product.id === selectedProductId);
 
   const renderPreview = async (imageSrc = photoUrl, product = selectedProduct, hasConsent = consent) => {
@@ -647,15 +860,23 @@ function TryOnLab({ initialProduct }) {
     setStatus('generating');
     setStyledPreviewUrl('');
     setUploadError('');
+    setScanResult(null);
     trackStyleEvent('tryon_started', { productId: product.id });
     try {
-      const preview = await createLocalTryOnPreview(imageSrc, product.image, product.name);
-      setStyledPreviewUrl(preview);
+      const preview = await createLocalTryOnPreview(imageSrc, product);
+      setStyledPreviewUrl(preview.dataUrl);
+      setScanResult(preview.scan);
       setStatus('ready');
-      trackStyleEvent('tryon_preview_ready', { productId: product.id, mode: 'local-preview' });
-    } catch {
+      trackStyleEvent('tryon_preview_ready', {
+        productId: product.id,
+        mode: 'local-human-scan',
+        confidence: preview.scan.confidence,
+        placement: preview.scan.placement?.type,
+      });
+    } catch (error) {
       setStatus('error');
-      setUploadError('Preview failed for this image/product pair. Try another photo or item.');
+      setScanResult(error.scan || null);
+      setUploadError(error.message || 'Preview failed for this image/product pair. Try another photo or item.');
     }
   };
 
@@ -669,6 +890,7 @@ function TryOnLab({ initialProduct }) {
     setUploadError('');
     setStatus('scanning');
     setStyledPreviewUrl('');
+    setScanResult(null);
     const reader = new FileReader();
     reader.onload = () => {
       const nextPhotoUrl = String(reader.result || '');
@@ -691,6 +913,7 @@ function TryOnLab({ initialProduct }) {
     const nextProduct = PRODUCTS.find(product => product.id === nextProductId);
     setSelectedProductId(nextProductId);
     setStyledPreviewUrl('');
+    setScanResult(null);
     setStatus(photoUrl && consent ? 'generating' : photoUrl ? 'scanned' : 'idle');
     if (photoUrl && consent && nextProduct) {
       renderPreview(photoUrl, nextProduct, consent);
@@ -714,7 +937,7 @@ function TryOnLab({ initialProduct }) {
         <div className="bg-[#f3f0ea] p-5 md:p-7 border border-black/10 shadow-[0_28px_80px_rgba(0,0,0,0.06)]">
           <div className="section-tag mb-2">Try-Before-You-Buy</div>
           <p className="mb-7 max-w-sm text-sm leading-relaxed text-black/55">
-            A polished preview flow for testing virtual try-on APIs with consent, product selection, and quality controls.
+            Upload a real person photo. 23 scans for a human subject first, then sizes the selected piece to the detected torso, legs, or head area.
           </p>
           <div className="block">
             <span className="font-mono text-[9px] uppercase tracking-[0.22em] text-black/45">Upload photo</span>
@@ -732,6 +955,14 @@ function TryOnLab({ initialProduct }) {
           </div>
           {uploadError && (
             <p className="mt-3 text-xs leading-relaxed text-red-600">{uploadError}</p>
+          )}
+          {scanResult?.humanDetected && (
+            <div className="mt-3 border border-black/10 bg-white p-3">
+              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-black/40">Human scan</p>
+              <p className="mt-1 text-xs leading-relaxed text-black/60">
+                {scanResult.confidence}% confidence using {scanResult.method}. Placement: {scanResult.placement?.type || 'auto'}.
+              </p>
+            </div>
           )}
 
           <label className="block mt-5">
@@ -754,7 +985,7 @@ function TryOnLab({ initialProduct }) {
               onChange={handleConsentChange}
               className="mt-1 accent-black"
             />
-            <span>I consent to using this photo for a temporary AI preview. The preview may differ from real fit.</span>
+            <span>I consent to using this photo for a temporary scan and AI-style preview. The preview may differ from real fit.</span>
           </label>
 
           <button
@@ -827,6 +1058,11 @@ function TryOnLab({ initialProduct }) {
                       ? 'Retry'
                       : photoUrl ? 'Ready to style' : 'Queued'}
             </p>
+            {scanResult && (
+              <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-white/45">
+                Human {scanResult.confidence}%
+              </p>
+            )}
           </div>
           <div className="border border-white/10 p-4 md:col-span-2">
             <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/40">Selected product</p>
@@ -849,6 +1085,9 @@ function ChallengesArena() {
   const [profileName, setProfileName] = useState('23 member');
   const [submissionImage, setSubmissionImage] = useState('');
   const [submissionError, setSubmissionError] = useState('');
+  const [likedChallengeIds, setLikedChallengeIds] = useState(() => readJsonStorage(CHALLENGE_LIKES_KEY, []));
+  const [savedChallengeIds, setSavedChallengeIds] = useState(() => readJsonStorage(CHALLENGE_SAVES_KEY, []));
+  const [savedSubmissionIds, setSavedSubmissionIds] = useState(() => readJsonStorage(SUBMISSION_SAVES_KEY, []));
 
   const leaderboard = useMemo(() => {
     const userRows = submissions.map(item => ({
@@ -910,6 +1149,25 @@ function ChallengesArena() {
     trackStyleEvent('challenge_vote', { submissionId: id });
   };
 
+  const toggleListValue = (key, list, setter, id, eventName) => {
+    const next = list.includes(id)
+      ? list.filter(item => item !== id)
+      : [...list, id];
+    setter(next);
+    writeJsonStorage(key, next);
+    trackStyleEvent(eventName, { id, active: next.includes(id) });
+  };
+
+  const removeSubmission = (id) => {
+    const nextSubmissions = submissions.filter(item => item.id !== id);
+    setSubmissions(nextSubmissions);
+    setStoredSubmissions(nextSubmissions);
+    const nextSaved = savedSubmissionIds.filter(item => item !== id);
+    setSavedSubmissionIds(nextSaved);
+    writeJsonStorage(SUBMISSION_SAVES_KEY, nextSaved);
+    trackStyleEvent('challenge_submission_removed', { id });
+  };
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
       <section className="xl:col-span-8 space-y-6">
@@ -931,16 +1189,20 @@ function ChallengesArena() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {STYLE_CHALLENGES.map(challenge => (
-            <button
+            <article
               key={challenge.id}
-              onClick={() => setSelectedChallenge(challenge)}
-              className={`text-left border overflow-hidden transition-colors ${
+              className={`border overflow-hidden transition-colors ${
                 selectedChallenge.id === challenge.id ? 'border-black bg-black text-white' : 'border-black/10 bg-white hover:border-black'
               }`}
             >
-              <div className="aspect-[16/10] overflow-hidden">
+              <button
+                onClick={() => setSelectedChallenge(challenge)}
+                className="w-full text-left"
+              >
+                <div className="aspect-[16/10] overflow-hidden">
                 <img src={challenge.image} alt={challenge.title} className="w-full h-full object-cover" />
-              </div>
+                </div>
+              </button>
               <div className="p-4">
                 <div className="flex justify-between gap-4">
                   <span className="font-mono text-[9px] uppercase tracking-[0.16em] opacity-60">{challenge.tag}</span>
@@ -950,8 +1212,36 @@ function ChallengesArena() {
                 </div>
                 <h3 className="mt-2 attention-product attention-heading text-2xl">{challenge.title}</h3>
                 <p className="mt-2 text-sm opacity-65">{challenge.theme}</p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setSelectedChallenge(challenge)}
+                    className={`h-9 border font-mono text-[8px] uppercase tracking-[0.12em] transition-colors ${
+                      selectedChallenge.id === challenge.id ? 'border-white/20 text-white' : 'border-black/10 hover:border-black'
+                    }`}
+                  >
+                    Select
+                  </button>
+                  <button
+                    onClick={() => toggleListValue(CHALLENGE_LIKES_KEY, likedChallengeIds, setLikedChallengeIds, challenge.id, 'challenge_like')}
+                    className={`h-9 border font-mono text-[8px] uppercase tracking-[0.12em] flex items-center justify-center gap-1 transition-colors ${
+                      selectedChallenge.id === challenge.id ? 'border-white/20 text-white' : 'border-black/10 hover:border-black'
+                    }`}
+                  >
+                    <Heart size={12} fill={likedChallengeIds.includes(challenge.id) ? 'currentColor' : 'none'} />
+                    {likedChallengeIds.includes(challenge.id) ? 'Liked' : 'Like'}
+                  </button>
+                  <button
+                    onClick={() => toggleListValue(CHALLENGE_SAVES_KEY, savedChallengeIds, setSavedChallengeIds, challenge.id, 'challenge_save')}
+                    className={`h-9 border font-mono text-[8px] uppercase tracking-[0.12em] flex items-center justify-center gap-1 transition-colors ${
+                      selectedChallenge.id === challenge.id ? 'border-white/20 text-white' : 'border-black/10 hover:border-black'
+                    }`}
+                  >
+                    <Bookmark size={12} fill={savedChallengeIds.includes(challenge.id) ? 'currentColor' : 'none'} />
+                    {savedChallengeIds.includes(challenge.id) ? 'Saved' : 'Save'}
+                  </button>
+                </div>
               </div>
-            </button>
+            </article>
           ))}
         </div>
 
@@ -1009,13 +1299,28 @@ function ChallengesArena() {
               <div className="p-4">
                 <p className="font-bold uppercase text-sm truncate">{item.name}</p>
                 <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.14em] text-black/40">{item.challengeTitle}</p>
-                <button
-                  onClick={() => voteFor(item.id)}
-                  className="mt-4 w-full h-9 border border-black/10 hover:border-black font-mono text-[9px] uppercase tracking-[0.14em] flex items-center justify-center gap-2"
-                >
-                  <Heart size={13} />
-                  Vote {item.votes}
-                </button>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => voteFor(item.id)}
+                    className="h-9 border border-black/10 hover:border-black font-mono text-[9px] uppercase tracking-[0.14em] flex items-center justify-center gap-2"
+                  >
+                    <Heart size={13} />
+                    Vote {item.votes}
+                  </button>
+                  <button
+                    onClick={() => toggleListValue(SUBMISSION_SAVES_KEY, savedSubmissionIds, setSavedSubmissionIds, item.id, 'challenge_submission_save')}
+                    className="h-9 border border-black/10 hover:border-black font-mono text-[9px] uppercase tracking-[0.14em] flex items-center justify-center gap-2"
+                  >
+                    <Bookmark size={13} fill={savedSubmissionIds.includes(item.id) ? 'currentColor' : 'none'} />
+                    {savedSubmissionIds.includes(item.id) ? 'Saved' : 'Save'}
+                  </button>
+                  <button
+                    onClick={() => removeSubmission(item.id)}
+                    className="col-span-2 h-9 border border-black/10 hover:border-black font-mono text-[9px] uppercase tracking-[0.14em]"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             </article>
           ))}
@@ -1048,6 +1353,22 @@ function ChallengesArena() {
 
 function TrendPredictor({ onTrendSelect, selectedTrendId }) {
   const catalogStats = useMemo(() => getCatalogStats(PRODUCTS), []);
+  const [savedTrendIds, setSavedTrendIds] = useState(() => readJsonStorage(TREND_SAVES_KEY, []));
+  const [watchTrendIds, setWatchTrendIds] = useState(() => readJsonStorage(TREND_WATCH_KEY, []));
+
+  const toggleTrend = (key, list, setter, trend, eventName) => {
+    const next = list.includes(trend.id)
+      ? list.filter(id => id !== trend.id)
+      : [...list, trend.id];
+    setter(next);
+    writeJsonStorage(key, next);
+    trackStyleEvent(eventName, { trendId: trend.id, active: next.includes(trend.id) });
+  };
+
+  const selectTrend = (trend, action = 'select') => {
+    onTrendSelect(trend.id);
+    trackStyleEvent('trend_action', { trendId: trend.id, action });
+  };
 
   return (
     <div className="space-y-8">
@@ -1069,22 +1390,23 @@ function TrendPredictor({ onTrendSelect, selectedTrendId }) {
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {TREND_SIGNALS.map(trend => (
-          <button
+          <article
             key={trend.id}
-            onClick={() => onTrendSelect(trend.id)}
             className={`text-left border p-5 transition-colors ${
               selectedTrendId === trend.id ? 'border-black bg-black text-white' : 'border-black/10 bg-white hover:border-black'
             }`}
           >
-            <div className="flex items-start justify-between gap-5">
-              <div>
-                <p className="font-mono text-[9px] uppercase tracking-[0.16em] opacity-50">{trend.platform}</p>
-                <h3 className="mt-2 attention-product attention-heading text-3xl">{trend.name}</h3>
+            <button onClick={() => selectTrend(trend)} className="w-full text-left">
+              <div className="flex items-start justify-between gap-5">
+                <div>
+                  <p className="font-mono text-[9px] uppercase tracking-[0.16em] opacity-50">{trend.platform}</p>
+                  <h3 className="mt-2 attention-product attention-heading text-3xl">{trend.name}</h3>
+                </div>
+                <p className={`font-display attention-heading text-3xl ${
+                  selectedTrendId === trend.id ? 'text-[var(--accent)]' : 'text-black/45'
+                }`}>{trend.confidence}</p>
               </div>
-              <p className={`font-display attention-heading text-3xl ${
-                selectedTrendId === trend.id ? 'text-[var(--accent)]' : 'text-black/45'
-              }`}>{trend.confidence}</p>
-            </div>
+            </button>
             <div className="mt-5 h-2 bg-black/10 overflow-hidden">
               <div className="h-full bg-[var(--accent)]" style={{ width: `${trend.growth}%` }} />
             </div>
@@ -1098,7 +1420,35 @@ function TrendPredictor({ onTrendSelect, selectedTrendId }) {
               ))}
             </div>
             <p className="mt-5 text-sm leading-relaxed opacity-70">{trend.action}</p>
-          </button>
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <button
+                onClick={() => selectTrend(trend, 'use_for_designs')}
+                className={`h-10 border font-mono text-[8px] uppercase tracking-[0.12em] transition-colors ${
+                  selectedTrendId === trend.id ? 'border-white/20 hover:bg-white/10' : 'border-black/10 hover:border-black'
+                }`}
+              >
+                Use
+              </button>
+              <button
+                onClick={() => toggleTrend(TREND_SAVES_KEY, savedTrendIds, setSavedTrendIds, trend, 'trend_save')}
+                className={`h-10 border font-mono text-[8px] uppercase tracking-[0.12em] flex items-center justify-center gap-1 transition-colors ${
+                  selectedTrendId === trend.id ? 'border-white/20 hover:bg-white/10' : 'border-black/10 hover:border-black'
+                }`}
+              >
+                <Bookmark size={12} fill={savedTrendIds.includes(trend.id) ? 'currentColor' : 'none'} />
+                {savedTrendIds.includes(trend.id) ? 'Saved' : 'Save'}
+              </button>
+              <button
+                onClick={() => toggleTrend(TREND_WATCH_KEY, watchTrendIds, setWatchTrendIds, trend, 'trend_watch')}
+                className={`h-10 border font-mono text-[8px] uppercase tracking-[0.12em] flex items-center justify-center gap-1 transition-colors ${
+                  selectedTrendId === trend.id ? 'border-white/20 hover:bg-white/10' : 'border-black/10 hover:border-black'
+                }`}
+              >
+                <Eye size={12} />
+                {watchTrendIds.includes(trend.id) ? 'Watching' : 'Watch'}
+              </button>
+            </div>
+          </article>
         ))}
       </section>
     </div>
@@ -1108,7 +1458,8 @@ function TrendPredictor({ onTrendSelect, selectedTrendId }) {
 function DesignEngine({ selectedTrendId }) {
   const selectedTrend = TREND_SIGNALS.find(trend => trend.id === selectedTrendId) || TREND_SIGNALS[0];
   const [directionId, setDirectionId] = useState(DESIGN_DIRECTIONS[0].id);
-  const [concepts, setConcepts] = useState([]);
+  const [concepts, setConcepts] = useState(() => readJsonStorage(DESIGN_CONCEPTS_KEY, []));
+  const [savedConceptIds, setSavedConceptIds] = useState(() => readJsonStorage(DESIGN_SAVES_KEY, []));
   const direction = DESIGN_DIRECTIONS.find(item => item.id === directionId) || DESIGN_DIRECTIONS[0];
 
   const generateConcept = () => {
@@ -1123,9 +1474,39 @@ function DesignEngine({ selectedTrendId }) {
       trend: selectedTrend.name,
       story: `${selectedTrend.name} translated into ${direction.language}.`,
       prompt: `Create a streetwear ${productType.toLowerCase()} concept for 23. It should feel bold, clean, youthful, and premium. Use ${colorway}. Reference ${selectedTrend.name}. Avoid generic clipart. Make it production-ready for a limited Lagos-born drop.`,
+      approved: false,
+      liked: false,
     };
-    setConcepts([concept, ...concepts].slice(0, 6));
+    const nextConcepts = [concept, ...concepts].slice(0, 6);
+    setConcepts(nextConcepts);
+    writeJsonStorage(DESIGN_CONCEPTS_KEY, nextConcepts);
     trackStyleEvent('design_concept_generated', { trendId: selectedTrend.id, directionId });
+  };
+
+  const updateConcept = (conceptId, updates, eventName) => {
+    const nextConcepts = concepts.map(concept => (
+      concept.id === conceptId ? { ...concept, ...updates } : concept
+    ));
+    setConcepts(nextConcepts);
+    writeJsonStorage(DESIGN_CONCEPTS_KEY, nextConcepts);
+    trackStyleEvent(eventName, { conceptId, ...updates });
+  };
+
+  const toggleConceptSave = (conceptId) => {
+    const next = savedConceptIds.includes(conceptId)
+      ? savedConceptIds.filter(id => id !== conceptId)
+      : [...savedConceptIds, conceptId];
+    setSavedConceptIds(next);
+    writeJsonStorage(DESIGN_SAVES_KEY, next);
+    trackStyleEvent('design_concept_saved', { conceptId, active: next.includes(conceptId) });
+  };
+
+  const clearConcepts = () => {
+    setConcepts([]);
+    setSavedConceptIds([]);
+    writeJsonStorage(DESIGN_CONCEPTS_KEY, []);
+    writeJsonStorage(DESIGN_SAVES_KEY, []);
+    trackStyleEvent('design_queue_cleared', {});
   };
 
   return (
@@ -1159,6 +1540,14 @@ function DesignEngine({ selectedTrendId }) {
             <Wand2 size={15} />
             Generate Concept
           </button>
+          {concepts.length > 0 && (
+            <button
+              onClick={clearConcepts}
+              className="mt-3 w-full h-10 border border-black/10 hover:border-black font-mono text-[9px] uppercase tracking-[0.14em]"
+            >
+              Clear Queue
+            </button>
+          )}
         </div>
 
         <div className="border border-black/10 p-5">
@@ -1204,12 +1593,30 @@ function DesignEngine({ selectedTrendId }) {
                     <p className="text-xs leading-relaxed text-black/60">{concept.prompt}</p>
                   </div>
                   <button
-                    onClick={() => trackStyleEvent('design_concept_saved', { conceptId: concept.id })}
+                    onClick={() => toggleConceptSave(concept.id)}
                     className="mt-4 h-10 w-full border border-black/10 hover:border-black font-mono text-[9px] uppercase tracking-[0.14em] flex items-center justify-center gap-2"
                   >
-                    <Bookmark size={13} />
-                    Mark for curation
+                    <Bookmark size={13} fill={savedConceptIds.includes(concept.id) ? 'currentColor' : 'none'} />
+                    {savedConceptIds.includes(concept.id) ? 'Saved for curation' : 'Mark for curation'}
                   </button>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => updateConcept(concept.id, { liked: !concept.liked }, 'design_concept_liked')}
+                      className="h-10 border border-black/10 hover:border-black font-mono text-[9px] uppercase tracking-[0.14em] flex items-center justify-center gap-2"
+                    >
+                      <Heart size={13} fill={concept.liked ? 'currentColor' : 'none'} />
+                      {concept.liked ? 'Liked' : 'Like'}
+                    </button>
+                    <button
+                      onClick={() => updateConcept(concept.id, { approved: !concept.approved }, 'design_concept_approved')}
+                      className={`h-10 border font-mono text-[9px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 ${
+                        concept.approved ? 'bg-black text-white border-black' : 'border-black/10 hover:border-black'
+                      }`}
+                    >
+                      <Check size={13} />
+                      {concept.approved ? 'Approved' : 'Approve'}
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
@@ -1222,8 +1629,8 @@ function DesignEngine({ selectedTrendId }) {
 
 export default function AIStudio() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || (searchParams.get('tryOn') ? 'tryon' : 'stylist');
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const requestedTab = searchParams.get('tab') || (searchParams.get('tryOn') ? 'tryon' : 'stylist');
+  const activeTab = TABS.some(tab => tab.id === requestedTab) ? requestedTab : 'stylist';
   const [answers, setAnswers] = useState(() => ({ ...DEFAULT_ANSWERS, ...(loadStylePreferences() || {}) }));
   const [selectedTrendId, setSelectedTrendId] = useState(TREND_SIGNALS[0].id);
   const focusProductId = searchParams.get('style');
@@ -1236,7 +1643,6 @@ export default function AIStudio() {
   const heroCategory = heroProduct ? inferFunctionalCategory(heroProduct) : 'tops';
 
   const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('tab', tabId);
     setSearchParams(nextParams);

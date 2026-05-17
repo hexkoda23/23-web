@@ -69,6 +69,7 @@ function App() {
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/identity-forge" element={<ProtectedRoute><IdentityForge /></ProtectedRoute>} />
             <Route path="/profile/:id" element={<DigitalProfile />} />
+            <Route path="*" element={<Home />} />
           </Routes>
         </main>
         <Footer />
