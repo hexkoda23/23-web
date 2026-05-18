@@ -1,242 +1,519 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, User } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
+import { X, Send } from 'lucide-react';
 import { askGroq } from '../lib/ai';
+import { PRODUCTS } from '../data/products';
+import { inferColorTags, inferFunctionalCategory, inferStyleTags } from '../lib/styleEngine';
+
+const KNOWLEDGE_MODULES = import.meta.glob('../data/knowledge/*.txt', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+const BRAND_FACTS = {
+  payment: [
+    'Bank: OPay',
+    'Account Number: 8072715465',
+    'Account Name: Ashibogwu Chukwudi Hilary',
+    'After payment, send your receipt and delivery address to WhatsApp: https://wa.me/2348107869063 or Instagram: @twentythreepreppy.',
+  ].join('\n'),
+  contact: 'Email: twentythreepreppy@gmail.com. Instagram: @twentythreepreppy. WhatsApp: 08107869063.',
+  shipping: '23 ships worldwide with tracked delivery. Estimated delivery: Nigeria 1-3 business days, Africa 3-7 business days, international 5-10 business days.',
+  owner: '23 is owned by Adeleke Kehinde Boluwatife. The brand manager is Ashibogwu Chukwudi Hilary.',
+  policies: 'Returns are accepted within 7 days when the item is unworn, in original condition, and still has tags attached. Exchanges depend on available stock. Customized items are final sale.',
+  customization: 'Selected 23 pieces can be personalized through Identity Forge. Customers can start from the product page or DM @twentythreepreppy for studio help.',
+  about: '23 is a Lagos-based fashion house building premium preppy-meets-streetwear pieces with clean silhouettes, strong identity, and limited-drop energy.',
+  pricing: 'General price guide: caps and some accessories start around NGN 12,000-NGN 25,000; classic tees are usually NGN 20,000-NGN 30,000; premium denim and sets are usually NGN 45,000-NGN 50,000. For exact pricing, ask for the product name.',
+};
+
+const STOP_WORDS = new Set([
+  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by', 'can', 'do', 'does',
+  'for', 'from', 'give', 'has', 'have', 'how', 'i', 'in', 'is', 'it', 'me',
+  'much', 'my', 'of', 'on', 'or', 'our', 'please', 'show', 'that', 'the', 'this',
+  'to', 'us', 'we', 'what', 'when', 'where', 'who', 'with', 'you', 'your',
+]);
+
+const GENERIC_PRODUCT_TERMS = new Set([
+  'available', 'buy', 'cost', 'details', 'item', 'much', 'order', 'pay',
+  'payment', 'piece', 'price', 'product', 'purchase', 'size', 'sizes', 'stock',
+]);
+
+const PRODUCT_CATEGORY_ALIASES = {
+  cap: ['accessories', 'cap'],
+  hat: ['accessories', 'cap', 'beanie'],
+  beanie: ['accessories', 'beanie'],
+  sunglasses: ['accessories', 'sunglasses'],
+  glasses: ['accessories', 'sunglasses'],
+  scarf: ['accessories', 'scarf'],
+  bag: ['accessories', 'bag', 'sacoche'],
+  shoe: ['shoes', 'shoe'],
+  shoes: ['shoes', 'shoe'],
+  shirt: ['tops', 'top', 'tee', 'tshirt'],
+  tee: ['tops', 'tee', 'tshirt'],
+  tshirt: ['tops', 'tee', 'tshirt'],
+  top: ['tops', 'top', 'tee'],
+  denim: ['bottoms', 'denim', 'jean', 'short'],
+  jeans: ['bottoms', 'denim', 'jean'],
+  short: ['bottoms', 'short'],
+  shorts: ['bottoms', 'short'],
+  pants: ['bottoms', 'pant', 'trouser'],
+  tracksuit: ['fullfit', 'set', 'track'],
+  set: ['fullfit', 'set'],
+  sweats: ['fullfit', 'sweat'],
+};
+
+const INTENT_TERMS = {
+  payment: ['pay', 'payment', 'opay', 'bank', 'account', 'transfer', 'receipt', 'buy', 'order', 'purchase', 'checkout', 'name', 'number'],
+  contact: ['contact', 'whatsapp', 'phone', 'email', 'instagram', 'dm', 'message', 'reach'],
+  shipping: ['shipping', 'ship', 'delivery', 'deliver', 'track', 'arrive', 'eta', 'days', 'location'],
+  policy: ['return', 'refund', 'exchange', 'policy', 'policies', 'final', 'sale', 'cancel'],
+  owner: ['owner', 'founder', 'owns', 'created', 'ceo', 'manager', 'boss'],
+  customization: ['custom', 'customize', 'personalize', 'identity', 'forge', 'bespoke', 'name', 'design'],
+  price: ['price', 'cost', 'amount', 'how much', 'expensive', 'cheap', 'budget', 'naira', 'ngn'],
+  product: ['available', 'stock', 'size', 'sizes', 'shirt', 'tee', 'cap', 'denim', 'short', 'pants', 'tracksuit', 'set', 'shoe', 'scarf', 'bag', 'sunglasses', 'beanie'],
+  care: ['wash', 'clean', 'care', 'stain', 'iron', 'dry', 'cotton', 'wool', 'leather', 'silk', 'denim'],
+  style: ['style', 'wear', 'pair', 'outfit', 'fit', 'recommend', 'match', 'occasion', 'vibe', 'look'],
+  trend: ['trend', 'trending', 'fashion', 'latest', 'modern', 'popular'],
+  about: ['about', 'brand', 'meaning', 'story', 'history', '23', 'twentythree', 'twenty', 'three'],
+};
+
+function normalizeText(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\bxxiii\b/g, ' 23 ')
+    .replace(/\btwenty\s*three\b/g, ' 23 ')
+    .replace(/\bnaira\b/g, ' ngn ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokenize(value) {
+  return normalizeText(value)
+    .split(/\s+/)
+    .filter(term => term.length > 1 && !STOP_WORDS.has(term));
+}
+
+function formatMoney(value) {
+  return `NGN ${Number(value || 0).toLocaleString('en-NG')}`;
+}
+
+function detectIntent(query, history = []) {
+  const normalized = normalizeText(query);
+  const historyText = normalizeText(history.slice(-4).map(item => item.content).join(' '));
+
+  if (/^(hi|hello|hey|yo|sup|good morning|good afternoon|good evening)$/.test(normalized)) {
+    return 'greeting';
+  }
+
+  if (/^(ok|okay|thanks|thank you|cool)$/.test(normalized)) {
+    return 'thanks';
+  }
+
+  if (/^(name|account name|acct name)$/.test(normalized) && /(opay|payment|bank|account)/.test(historyText)) {
+    return 'payment_name';
+  }
+
+  if (/^(number|account number|acct number)$/.test(normalized) && /(opay|payment|bank|account)/.test(historyText)) {
+    return 'payment_number';
+  }
+
+  const scores = Object.entries(INTENT_TERMS).map(([intent, terms]) => {
+    const score = terms.reduce((sum, term) => (
+      normalized.includes(normalizeText(term)) ? sum + (term.includes(' ') ? 3 : 1) : sum
+    ), 0);
+    return [intent, score];
+  }).sort((a, b) => b[1] - a[1]);
+
+  return scores[0]?.[1] > 0 ? scores[0][0] : 'general';
+}
+
+function parseKnowledgeFiles() {
+  const content = Object.values(KNOWLEDGE_MODULES).map(text => String(text)).join('\n');
+  const rawLines = content.split(/\r?\n/);
+  const docs = [];
+  let currentQuestion = null;
+  let currentAnswer = [];
+
+  const pushQA = () => {
+    if (currentQuestion && currentAnswer.length) {
+      docs.push(createKnowledgeDoc(currentQuestion, currentAnswer.join(' ').trim()));
+    }
+    currentQuestion = null;
+    currentAnswer = [];
+  };
+
+  for (let i = 0; i < rawLines.length; i += 1) {
+    const line = rawLines[i].trim();
+    if (!line) {
+      pushQA();
+      continue;
+    }
+
+    const question = line.match(/^Q:\s*(.+)$/i);
+    if (question) {
+      pushQA();
+      currentQuestion = question[1].trim();
+      continue;
+    }
+
+    const answer = line.match(/^A:\s*(.+)$/i);
+    if (answer) {
+      currentAnswer.push(answer[1].trim());
+      continue;
+    }
+
+    const heading = line.match(/^([A-Za-z0-9][^:]{1,80}):\s*$/);
+    if (heading) {
+      pushQA();
+      const block = [];
+      let j = i + 1;
+      while (j < rawLines.length) {
+        const nextLine = rawLines[j].trim();
+        if (!nextLine || /^Q:\s*/i.test(nextLine) || /^A:\s*/i.test(nextLine) || /^([A-Za-z0-9][^:]{1,80}):\s*$/.test(nextLine)) break;
+        block.push(nextLine);
+        j += 1;
+      }
+      if (block.length) docs.push(createKnowledgeDoc(heading[1].trim(), block.join(' ')));
+      i = j - 1;
+      continue;
+    }
+
+    if (currentQuestion) {
+      currentAnswer.push(line);
+      continue;
+    }
+
+    const keyValue = line.match(/^(.+?):\s*(.+)$/);
+    if (keyValue && !line.startsWith('http')) {
+      docs.push(createKnowledgeDoc(keyValue[1].trim(), keyValue[2].trim()));
+    }
+  }
+
+  pushQA();
+  return docs;
+}
+
+function inferDocIntent(text) {
+  const normalized = normalizeText(text);
+  const best = Object.entries(INTENT_TERMS).map(([intent, terms]) => [
+    intent,
+    terms.reduce((score, term) => (normalized.includes(normalizeText(term)) ? score + 1 : score), 0),
+  ]).sort((a, b) => b[1] - a[1])[0];
+  return best?.[1] > 0 ? best[0] : 'general';
+}
+
+function createKnowledgeDoc(title, answer) {
+  const text = `${title} ${answer}`;
+  return {
+    id: `kb-${normalizeText(title).slice(0, 48)}`,
+    type: 'knowledge',
+    intent: inferDocIntent(text),
+    title,
+    answer,
+    text,
+    keywords: tokenize(text),
+  };
+}
+
+function createFactDocs() {
+  return [
+    ['payment', 'Payment details', BRAND_FACTS.payment],
+    ['contact', 'Contact 23', BRAND_FACTS.contact],
+    ['shipping', 'Shipping and delivery', BRAND_FACTS.shipping],
+    ['owner', 'Owner and brand manager', BRAND_FACTS.owner],
+    ['policy', 'Returns, exchanges, and policies', BRAND_FACTS.policies],
+    ['customization', 'Customization and Identity Forge', BRAND_FACTS.customization],
+    ['about', 'About 23', BRAND_FACTS.about],
+    ['price', 'Price guide', BRAND_FACTS.pricing],
+  ].map(([intent, title, answer]) => ({
+    id: `fact-${intent}`,
+    type: 'fact',
+    intent,
+    title,
+    answer,
+    text: `${title} ${answer}`,
+    keywords: tokenize(`${title} ${answer}`),
+  }));
+}
+
+function createProductDocs() {
+  return PRODUCTS
+    .filter(product => !product.hidden)
+    .map(product => {
+      const category = inferFunctionalCategory(product);
+      const colors = inferColorTags(product);
+      const styles = inferStyleTags(product);
+      const sizes = product.sizes?.join(', ') || 'Ask for size availability';
+      const status = product.inStock ? 'in stock' : product.comingSoon ? 'coming soon' : 'sold out';
+      const text = [
+        product.id,
+        product.name,
+        product.category,
+        category,
+        product.variantGroup,
+        product.description,
+        product.writeUp,
+        colors.join(' '),
+        styles.join(' '),
+        sizes,
+        status,
+        formatMoney(product.price),
+      ].filter(Boolean).join(' ');
+
+      return {
+        id: `product-${product.id}`,
+        type: 'product',
+        intent: 'product',
+        product,
+        title: product.name,
+        answer: `${product.name} costs ${formatMoney(product.price)}. Category: ${category}. Sizes: ${sizes}. Status: ${status}. ${product.description || ''}`.trim(),
+        text,
+        keywords: tokenize(text),
+        category,
+        colors,
+        styles,
+        sizes,
+        status,
+      };
+    });
+}
+
+const BASE_DOCS = [
+  ...createFactDocs(),
+  ...parseKnowledgeFiles(),
+  ...createProductDocs(),
+];
+
+function scoreDocument(doc, query, terms, intent) {
+  const normalizedQuery = normalizeText(query);
+  const normalizedTitle = normalizeText(doc.title);
+  const normalizedText = normalizeText(doc.text);
+  const words = new Set(normalizedText.split(/\s+/));
+  const titleWords = new Set(normalizedTitle.split(/\s+/));
+  let score = 0;
+
+  if (normalizedQuery.length > 2 && normalizedTitle.includes(normalizedQuery)) score += 75;
+  if (normalizedQuery.length > 2 && normalizedText.includes(normalizedQuery)) score += 35;
+  if (doc.intent === intent) score += 18;
+  if ((intent === 'price' || intent === 'product') && doc.type === 'product') score += 12;
+  if ((intent === 'style' || intent === 'care') && doc.type === 'knowledge') score += 6;
+
+  terms.forEach(term => {
+    if (titleWords.has(term)) score += 14;
+    if (doc.keywords.includes(term)) score += 9;
+    if (words.has(term)) score += 6;
+    if (normalizedTitle.includes(term)) score += 4;
+    if (normalizedText.includes(term)) score += 2;
+  });
+
+  if (doc.type === 'product') {
+    const productName = normalizeText(doc.product.name);
+    const category = normalizeText(doc.category);
+    if (terms.some(term => productName.includes(term))) score += 12;
+    if (terms.some(term => category.includes(term))) score += 10;
+  }
+
+  return score;
+}
+
+function getRankedDocs(query, intent, limit = 8) {
+  const terms = tokenize(query);
+  if (!terms.length && intent !== 'greeting' && intent !== 'thanks') return [];
+
+  return BASE_DOCS
+    .map(doc => ({ ...doc, score: scoreDocument(doc, query, terms, intent) }))
+    .filter(doc => doc.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+
+function getFocusedProductDocs(query, rankedDocs) {
+  const terms = tokenize(query).filter(term => !GENERIC_PRODUCT_TERMS.has(term));
+  if (!terms.length) return [];
+
+  return rankedDocs.filter(doc => {
+    if (doc.type !== 'product') return false;
+
+    const productFocusText = normalizeText([
+      doc.product.id,
+      doc.product.name,
+      doc.product.category,
+      doc.product.variantGroup,
+      doc.category,
+      doc.colors?.join(' '),
+      doc.styles?.join(' '),
+    ].filter(Boolean).join(' '));
+
+    const focusWords = new Set(productFocusText.split(/\s+/));
+    return terms.some(term => {
+      if (focusWords.has(term) || productFocusText.includes(term)) return true;
+      const aliases = PRODUCT_CATEGORY_ALIASES[term] || [];
+      return aliases.some(alias => productFocusText.includes(normalizeText(alias)));
+    });
+  });
+}
+
+function formatProductDetails(productDocs, limit = 3) {
+  return productDocs.slice(0, limit).map((doc, index) => {
+    const product = doc.product;
+    const sizes = product.sizes?.join(', ') || 'Ask for size availability';
+    const status = product.inStock ? 'in stock' : product.comingSoon ? 'coming soon' : 'sold out';
+    return `${index + 1}. ${product.name} - ${formatMoney(product.price)}. Sizes: ${sizes}. Status: ${status}. ${product.description || ''} View: /product/${product.id}`;
+  }).join('\n');
+}
+
+function bestDocAnswer(rankedDocs, intent) {
+  return rankedDocs.find(doc => doc.intent === intent)?.answer || rankedDocs[0]?.answer || null;
+}
+
+function buildStyleAnswer(productDocs) {
+  const picks = productDocs.length
+    ? productDocs.slice(0, 3)
+    : BASE_DOCS.filter(doc => doc.type === 'product' && doc.product.inStock).slice(0, 3);
+
+  if (!picks.length) return null;
+
+  const lines = picks.map(doc => `${doc.product.name} (${formatMoney(doc.product.price)})`).join(', ');
+  return `For a clean 23 fit, start with ${lines}. Keep the silhouette intentional: one hero piece, one quiet supporting piece, and minimal accessories so the outfit still feels premium.`;
+}
+
+function buildDirectAnswer(query, intent, rankedDocs, history) {
+  const normalized = normalizeText(query);
+  const focusedProductDocs = getFocusedProductDocs(query, rankedDocs);
+  const highConfidenceProductDocs = rankedDocs.filter(doc => doc.type === 'product' && doc.score >= 42);
+  const productDocs = focusedProductDocs.length ? focusedProductDocs : highConfidenceProductDocs;
+
+  if (intent === 'greeting') {
+    return "Hey. I'm 23, your fashion assistant. Ask me about products, prices, sizing, styling, shipping, payment, or the story behind the brand.";
+  }
+
+  if (intent === 'thanks') {
+    return 'You are welcome. I am here whenever you want to style the next piece.';
+  }
+
+  if (intent === 'payment_name') return 'Account Name: Ashibogwu Chukwudi Hilary.';
+  if (intent === 'payment_number') return 'Account Number: 8072715465.';
+
+  if (intent === 'payment') {
+    const productLine = focusedProductDocs.length ? `\n\nSelected item context:\n${formatProductDetails(focusedProductDocs, 2)}` : '';
+    return `${BRAND_FACTS.payment}${productLine}`;
+  }
+
+  if (intent === 'contact') return BRAND_FACTS.contact;
+  if (intent === 'shipping') return BRAND_FACTS.shipping;
+  if (intent === 'owner') return BRAND_FACTS.owner;
+  if (intent === 'policy') return BRAND_FACTS.policies;
+  if (intent === 'customization') return BRAND_FACTS.customization;
+
+  if (intent === 'price') {
+    return productDocs.length ? formatProductDetails(productDocs, 3) : BRAND_FACTS.pricing;
+  }
+
+  if (intent === 'product' && productDocs.length) {
+    return formatProductDetails(productDocs, 3);
+  }
+
+  if (intent === 'care') {
+    return bestDocAnswer(rankedDocs, 'care');
+  }
+
+  if (intent === 'style') {
+    return buildStyleAnswer(productDocs);
+  }
+
+  if (intent === 'trend') {
+    return bestDocAnswer(rankedDocs, 'trend') || 'For 23, the strongest direction is elevated streetwear: clean silhouettes, textured monochrome, premium denim, structured caps, and one bold statement detail.';
+  }
+
+  if (intent === 'about' && /(what is 23|about 23|meaning|brand|story|history)/.test(normalized)) {
+    return BRAND_FACTS.about;
+  }
+
+  const recentPaymentContext = normalizeText(history.slice(-4).map(item => item.content).join(' '));
+  if ((normalized === 'name' || normalized === 'number') && /(opay|payment|bank|account)/.test(recentPaymentContext)) {
+    return normalized === 'name' ? 'Account Name: Ashibogwu Chukwudi Hilary.' : 'Account Number: 8072715465.';
+  }
+
+  return null;
+}
+
+function buildFallbackAnswer(rankedDocs) {
+  if (!rankedDocs.length || rankedDocs[0].score < 10) {
+    return "I do not have a confirmed answer for that yet. For the most accurate help, message the studio on Instagram @twentythreepreppy or WhatsApp 08107869063.";
+  }
+
+  const productDocs = rankedDocs.filter(doc => doc.type === 'product');
+  if (productDocs.length && productDocs[0].score >= 16) {
+    return formatProductDetails(productDocs, 3);
+  }
+
+  return rankedDocs[0].answer;
+}
+
+function formatContextForAI(rankedDocs) {
+  return rankedDocs.slice(0, 8).map(doc => {
+    if (doc.type === 'product') {
+      return [
+        `TYPE: Product`,
+        `NAME: ${doc.product.name}`,
+        `PRICE: ${formatMoney(doc.product.price)}`,
+        `CATEGORY: ${doc.category}`,
+        `SIZES: ${doc.product.sizes?.join(', ') || 'Ask for availability'}`,
+        `STATUS: ${doc.status}`,
+        `URL: /product/${doc.product.id}`,
+        `DETAILS: ${doc.product.description || ''}`,
+      ].join('\n');
+    }
+    return [`TYPE: ${doc.type}`, `TITLE: ${doc.title}`, `ANSWER: ${doc.answer}`].join('\n');
+  }).join('\n\n---\n\n');
+}
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: 'bot', content: "Hello! I'm 23, your personal fashion assistant. Ask me anything about our brand, style advice, or clothing care." }
+    { role: 'bot', content: "Hello. I'm 23, your personal fashion assistant. Ask me about our products, styling, shipping, payment, or clothing care." },
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [knowledgeBase, setKnowledgeBase] = useState([]);
-  const [kbQA, setKbQA] = useState([]);
   const messagesEndRef = useRef(null);
 
-  // Load Knowledge Base
-  useEffect(() => {
-    const loadKnowledge = async () => {
-      try {
-        // Simple fallback if glob fails
-        setKnowledgeBase([
-          "23 is a luxury fashion brand founded in Lagos.",
-          "We offer worldwide shipping.",
-          "Ask me about payments (OPay), policies, owner, customization, or trends.",
-          " "
-        ]);
-
-        // Attempt to load from files
-        try {
-          const modules = import.meta.glob('../data/knowledge/*.txt', { as: 'raw', eager: true });
-          const texts = Object.values(modules).map(t => String(t));
-          const content = texts.join('\n');
-          const rawLines = content.split('\n');
-          const qa = [];
-          let currentQ = null;
-          let currentA = [];
-          const pushQA = () => {
-            if (currentQ && currentA.length) {
-              qa.push({ q: currentQ, a: currentA.join(' ').trim() });
-            }
-            currentQ = null;
-            currentA = [];
-          };
-          for (let i = 0; i < rawLines.length; i++) {
-            const orig = rawLines[i];
-            const line = orig.trim();
-            const qmMatch = line.match(/^(.+\\?)$/); // Treat lines ending with ? as questions
-            if (qmMatch && !line.startsWith('A:')) {
-              pushQA();
-              currentQ = qmMatch[1].replace(/\?+$/, '').trim();
-              continue;
-            }
-            const qMatch = line.match(/^Q:\s*(.+)$/i);
-            if (qMatch) { pushQA(); currentQ = qMatch[1].trim(); continue; }
-            const aMatch = line.match(/^A:\s*(.+)$/i);
-            if (aMatch) { currentA.push(aMatch[1].trim()); continue; }
-            if (currentQ) {
-              if (line.length === 0) { pushQA(); continue; }
-              currentA.push(line);
-              continue;
-            }
-            const headingMatch = line.match(/^([A-Za-z0-9].*?):\s*$/);
-            if (headingMatch) {
-              let block = [];
-              let j = i + 1;
-              while (j < rawLines.length) {
-                const look = rawLines[j].trim();
-                if (look.match(/^Q:\s*/i) || look.match(/^A:\s*/i) || look.match(/^([A-Za-z0-9].*?):\s*$/)) break;
-                block.push(look);
-                j++;
-              }
-              i = j - 1;
-              const ans = block.join(' ').trim();
-              if (ans.length) qa.push({ q: headingMatch[1].trim(), a: ans });
-              continue;
-            }
-            const kv = line.match(/^(.+?):\s*(.+)$/);
-            if (kv && !line.startsWith('http')) {
-              qa.push({ q: kv[1].trim(), a: kv[2].trim() });
-            }
-          }
-          pushQA();
-          const flatLines = rawLines.map(l => l.trim()).filter(l => l.length > 0);
-          if (qa.length > 0) setKbQA(qa);
-          if (flatLines.length > 0) setKnowledgeBase(flatLines);
-        } catch (e) {
-          console.warn("Could not load knowledge files:", e);
-        }
-      } catch (error) {
-        console.error("Failed to load knowledge base:", error);
-      }
-    };
-
-    loadKnowledge();
-  }, []);
-
-  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const findBestMatch = (query) => {
-    const hasKB = knowledgeBase.length > 0 || kbQA.length > 0;
-    if (!hasKB) return null;
-
-    const clean = query.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
-    const STOP_WORDS = new Set(['to', 'if', 'or', 'and', 'the', 'is', 'it', 'for', 'in', 'on', 'at', 'by', 'this', 'that', 'with', 'from', 'my', 'how', 'what', 'where', 'who', 'does', 'do', 'can', 'take', 'has', 'am']);
-    const terms = clean.split(/\s+/).filter(t => t.length >= 2 && !STOP_WORDS.has(t));
-    if (!terms.length) return null;
-
-    const intentSynonyms = {
-      payment: ['pay', 'payment', 'opay', 'account', 'transfer', 'number', 'bank', 'cash', 'money'],
-      owner: ['owner', 'founder', 'who', 'created', 'owns', 'ceo', 'boss'],
-      contact: ['contact', 'reach', 'whatsapp', 'phone', 'email', 'instagram', 'twitter', 'dm', 'message'],
-      customize: ['custom', 'customize', 'personalize', 'design', 'collection', 'bespoke', 'tailor'],
-      trend: ['trend', 'trending', 'vogue', 'fashion', 'latest', 'new', 'upcoming'],
-      brand: ['what', 'is', 'about', 'brand', '23', 'meaning', 'identity', 'story', 'history'],
-      policies: ['policy', 'policies', 'rules', 'terms', 'shipping', 'returns', 'refund', 'exchange'],
-      shipping: ['delivery', 'ship', 'shipping', 'time', 'days', 'eta', 'long', 'arrives', 'when', 'track'],
-      price: ['cost', 'price', 'how much', 'expensive', 'cheap', 'budget'],
-      greeting: ['hi', 'hello', 'hey', 'yo', 'sup', 'howfar', 'wassup', 'morning', 'afternoon', 'evening'],
-      howareyou: ['how are', 'doing', 'good', 'well', 'what\'s up']
-    };
-
-    const intentScores = {};
-    Object.keys(intentSynonyms).forEach(k => {
-      intentScores[k] = terms.reduce((s, t) => s + (intentSynonyms[k].some(x => x.includes(t) || t.includes(x)) ? 1 : 0), 0);
-    });
-    const sortedIntents = Object.entries(intentScores).sort((a, b) => b[1] - a[1]);
-    const topIntent = sortedIntents[0][1] > 0 ? sortedIntents[0] : null;
-
-    // Hardcoded highly intelligent generic responses based on pure intent if no deep match
-    const genericIntentResponses = {
-      greeting: "Hello there! I'm 23. What can I help you discover today?",
-      howareyou: "I'm doing beautifully, thank you for asking! I'm here to help you upgrade your aesthetic. What are you looking for?",
-      price: "Our pieces are premium but accessibly priced for the value of Lagos craftsmanship. Most tees and caps start around ₦25,000, while our exclusive sets hover around ₦50,000.",
-      shipping: "We ship worldwide! Within Nigeria, it takes about 1-3 days. International delivery usually arrives within 5-10 business days."
-    };
-
-    let bestAnswer = topIntent && genericIntentResponses[topIntent[0]] ? genericIntentResponses[topIntent[0]] : null;
-    let maxOverallScore = topIntent && genericIntentResponses[topIntent[0]] ? 4 : 0;
-
-    // Check Question-Answer pairs
-    kbQA.forEach(({ q, a }) => {
-      let s = 0;
-      const lowQ = q.toLowerCase();
-      terms.forEach(t => {
-        if (lowQ.includes(t)) {
-          const isMatch = lowQ.split(/\s+/).includes(t);
-          s += isMatch ? 5 : 2;
-        }
-      });
-      if (topIntent) {
-        const syns = intentSynonyms[topIntent[0]];
-        syns.forEach(t => { if (lowQ.includes(t)) s += 3; });
-      }
-      if (s > maxOverallScore) { maxOverallScore = s; bestAnswer = a; }
-    });
-
-    // Check raw lines fallback
-    knowledgeBase.forEach(line => {
-      let s = 0;
-      const lowL = line.toLowerCase();
-      if (lowL.startsWith('q:') || lowL.startsWith('a:')) return;
-      terms.forEach(t => {
-        if (lowL.includes(t)) {
-          const isMatch = lowL.split(/\s+/).includes(t);
-          s += isMatch ? 5 : 2;
-        }
-      });
-      if (topIntent) {
-        const syns = intentSynonyms[topIntent[0]];
-        syns.forEach(t => { if (lowL.includes(t)) s += 3; });
-      }
-      if (s > maxOverallScore) { maxOverallScore = s; bestAnswer = line; }
-    });
-
-    return maxOverallScore > 5 ? bestAnswer : null;
-  };
 
   const handleSend = async (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
-    const userMessage = inputValue;
+    const userMessage = inputValue.trim();
+    const intent = detectIntent(userMessage, messages);
+    const rankedDocs = getRankedDocs(userMessage, intent);
+    const directAnswer = buildDirectAnswer(userMessage, intent, rankedDocs, messages);
+
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setInputValue('');
     setIsTyping(true);
 
     try {
-      // Direct smart chat handling for super short requests before heavy logic
-      const greetTerms = ['hi', 'hello', 'hey', 'yo', 'sup', 'howfar', 'wassup', 'morning'];
-      const qLow = userMessage.toLowerCase().trim();
-      if (greetTerms.includes(qLow)) {
-        const greet = "Hey! I'm 23, your personal fashion assistant. Ask me anything about our latest collections, pricing, or the story behind our brand.";
-        setMessages(prev => [...prev, { role: 'bot', content: greet }]);
-        setIsTyping(false);
-        return;
-      }
+      let response = directAnswer;
 
-      if (qLow.includes('how much') || qLow.includes('price')) {
-        const resp = "Our premium pieces vary depending on the collection. Classic t-shirts are typically ₦25,000, while full tracksuits and premium denim are ₦50,000. You can browse the Shop page for specific items!";
-        setMessages(prev => [...prev, { role: 'bot', content: resp }]);
-        setIsTyping(false);
-        return;
-      }
-
-      if (qLow.includes('who are you') || qLow.includes('what is 23')) {
-        const resp = "I am the digital intelligence behind 23. Born in Lagos, we craft high-end luxury streetwear that moves as fast as you do. How can I style you today?";
-        setMessages(prev => [...prev, { role: 'bot', content: resp }]);
-        setIsTyping(false);
-        return;
-      }
-      // 1. Try AI First (Highly Reliable with Context)
-      const hasGroq = Boolean(import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_KEY);
-      let response = null;
-
-      if (hasGroq) {
-        const kbText = [
-          ...kbQA.map(({ q, a }) => `Q: ${q}\nA: ${a}`),
-          ...knowledgeBase
-        ].join('\n');
-        try {
-          response = await askGroq(userMessage, kbText, messages);
-        } catch (err) {
-          console.warn("AI bridge failed, falling back to keywords:", err);
-          response = null;
+      if (!response) {
+        const hasGroq = Boolean(import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GROQ_KEY);
+        if (hasGroq && rankedDocs.length) {
+          try {
+            response = await askGroq(userMessage, formatContextForAI(rankedDocs), messages);
+          } catch (error) {
+            console.warn('AI bridge failed, using local RAG fallback:', error);
+          }
         }
       }
 
-      // 2. Fallback to Keyword Match if AI failed or is missing
       if (!response) {
-        response = findBestMatch(userMessage);
-      }
-
-      // 3. Final Multi-layered Fallback
-      if (!response) {
-        response = "I'm not quite sure about that one yet — reach out to us on Instagram @twentythreepreppy or WhatsApp and we'll help you out! 📩";
+        response = buildFallbackAnswer(rankedDocs);
       }
 
       setMessages(prev => [...prev, { role: 'bot', content: response }]);
@@ -247,29 +524,21 @@ export default function ChatBot() {
 
   return (
     <>
-      {/* Floating Icon — NEW LUXURIOUS DESIGN */}
       <button
         onClick={() => setIsOpen(true)}
         className={`fixed bottom-8 right-8 z-40 w-16 h-16 rounded-full bg-black text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:scale-110 active:scale-95 transition-all duration-300 border border-white/10 flex items-center justify-center group/chat overflow-hidden ${isOpen ? 'hidden' : 'flex'}`}
+        aria-label="Open 23 chat"
       >
         <div className="absolute inset-0 bg-[var(--accent)] translate-y-full group-hover/chat:translate-y-0 transition-transform duration-500" />
         <div className="relative z-10 font-display font-black text-xl group-hover/chat:text-black transition-colors duration-500">
           23
         </div>
-        {/* Subtle dot */}
         <div className="absolute top-4 right-4 w-1.5 h-1.5 bg-[var(--accent)] rounded-full group-hover/chat:bg-black transition-colors" />
       </button>
 
-      {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className="fixed bottom-8 right-4 md:right-8 w-[90vw] md:w-[400px] h-[500px] bg-white z-50 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-100"
-          >
-            {/* Header */}
+          <div className="fixed bottom-8 right-4 md:right-8 w-[90vw] md:w-[400px] h-[500px] bg-white z-50 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-100">
             <div className="bg-black text-white p-4 flex justify-between items-center">
               <div className="flex items-center space-x-3">
                 <div className="bg-white/20 w-10 h-10 rounded-full flex items-center justify-center border border-white/30">
@@ -280,20 +549,19 @@ export default function ChatBot() {
                   <p className="text-[10px] text-gray-300 uppercase tracking-wider">Fashion Assistant</p>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="hover:text-gray-300 transition-colors">
+              <button onClick={() => setIsOpen(false)} className="hover:text-gray-300 transition-colors" aria-label="Close chat">
                 <X size={20} />
               </button>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
               {messages.map((msg, idx) => (
                 <div
-                  key={idx}
+                  key={`${msg.role}-${idx}`}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
+                    className={`max-w-[80%] whitespace-pre-line p-3 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
                       ? 'bg-black text-white rounded-tr-none'
                       : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-none'
                       }`}
@@ -312,12 +580,11 @@ export default function ChatBot() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
             <form onSubmit={handleSend} className="p-4 bg-white border-t border-gray-100 flex gap-2">
               <input
                 type="text"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(event) => setInputValue(event.target.value)}
                 placeholder="Ask about fashion, 23, or style..."
                 className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm outline-none focus:border-black transition-colors"
               />
@@ -325,11 +592,12 @@ export default function ChatBot() {
                 type="submit"
                 disabled={!inputValue.trim()}
                 className="bg-black text-white p-2 rounded-full hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Send message"
               >
                 <Send size={18} />
               </button>
             </form>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>
