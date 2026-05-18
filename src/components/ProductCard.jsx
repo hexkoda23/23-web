@@ -100,15 +100,13 @@ export default function ProductCard({ product }) {
             <motion.img
               src={image1}
               alt={product.name}
-              className="absolute inset-0 w-full h-full object-cover transition-opacity duration-350 ease-in-out group-hover:opacity-0"
-              whileHover={{ scale: 1.05 }}
+              className="absolute inset-0 w-full h-full object-contain bg-white transition-opacity duration-350 ease-in-out group-hover:opacity-0"
               transition={{ duration: 0.4 }}
             />
             <motion.img
               src={image2}
               alt={`${product.name} alternate`}
-              className="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-350 ease-in-out group-hover:opacity-100"
-              whileHover={{ scale: 1.05 }}
+              className="absolute inset-0 w-full h-full object-contain bg-white opacity-0 transition-opacity duration-350 ease-in-out group-hover:opacity-100"
               transition={{ duration: 0.4 }}
             />
           </div>

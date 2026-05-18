@@ -335,13 +335,6 @@ export default function Home() {
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover/coll:scale-110"
                 />
                 <div className="absolute inset-0 bg-black/20" />
-                <motion.div
-                  className="absolute inset-0 flex items-center justify-center"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                >
-                  <h3 className="font-display attention-heading text-white text-[8vw] uppercase mix-blend-overlay">XXIII</h3>
-                </motion.div>
               </div>
             </div>
             <div className="lg:col-span-5">
