@@ -13,7 +13,7 @@ const HERO_IMAGES = [
   '/lookbook/18.jpg',
   '/lookbook/JF-22.JPG',
   '/lookbook/JF-1.JPG',
-  '/lookbook/JF-15.JPG'
+  '/lookbook/JF-4.JPG'
 ];
 
 const HERO_DESKTOP_IMAGES = [
