@@ -97,10 +97,10 @@ export default function Home() {
                 key={idx}
                 src={img}
                 alt="23 Collection"
-                className="absolute inset-0 w-full h-full object-cover object-top"
+                className="absolute inset-0 w-full h-full object-cover object-top brightness-110"
                 initial={{ opacity: 0, scale: 1.1 }}
                 animate={{
-                  opacity: currentHero === idx ? 0.7 : 0,
+                  opacity: currentHero === idx ? 0.95 : 0,
                   scale: currentHero === idx ? 1 : 1.1
                 }}
                 transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
@@ -112,7 +112,7 @@ export default function Home() {
             <motion.img
               src="/lookbook/18.jpg"
               alt="23 editorial atmosphere"
-              className="absolute inset-0 w-full h-full object-cover object-center opacity-35"
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-70 brightness-110"
               initial={{ scale: 1.04 }}
               animate={{ scale: 1 }}
               transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
@@ -134,7 +134,7 @@ export default function Home() {
                     <img
                       src={item.src}
                       alt="23 lookbook editorial"
-                      className="h-full w-full object-cover object-top"
+                      className="h-full w-full object-cover object-top brightness-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-white/5" />
                   </motion.div>
@@ -142,7 +142,7 @@ export default function Home() {
               })}
             </div>
           </div>
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.58)_38%,rgba(0,0,0,0.14)_66%,rgba(0,0,0,0.48)_100%)] md:bg-[linear-gradient(90deg,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.7)_34%,rgba(0,0,0,0.22)_62%,rgba(0,0,0,0.62)_100%)] z-0" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.3)_38%,rgba(0,0,0,0.08)_66%,rgba(0,0,0,0.35)_100%)] md:bg-[linear-gradient(90deg,rgba(0,0,0,0.65)_0%,rgba(0,0,0,0.45)_34%,rgba(0,0,0,0.15)_62%,rgba(0,0,0,0.45)_100%)] z-0" />
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/20 to-transparent z-0" />
         </motion.div>
 
@@ -154,7 +154,7 @@ export default function Home() {
           >
             <h1
               className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-4 max-w-[10ch]"
-              style={{ fontSize: 'clamp(4.15rem, 9.2vw, 8.7rem)' }}
+              style={{ fontSize: 'clamp(3rem, 6.5vw, 6rem)' }}
             >
               WEAR YOUR<br />WORLD
             </h1>
