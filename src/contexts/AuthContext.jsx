@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
@@ -88,6 +89,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resetPassword = (email) => sendPasswordResetEmail(auth, email);
+
   const getUserData = async () => {
     if (!currentUser) return null;
     
@@ -108,6 +111,7 @@ export const AuthProvider = ({ children }) => {
     signup,
     login,
     logout,
+    resetPassword,
     getUserData,
     loading,
   };

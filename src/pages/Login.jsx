@@ -1,21 +1,46 @@
 import { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import PageTransition from "../components/PageTransition.jsx";
 
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
-  
+  const { login, resetPassword } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetStatus, setResetStatus] = useState("idle"); // idle | sending | sent
 
   const searchParams = new URLSearchParams(location.search);
   const redirectPath = searchParams.get('redirect') || '/';
-  
+
+  const handleForgotPassword = async () => {
+    setError("");
+    if (!email.trim()) {
+      setError("Type your email in the field above, then tap \"Forgot password?\" again.");
+      return;
+    }
+    try {
+      setResetStatus("sending");
+      await resetPassword(email.trim());
+      setResetStatus("sent");
+    } catch (err) {
+      setResetStatus("idle");
+      if (err.code === "auth/invalid-email") {
+        setError("Invalid email address.");
+      } else if (err.code === "auth/user-not-found") {
+        setError("No account found with this email. Please sign up.");
+      } else {
+        setError("Could not send the reset email. Please try again.");
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -86,14 +111,41 @@ function Login() {
 
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-[0.25em] text-gray-300">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-transparent border border-white/30 px-4 py-3 text-sm text-white outline-none placeholder:text-gray-400 focus:border-white transition-colors"
-                  placeholder="Enter your password"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-transparent border border-white/30 px-4 py-3 pr-12 text-sm text-white outline-none placeholder:text-gray-400 focus:border-white transition-colors"
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-white transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={resetStatus === "sending"}
+                    className="text-xs text-gray-300 underline underline-offset-2 hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    {resetStatus === "sending" ? "Sending reset link..." : "Forgot password?"}
+                  </button>
+                </div>
+                {resetStatus === "sent" && (
+                  <div className="rounded-lg border border-emerald-500/50 bg-emerald-500/10 p-3">
+                    <p className="text-xs leading-relaxed text-emerald-300">
+                      Password reset link sent to {email}. Check your inbox (and spam folder), then log in with your new password.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <button
