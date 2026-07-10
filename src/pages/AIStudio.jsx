@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -48,8 +48,7 @@ import {
   toCatalogRecord,
   trackStyleEvent,
 } from '../lib/styleEngine';
-
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+import { createTryOnPreview, preloadTryOnModel } from '../lib/tryOnEngine';
 
 function readJsonStorage(key, fallback) {
   try {
@@ -62,326 +61,6 @@ function readJsonStorage(key, fallback) {
 
 function writeJsonStorage(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
-}
-
-const loadImage = (src) => new Promise((resolve, reject) => {
-  const img = new Image();
-  if (!src.startsWith('data:') && !src.startsWith('blob:')) {
-    img.crossOrigin = 'anonymous';
-  }
-  img.onload = () => resolve(img);
-  img.onerror = reject;
-  img.src = src;
-});
-
-function removeLightGarmentBackground(canvas) {
-  const ctx = canvas.getContext('2d');
-  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < pixels.data.length; i += 4) {
-    const r = pixels.data[i];
-    const g = pixels.data[i + 1];
-    const b = pixels.data[i + 2];
-    const isWhiteBackground = r > 236 && g > 236 && b > 232;
-    const isVeryLight = r > 224 && g > 224 && b > 218;
-    if (isWhiteBackground) {
-      pixels.data[i + 3] = 0;
-    } else if (isVeryLight) {
-      pixels.data[i + 3] = Math.min(pixels.data[i + 3], 132);
-    }
-  }
-  ctx.putImageData(pixels, 0, 0);
-}
-
-function drawProductIntoCanvas(productImage, targetWidth, targetHeight) {
-  const garmentCanvas = document.createElement('canvas');
-  garmentCanvas.width = Math.round(targetWidth);
-  garmentCanvas.height = Math.round(targetHeight);
-  const garmentCtx = garmentCanvas.getContext('2d');
-  garmentCtx.clearRect(0, 0, garmentCanvas.width, garmentCanvas.height);
-
-  const productRatio = productImage.naturalWidth / productImage.naturalHeight;
-  const targetRatio = garmentCanvas.width / garmentCanvas.height;
-  let garmentWidth = garmentCanvas.width;
-  let garmentHeight = garmentCanvas.height;
-  if (productRatio > targetRatio) {
-    garmentHeight = garmentCanvas.width / productRatio;
-  } else {
-    garmentWidth = garmentCanvas.height * productRatio;
-  }
-
-  garmentCtx.drawImage(
-    productImage,
-    (garmentCanvas.width - garmentWidth) / 2,
-    (garmentCanvas.height - garmentHeight) / 2,
-    garmentWidth,
-    garmentHeight
-  );
-  removeLightGarmentBackground(garmentCanvas);
-  return garmentCanvas;
-}
-
-function getCornerBackgroundColor(ctx, width, height) {
-  const sampleSize = Math.max(16, Math.round(Math.min(width, height) * 0.06));
-  const zones = [
-    [0, 0],
-    [width - sampleSize, 0],
-    [0, height - sampleSize],
-    [width - sampleSize, height - sampleSize],
-  ];
-  const totals = [0, 0, 0];
-  let count = 0;
-
-  zones.forEach(([x, y]) => {
-    const data = ctx.getImageData(x, y, sampleSize, sampleSize).data;
-    for (let i = 0; i < data.length; i += 16) {
-      totals[0] += data[i];
-      totals[1] += data[i + 1];
-      totals[2] += data[i + 2];
-      count += 1;
-    }
-  });
-
-  return totals.map(total => total / Math.max(1, count));
-}
-
-async function detectHumanFit(ctx, canvas) {
-  const { width, height } = canvas;
-  let face = null;
-
-  if ('FaceDetector' in window) {
-    try {
-      const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 });
-      const faces = await detector.detect(canvas);
-      if (faces?.length) {
-        const box = faces[0].boundingBox;
-        face = {
-          x: box.x,
-          y: box.y,
-          width: box.width,
-          height: box.height,
-        };
-      }
-    } catch {
-      face = null;
-    }
-  }
-
-  const data = ctx.getImageData(0, 0, width, height).data;
-  const bg = getCornerBackgroundColor(ctx, width, height);
-  let minX = width;
-  let minY = height;
-  let maxX = 0;
-  let maxY = 0;
-  let foreground = 0;
-  let centerForeground = 0;
-  let upperSkin = 0;
-  const stride = Math.max(3, Math.round(Math.min(width, height) / 260));
-
-  for (let y = 0; y < height; y += stride) {
-    for (let x = 0; x < width; x += stride) {
-      const i = (y * width + x) * 4;
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      const bgDistance = Math.abs(r - bg[0]) + Math.abs(g - bg[1]) + Math.abs(b - bg[2]);
-      const brightness = (r + g + b) / 3;
-      const saturation = Math.max(r, g, b) - Math.min(r, g, b);
-      const skinLike = r > 72 && g > 38 && b > 25 && r > g * 1.05 && r > b * 1.12 && saturation > 18;
-      const subjectPixel = bgDistance > 58 || (saturation > 42 && brightness > 32 && brightness < 235);
-
-      if (subjectPixel) {
-        foreground += 1;
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-        if (x > width * 0.22 && x < width * 0.78) centerForeground += 1;
-      }
-      if (skinLike && y < height * 0.48) upperSkin += 1;
-    }
-  }
-
-  const sampleCount = Math.ceil(width / stride) * Math.ceil(height / stride);
-  const foregroundRatio = foreground / Math.max(1, sampleCount);
-  const centerRatio = centerForeground / Math.max(1, foreground);
-  const skinRatio = upperSkin / Math.max(1, sampleCount);
-  const box = foreground > 0
-    ? { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
-    : { x: width * 0.2, y: height * 0.12, width: width * 0.6, height: height * 0.76 };
-
-  const personLikeSubject = box.height > height * 0.42 && box.width > width * 0.16 && box.width < width * 0.92 && centerRatio > 0.34;
-  const humanDetected = Boolean(face) || (personLikeSubject && (skinRatio > 0.004 || foregroundRatio > 0.08));
-
-  if (!humanDetected) {
-    // Never block the preview: fall back to a centered framing estimate so
-    // any photo still produces a styled result.
-    const centerX = box.x + box.width / 2;
-    const torsoWidth = clamp(box.width * 0.78, width * 0.3, width * 0.66);
-    return {
-      humanDetected: false,
-      confidence: Math.round(clamp((foregroundRatio + skinRatio * 8) * 100, 30, 60)),
-      method: 'centered fit framing',
-      note: 'No clear person detected — the piece was placed with centered framing. A front-facing photo gives the best result.',
-      box,
-      torso: {
-        x: clamp(centerX - torsoWidth / 2, width * 0.04, width * 0.96 - torsoWidth),
-        y: clamp(box.y + box.height * 0.22, height * 0.18, height * 0.55),
-        width: torsoWidth,
-        height: clamp(box.height * 0.42, height * 0.24, height * 0.46),
-      },
-    };
-  }
-
-  let torso;
-  if (face) {
-    const centerX = face.x + face.width / 2;
-    const shoulderWidth = clamp(face.width * 3.15, width * 0.3, width * 0.74);
-    torso = {
-      x: clamp(centerX - shoulderWidth / 2, width * 0.04, width * 0.96 - shoulderWidth),
-      y: clamp(face.y + face.height * 1.08, height * 0.18, height * 0.54),
-      width: shoulderWidth,
-      height: clamp(shoulderWidth * 1.16, height * 0.24, height * 0.46),
-    };
-  } else {
-    const centerX = box.x + box.width / 2;
-    const torsoWidth = clamp(box.width * 0.78, width * 0.3, width * 0.72);
-    torso = {
-      x: clamp(centerX - torsoWidth / 2, width * 0.04, width * 0.96 - torsoWidth),
-      y: clamp(box.y + box.height * 0.24, height * 0.2, height * 0.58),
-      width: torsoWidth,
-      height: clamp(box.height * 0.4, height * 0.24, height * 0.48),
-    };
-  }
-
-  return {
-    humanDetected: true,
-    confidence: Math.round(clamp((face ? 86 : 64) + foregroundRatio * 30 + skinRatio * 250, 62, 97)),
-    method: face ? 'face + torso scan' : 'person foreground scan',
-    box,
-    face,
-    torso,
-  };
-}
-
-function getGarmentPlacement(scan, product, canvasWidth, canvasHeight) {
-  const category = inferFunctionalCategory(product);
-  const torso = scan.torso;
-  const personBox = scan.box || torso;
-
-  if (category.includes('full')) {
-    const width = clamp(personBox.width * 0.72, canvasWidth * 0.32, canvasWidth * 0.68);
-    const height = clamp(personBox.height * 0.7, canvasHeight * 0.42, canvasHeight * 0.76);
-    return {
-      x: clamp(personBox.x + personBox.width / 2 - width / 2, canvasWidth * 0.04, canvasWidth * 0.96 - width),
-      y: clamp(torso.y, canvasHeight * 0.18, canvasHeight * 0.58),
-      width,
-      height,
-      type: 'full fit',
-    };
-  }
-
-  if (category.includes('bottom') || product.name.toLowerCase().includes('pant') || product.name.toLowerCase().includes('denim') || product.name.toLowerCase().includes('short')) {
-    const width = clamp(personBox.width * 0.62, canvasWidth * 0.22, canvasWidth * 0.52);
-    const height = clamp(personBox.height * 0.44, canvasHeight * 0.2, canvasHeight * 0.46);
-    return {
-      x: clamp(personBox.x + personBox.width / 2 - width / 2, canvasWidth * 0.04, canvasWidth * 0.96 - width),
-      y: clamp(personBox.y + personBox.height * 0.5, canvasHeight * 0.38, canvasHeight * 0.82),
-      width,
-      height,
-      type: 'bottom',
-    };
-  }
-
-  if (category.includes('accessories') || product.name.toLowerCase().includes('cap')) {
-    const head = scan.face || {
-      x: personBox.x + personBox.width * 0.34,
-      y: personBox.y,
-      width: personBox.width * 0.32,
-      height: personBox.height * 0.18,
-    };
-    const width = clamp(head.width * 1.55, canvasWidth * 0.16, canvasWidth * 0.38);
-    const height = width * 0.72;
-    return {
-      x: clamp(head.x + head.width / 2 - width / 2, canvasWidth * 0.04, canvasWidth * 0.96 - width),
-      y: clamp(head.y - height * 0.34, canvasHeight * 0.02, canvasHeight * 0.38),
-      width,
-      height,
-      type: 'accessory',
-    };
-  }
-
-  return {
-    x: torso.x,
-    y: torso.y,
-    width: torso.width,
-    height: torso.height,
-    type: 'top',
-  };
-}
-
-async function createLocalTryOnPreview(photoSrc, product) {
-  const [subjectImage, productImage] = await Promise.all([
-    loadImage(photoSrc),
-    loadImage(product.image),
-  ]);
-
-  const maxSide = 1080;
-  const baseScale = Math.min(1, maxSide / Math.max(subjectImage.naturalWidth, subjectImage.naturalHeight));
-  const minScale = Math.max(1, 420 / Math.max(1, Math.min(subjectImage.naturalWidth, subjectImage.naturalHeight)));
-  const scale = Math.min(1.6, Math.max(baseScale, Math.min(minScale, 1.35)));
-  const width = Math.round(subjectImage.naturalWidth * scale);
-  const height = Math.round(subjectImage.naturalHeight * scale);
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-
-  ctx.drawImage(subjectImage, 0, 0, width, height);
-  // The scan never blocks the preview — when no person is confidently
-  // detected it returns a centered fallback framing instead.
-  const scan = await detectHumanFit(ctx, canvas);
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, height);
-  gradient.addColorStop(0, 'rgba(0,0,0,0)');
-  gradient.addColorStop(0.72, 'rgba(0,0,0,0)');
-  gradient.addColorStop(1, 'rgba(0,0,0,0.28)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-
-  const placement = getGarmentPlacement(scan, product, width, height);
-  const garmentCanvas = drawProductIntoCanvas(productImage, placement.width, placement.height);
-
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.32)';
-  ctx.shadowBlur = width * 0.03;
-  ctx.shadowOffsetY = width * 0.012;
-  ctx.drawImage(garmentCanvas, placement.x, placement.y, placement.width, placement.height);
-  ctx.restore();
-
-  // Minimal atelier caption — thin rule + serif label, no heavy overlay.
-  ctx.save();
-  const captionSize = Math.max(13, width * 0.02);
-  ctx.strokeStyle = 'rgba(244,240,232,0.85)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(26, height - 54);
-  ctx.lineTo(58, height - 54);
-  ctx.stroke();
-  ctx.fillStyle = 'rgba(244,240,232,0.95)';
-  ctx.font = `italic 400 ${captionSize}px "DM Serif Display", Georgia, serif`;
-  ctx.fillText(`TWENTY3 Atelier — ${product.name.slice(0, 42)}`, 68, height - 48);
-  ctx.font = `400 ${Math.max(9, width * 0.011)}px "DM Mono", monospace`;
-  ctx.fillStyle = 'rgba(244,240,232,0.6)';
-  ctx.fillText(`${scan.method.toUpperCase()} · ${scan.confidence}% FIT`, 68, height - 28);
-  ctx.restore();
-
-  return {
-    dataUrl: canvas.toDataURL('image/jpeg', 0.92),
-    scan: {
-      ...scan,
-      placement,
-    },
-  };
 }
 
 const DEFAULT_ANSWERS = {
@@ -856,6 +535,11 @@ function TryOnLab({ initialProduct }) {
   const [scanResult, setScanResult] = useState(null);
   const selectedProduct = PRODUCTS.find(product => product.id === selectedProductId);
 
+  // Warm the pose model as soon as the lab opens so the first render is fast.
+  useEffect(() => {
+    preloadTryOnModel();
+  }, []);
+
   const renderPreview = async (imageSrc = photoUrl, product = selectedProduct, hasConsent = consent) => {
     if (!imageSrc || !product || !hasConsent) return;
     setStatus('generating');
@@ -864,13 +548,13 @@ function TryOnLab({ initialProduct }) {
     setScanResult(null);
     trackStyleEvent('tryon_started', { productId: product.id });
     try {
-      const preview = await createLocalTryOnPreview(imageSrc, product);
+      const preview = await createTryOnPreview(imageSrc, product);
       setStyledPreviewUrl(preview.dataUrl);
       setScanResult(preview.scan);
       setStatus('ready');
       trackStyleEvent('tryon_preview_ready', {
         productId: product.id,
-        mode: 'local-human-scan',
+        mode: 'pose-landmark-tryon',
         confidence: preview.scan.confidence,
         placement: preview.scan.placement?.type,
       });
@@ -938,7 +622,7 @@ function TryOnLab({ initialProduct }) {
         <div className="bg-[#f3f0ea] p-5 md:p-7 border border-black/10 shadow-[0_28px_80px_rgba(0,0,0,0.06)]">
           <div className="section-tag mb-2">Try-Before-You-Buy</div>
           <p className="mb-7 max-w-sm text-sm leading-relaxed text-black/55">
-            Upload a real person photo. 23 scans for a human subject first, then sizes the selected piece to the detected torso, legs, or head area.
+            Upload a clear photo. TWENTY3 reads the body pose — shoulders, hips, and legs — then cuts the piece from its product shot and fits it to your exact frame.
           </p>
           <div className="block">
             <span className="font-mono text-[9px] uppercase tracking-[0.22em] text-black/45">Upload photo</span>
