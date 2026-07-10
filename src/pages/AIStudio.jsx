@@ -309,9 +309,14 @@ function ProductTile({ product, onAdd, compact = false }) {
   );
 }
 
-function OutfitCard({ look, onAddProduct, onFeedback, onSave }) {
+function OutfitCard({ look, liked, onAddProduct, onFeedback, onSave }) {
   return (
-    <article
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="bg-white border border-black/10 shadow-[0_28px_80px_rgba(0,0,0,0.07)]"
     >
       <div className="p-5 md:p-6 border-b border-black/10 flex items-start justify-between gap-4">
@@ -344,10 +349,14 @@ function OutfitCard({ look, onAddProduct, onFeedback, onSave }) {
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => onFeedback(look, 'like')}
-            className="h-11 border border-black/10 hover:border-black hover:bg-black/[0.02] font-mono text-[9px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-colors"
+            className={`h-11 border font-mono text-[9px] uppercase tracking-[0.14em] flex items-center justify-center gap-2 transition-colors ${
+              liked
+                ? 'border-red-600 text-red-600 bg-red-50'
+                : 'border-black/10 hover:border-red-600 hover:text-red-600 hover:bg-red-50/50'
+            }`}
           >
-            <Heart size={13} />
-            Like
+            <Heart size={13} fill={liked ? 'currentColor' : 'none'} />
+            {liked ? 'Liked' : 'Like'}
           </button>
           <button
             onClick={() => onFeedback(look, 'dislike')}
@@ -365,18 +374,30 @@ function OutfitCard({ look, onAddProduct, onFeedback, onSave }) {
           </button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
+
+const LOOK_LIKES_KEY = '23_ai_look_likes';
+const LOOK_PASSES_KEY = '23_ai_look_passes';
+
+// Looks get a stable identity from their product signature (the numeric
+// index prefix shifts as looks are filtered), so likes/passes survive
+// reloads on the same device.
+const lookKey = (look) => look.id.replace(/^look-\d+-/, '');
 
 function StylistExperience({ focusProduct, answers, setAnswers }) {
   const { addToCart } = useCart();
   const [savedLooks, setSavedLooks] = useState(() => loadSavedLooks());
+  const [likedLookKeys, setLikedLookKeys] = useState(() => readJsonStorage(LOOK_LIKES_KEY, []));
+  const [passedLookKeys, setPassedLookKeys] = useState(() => readJsonStorage(LOOK_PASSES_KEY, []));
+  const [savePromptLook, setSavePromptLook] = useState(null);
   const catalogStats = useMemo(() => getCatalogStats(PRODUCTS), []);
   const recommendations = useMemo(
     () => buildOutfitRecommendations(PRODUCTS, answers, focusProduct?.id, 4),
     [answers, focusProduct]
   );
+  const visibleLooks = recommendations.filter(look => !passedLookKeys.includes(lookKey(look)));
   const catalogPreview = useMemo(() => buildCatalog(PRODUCTS).slice(0, 6), []);
 
   const handleAnswerChange = (key, value) => {
@@ -392,7 +413,29 @@ function StylistExperience({ focusProduct, answers, setAnswers }) {
     trackStyleEvent('stylist_add_to_cart', { productId: product.id, size });
   };
 
+  const addLookToCart = (look) => {
+    look.products.forEach(product => {
+      addToCart(product, getDefaultSize(product, answers.size), 1);
+    });
+  };
+
   const handleFeedback = (look, sentiment) => {
+    const key = lookKey(look);
+    if (sentiment === 'like') {
+      // Liking a look puts every piece in the frame into the cart, and the
+      // red heart persists on this device.
+      if (!likedLookKeys.includes(key)) {
+        addLookToCart(look);
+        const nextLiked = [...likedLookKeys, key];
+        setLikedLookKeys(nextLiked);
+        writeJsonStorage(LOOK_LIKES_KEY, nextLiked);
+      }
+    } else {
+      // Passing removes the frame and remembers the choice.
+      const nextPassed = [...passedLookKeys, key];
+      setPassedLookKeys(nextPassed);
+      writeJsonStorage(LOOK_PASSES_KEY, nextPassed);
+    }
     trackStyleEvent('stylist_feedback', {
       lookId: look.id,
       sentiment,
@@ -400,7 +443,13 @@ function StylistExperience({ focusProduct, answers, setAnswers }) {
     });
   };
 
-  const handleSaveLook = (look) => {
+  const resetPassedLooks = () => {
+    setPassedLookKeys([]);
+    writeJsonStorage(LOOK_PASSES_KEY, []);
+    trackStyleEvent('stylist_passes_reset', {});
+  };
+
+  const persistLook = (look) => {
     const nextSaved = saveLook({
       ...look,
       savedAt: new Date().toISOString(),
@@ -413,6 +462,20 @@ function StylistExperience({ focusProduct, answers, setAnswers }) {
     });
     setSavedLooks(nextSaved);
     trackStyleEvent('stylist_save_look', { lookId: look.id });
+  };
+
+  const handleSaveLook = (look) => {
+    setSavePromptLook(look);
+  };
+
+  const confirmSave = (addAllToCart) => {
+    if (!savePromptLook) return;
+    persistLook(savePromptLook);
+    if (addAllToCart) {
+      addLookToCart(savePromptLook);
+      trackStyleEvent('stylist_save_added_to_cart', { lookId: savePromptLook.id });
+    }
+    setSavePromptLook(null);
   };
 
   return (
@@ -509,10 +572,11 @@ function StylistExperience({ focusProduct, answers, setAnswers }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AnimatePresence mode="popLayout">
-            {recommendations.map(look => (
+            {visibleLooks.map(look => (
               <OutfitCard
-                key={look.id}
+                key={lookKey(look)}
                 look={look}
+                liked={likedLookKeys.includes(lookKey(look))}
                 onAddProduct={handleAddProduct}
                 onFeedback={handleFeedback}
                 onSave={handleSaveLook}
@@ -520,7 +584,68 @@ function StylistExperience({ focusProduct, answers, setAnswers }) {
             ))}
           </AnimatePresence>
         </div>
+
+        {visibleLooks.length === 0 && (
+          <div className="border border-black/10 bg-[#f7f7f5] p-10 text-center">
+            <p className="text-sm text-black/60">
+              You have passed on every look for this style direction. Adjust your answers for fresh edits, or bring the passed looks back.
+            </p>
+            <button
+              onClick={resetPassedLooks}
+              className="mt-5 h-11 px-8 bg-black text-white hover:bg-[var(--accent)] hover:text-black transition-colors font-mono text-[9px] uppercase tracking-[0.16em] font-bold"
+            >
+              Show Passed Looks
+            </button>
+          </div>
+        )}
       </section>
+
+      {/* Save look confirmation */}
+      <AnimatePresence>
+        {savePromptLook && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6"
+            onClick={() => confirmSave(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white w-full max-w-md p-6 md:p-8 shadow-[0_40px_120px_rgba(0,0,0,0.35)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="section-tag mb-3">Look saved</div>
+              <h3 className="font-display text-2xl md:text-3xl">Add everything to your cart?</h3>
+              <p className="mt-3 text-sm leading-relaxed text-black/60">
+                {savePromptLook.title} — {savePromptLook.products.length} pieces, {formatPrice(savePromptLook.total)} total.
+              </p>
+              <div className="mt-4 flex gap-2">
+                {savePromptLook.products.slice(0, 4).map(product => (
+                  <img key={product.id} src={product.image} alt={product.name} className="w-14 h-18 object-contain bg-[#f7f7f5] border border-black/10" />
+                ))}
+              </div>
+              <div className="mt-6 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => confirmSave(false)}
+                  className="h-12 border border-black/15 hover:border-black font-mono text-[10px] uppercase tracking-[0.16em] transition-colors"
+                >
+                  Just Save
+                </button>
+                <button
+                  onClick={() => confirmSave(true)}
+                  className="h-12 bg-black text-white hover:bg-[var(--accent)] hover:text-black font-mono text-[10px] uppercase tracking-[0.16em] font-bold transition-colors"
+                >
+                  Yes, Add All
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

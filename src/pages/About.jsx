@@ -36,8 +36,8 @@ export default function About() {
         {/* Dark hero header */}
         <section className="relative min-h-[70vh] flex items-end pb-20 px-6 lg:px-16 overflow-hidden">
           <div className="absolute inset-0">
-            <img src="/lookbook/6.jpg" alt="About 23" className="w-full h-full object-cover opacity-30" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#0A0A0A]" />
+            <img src="/lookbook/6.jpg" alt="About 23" className="w-full h-full object-cover opacity-90 brightness-125" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-[#0A0A0A]" />
           </div>
           <div
             className="absolute inset-0 opacity-[0.04]"

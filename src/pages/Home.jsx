@@ -33,9 +33,11 @@ export default function Home() {
   const heroY = useTransform(scrollY, [0, 1000], [0, 400]); // Parallax 60% relative to wrapper
 
   useEffect(() => {
+    // Mobile rotates every 3s; desktop keeps the slower gallery pace.
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
     const timer = setInterval(() => {
       setCurrentHero((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 5200); // slow, gallery-paced rotation
+    }, isMobile ? 3000 : 5200);
     return () => clearInterval(timer);
   }, []);
 
@@ -97,13 +99,13 @@ export default function Home() {
                 key={idx}
                 src={img}
                 alt="23 Collection"
-                className="absolute inset-0 w-full h-full object-cover object-top brightness-110"
+                className="absolute inset-0 w-full h-full object-cover object-top brightness-125"
                 initial={{ opacity: 0, scale: 1.1 }}
                 animate={{
-                  opacity: currentHero === idx ? 0.95 : 0,
+                  opacity: currentHero === idx ? 1 : 0,
                   scale: currentHero === idx ? 1 : 1.1
                 }}
-                transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
               />
             ))}
           </div>
@@ -112,7 +114,7 @@ export default function Home() {
             <motion.img
               src="/lookbook/18.jpg"
               alt="23 editorial atmosphere"
-              className="absolute inset-0 w-full h-full object-cover object-center opacity-70 brightness-110"
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-95 brightness-125"
               initial={{ scale: 1.04 }}
               animate={{ scale: 1 }}
               transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
@@ -134,7 +136,7 @@ export default function Home() {
                     <img
                       src={item.src}
                       alt="23 lookbook editorial"
-                      className="h-full w-full object-cover object-top brightness-110"
+                      className="h-full w-full object-cover object-top brightness-125"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-white/5" />
                   </motion.div>
@@ -142,8 +144,8 @@ export default function Home() {
               })}
             </div>
           </div>
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.3)_38%,rgba(0,0,0,0.08)_66%,rgba(0,0,0,0.35)_100%)] md:bg-[linear-gradient(90deg,rgba(0,0,0,0.65)_0%,rgba(0,0,0,0.45)_34%,rgba(0,0,0,0.15)_62%,rgba(0,0,0,0.45)_100%)] z-0" />
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/20 to-transparent z-0" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.3)_0%,rgba(0,0,0,0.12)_38%,rgba(0,0,0,0)_66%,rgba(0,0,0,0.15)_100%)] md:bg-[linear-gradient(90deg,rgba(0,0,0,0.38)_0%,rgba(0,0,0,0.2)_34%,rgba(0,0,0,0.02)_62%,rgba(0,0,0,0.2)_100%)] z-0" />
+          <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 via-black/15 to-transparent z-0" />
         </motion.div>
 
         <div className="absolute inset-0 flex flex-col justify-end pb-24 md:pb-32 px-6 lg:px-10 max-w-[1400px] mx-auto z-10">

@@ -1,9 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { X, Send } from 'lucide-react';
 import { askGroq } from '../lib/ai';
 import { PRODUCTS } from '../data/products';
 import { inferColorTags, inferFunctionalCategory, inferStyleTags } from '../lib/styleEngine';
+
+const WHATSAPP_URL = 'https://wa.me/2348107869063';
+const INSTAGRAM_URL = 'https://www.instagram.com/twentythreepreppy?igsh=MXZnY3MybjY1MXVvbA==';
+
+// Matches external URLs (without trailing punctuation), internal product /
+// shop routes, and the brand IG handle so every reference renders clickable.
+const LINK_PATTERN = /(https?:\/\/[^\s]*[^\s.,!?)]|\/product\/[a-zA-Z0-9-]+|\/(?:shop|ai-studio|lookbook|outfit-generator)\b|@twentythreepreppy)/g;
 
 const KNOWLEDGE_MODULES = import.meta.glob('../data/knowledge/*.txt', {
   query: '?raw',
@@ -14,11 +22,11 @@ const KNOWLEDGE_MODULES = import.meta.glob('../data/knowledge/*.txt', {
 const BRAND_FACTS = {
   payment: [
     'Bank: OPay',
-    'Account Number: 8072715465',
-    'Account Name: Ashibogwu Chukwudi Hilary',
+    'Account Number: 9034212617',
+    'Account Name: Adeleke Kehinde Boluwatife',
     'After payment, send your receipt and delivery address to WhatsApp: https://wa.me/2348107869063 or Instagram: @twentythreepreppy.',
   ].join('\n'),
-  contact: 'Email: twentythreepreppy@gmail.com. Instagram: @twentythreepreppy. WhatsApp: 08107869063.',
+  contact: 'Email: twentythreepreppy@gmail.com. Instagram: @twentythreepreppy. WhatsApp: https://wa.me/2348107869063 (08107869063).',
   shipping: '23 ships worldwide with tracked delivery. Estimated delivery: Nigeria 1-3 business days, Africa 3-7 business days, international 5-10 business days.',
   owner: '23 is owned by Adeleke Kehinde Boluwatife. The brand manager is Ashibogwu Chukwudi Hilary.',
   policies: 'Returns are accepted within 7 days when the item is unworn, in original condition, and still has tags attached. Exchanges depend on available stock. Customized items are final sale.',
@@ -119,6 +127,15 @@ function detectIntent(query, history = []) {
 
   if (/^(number|account number|acct number)$/.test(normalized) && /(opay|payment|bank|account)/.test(historyText)) {
     return 'payment_number';
+  }
+
+  // "What's the best fit to buy", "recommend me something", "what should I
+  // wear" — styling questions beat the generic buy/payment keywords.
+  if (
+    /(best|recommend|suggest|top|hottest|what should i)/.test(normalized) &&
+    /(fit|fits|outfit|look|piece|style|buy|wear|drip|get|cop)/.test(normalized)
+  ) {
+    return 'style';
   }
 
   const scores = Object.entries(INTENT_TERMS).map(([intent, terms]) => {
@@ -371,14 +388,32 @@ function bestDocAnswer(rankedDocs, intent) {
 }
 
 function buildStyleAnswer(productDocs) {
-  const picks = productDocs.length
-    ? productDocs.slice(0, 3)
-    : BASE_DOCS.filter(doc => doc.type === 'product' && doc.product.inStock).slice(0, 3);
+  const pool = productDocs.length
+    ? productDocs
+    : BASE_DOCS.filter(doc => doc.type === 'product' && doc.product.inStock && doc.category !== 'accessories');
+
+  // Diversify the picks across categories so a "best fit" answer reads like
+  // an outfit, not three of the same tee.
+  const picks = [];
+  const seenCategories = new Set();
+  for (const doc of pool) {
+    if (picks.length >= 3) break;
+    if (seenCategories.has(doc.category) && pool.length > 3) continue;
+    seenCategories.add(doc.category);
+    picks.push(doc);
+  }
+  for (const doc of pool) {
+    if (picks.length >= 3) break;
+    if (!picks.includes(doc)) picks.push(doc);
+  }
 
   if (!picks.length) return null;
 
-  const lines = picks.map(doc => `${doc.product.name} (${formatMoney(doc.product.price)})`).join(', ');
-  return `For a clean 23 fit, start with ${lines}. Keep the silhouette intentional: one hero piece, one quiet supporting piece, and minimal accessories so the outfit still feels premium.`;
+  const lines = picks.map((doc, index) => (
+    `${index + 1}. ${doc.product.name} — ${formatMoney(doc.product.price)} · /product/${doc.product.id}`
+  )).join('\n');
+
+  return `Here are the strongest fits to buy right now:\n\n${lines}\n\nTap any link to open the piece. Want a full look built around one? Try the stylist at /ai-studio, or message us on WhatsApp: ${WHATSAPP_URL}`;
 }
 
 function buildDirectAnswer(query, intent, rankedDocs, history) {
@@ -395,8 +430,8 @@ function buildDirectAnswer(query, intent, rankedDocs, history) {
     return 'You are welcome. I am here whenever you want to style the next piece.';
   }
 
-  if (intent === 'payment_name') return 'Account Name: Ashibogwu Chukwudi Hilary.';
-  if (intent === 'payment_number') return 'Account Number: 8072715465.';
+  if (intent === 'payment_name') return 'Account Name: Adeleke Kehinde Boluwatife.';
+  if (intent === 'payment_number') return 'Account Number: 9034212617.';
 
   if (intent === 'payment') {
     const productLine = focusedProductDocs.length ? `\n\nSelected item context:\n${formatProductDetails(focusedProductDocs, 2)}` : '';
@@ -435,7 +470,7 @@ function buildDirectAnswer(query, intent, rankedDocs, history) {
 
   const recentPaymentContext = normalizeText(history.slice(-4).map(item => item.content).join(' '));
   if ((normalized === 'name' || normalized === 'number') && /(opay|payment|bank|account)/.test(recentPaymentContext)) {
-    return normalized === 'name' ? 'Account Name: Ashibogwu Chukwudi Hilary.' : 'Account Number: 8072715465.';
+    return normalized === 'name' ? 'Account Name: Adeleke Kehinde Boluwatife.' : 'Account Number: 9034212617.';
   }
 
   return null;
@@ -443,7 +478,7 @@ function buildDirectAnswer(query, intent, rankedDocs, history) {
 
 function buildFallbackAnswer(rankedDocs) {
   if (!rankedDocs.length || rankedDocs[0].score < 10) {
-    return "I do not have a confirmed answer for that yet. For the most accurate help, message the studio on Instagram @twentythreepreppy or WhatsApp 08107869063.";
+    return `I do not have a confirmed answer for that yet. For the most accurate help, message the studio on Instagram @twentythreepreppy or WhatsApp: ${WHATSAPP_URL}`;
   }
 
   const productDocs = rankedDocs.filter(doc => doc.type === 'product');
@@ -484,6 +519,52 @@ export default function ChatBot() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Turn every URL / route / handle in a bot message into a real link:
+  // internal product links navigate the app (and close the chat), external
+  // links open in a new tab.
+  const renderMessageContent = (content) => {
+    const parts = String(content).split(LINK_PATTERN);
+    return parts.map((part, index) => {
+      if (!part) return null;
+      if (/^https?:\/\//.test(part)) {
+        const label = part.includes('wa.me')
+          ? 'WhatsApp ↗'
+          : part.includes('instagram')
+            ? 'Instagram ↗'
+            : part;
+        return (
+          <a key={index} href={part} target="_blank" rel="noreferrer" className="font-bold underline underline-offset-2 hover:text-black/60 break-all">
+            {label}
+          </a>
+        );
+      }
+      if (part === '@twentythreepreppy') {
+        return (
+          <a key={index} href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="font-bold underline underline-offset-2 hover:text-black/60">
+            @twentythreepreppy
+          </a>
+        );
+      }
+      if (part.startsWith('/product/')) {
+        const product = PRODUCTS.find(item => `/product/${item.id}` === part);
+        return (
+          <Link key={index} to={part} onClick={() => setIsOpen(false)} className="font-bold underline underline-offset-2 hover:text-black/60">
+            {product ? `Shop ${product.name} ↗` : 'View piece ↗'}
+          </Link>
+        );
+      }
+      if (/^\/(shop|ai-studio|lookbook|outfit-generator)$/.test(part)) {
+        const labels = { '/shop': 'the Shop', '/ai-studio': 'the AI Studio', '/lookbook': 'the Lookbook', '/outfit-generator': 'the Outfit Generator' };
+        return (
+          <Link key={index} to={part} onClick={() => setIsOpen(false)} className="font-bold underline underline-offset-2 hover:text-black/60">
+            {labels[part]} ↗
+          </Link>
+        );
+      }
+      return part;
+    });
+  };
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -566,7 +647,7 @@ export default function ChatBot() {
                       : 'bg-white text-gray-800 shadow-sm border border-gray-100 rounded-tl-none'
                       }`}
                   >
-                    {msg.content}
+                    {msg.role === 'bot' ? renderMessageContent(msg.content) : msg.content}
                   </div>
                 </div>
               ))}

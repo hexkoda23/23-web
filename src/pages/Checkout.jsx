@@ -7,8 +7,8 @@ import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../lib/firebase";
 
-const OPAY_ACCOUNT_NAME = "Ashibogwu Chukwudi Hilary";
-const OPAY_ACCOUNT_NUMBER = "8072715465";
+const OPAY_ACCOUNT_NAME = "Adeleke Kehinde Boluwatife";
+const OPAY_ACCOUNT_NUMBER = "9034212617";
 
 export default function Checkout() {
   const { cart, getCartTotal, clearCart } = useCart();
