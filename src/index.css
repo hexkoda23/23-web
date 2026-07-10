@@ -25,6 +25,11 @@
 
   html {
     scroll-behavior: smooth;
+    /* Stop mobile browsers from inflating text or zooming on double-tap;
+       panning and pinch still work. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: manipulation;
   }
 
   body {
@@ -52,6 +57,19 @@
   ::selection {
     background: var(--black);
     color: var(--cream);
+  }
+}
+
+/* iOS Safari auto-zooms the whole page when a focused form field is under
+   16px and never zooms back out. Keep every input at 16px on touch devices
+   so the viewport never shifts — the chat box, search, newsletter, and
+   checkout all stay put. */
+@media (pointer: coarse), (max-width: 1023px) {
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 
