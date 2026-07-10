@@ -61,19 +61,28 @@ export default function LoadingScreen({ onComplete }) {
                 animate={{ opacity: phase === 'splitting' ? 0 : 1 }}
                 transition={{ duration: 0.3 }}
             >
-                <div className="flex overflow-hidden">
-                    {"23".split("").map((letter, i) => (
+                <div className="flex overflow-hidden items-start">
+                    {"TWENTY3".split("").map((letter, i) => (
                         <motion.span
                             key={i}
-                            className="text-white font-display font-black uppercase tracking-tight"
-                            style={{ fontSize: 'clamp(3.5rem, 12vw, 8rem)', lineHeight: 1 }}
+                            className="text-white brand-wordmark"
+                            style={{ fontSize: 'clamp(2.2rem, 8vw, 5.5rem)', lineHeight: 1 }}
                             initial={{ clipPath: 'inset(100% 0 0 0)' }}
                             animate={{ clipPath: 'inset(0% 0 0 0)' }}
-                            transition={{ delay: 0.2 + i * 0.06, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                            transition={{ delay: 0.2 + i * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                         >
                             {letter}
                         </motion.span>
                     ))}
+                    <motion.span
+                        className="text-white brand-wordmark"
+                        style={{ fontSize: 'clamp(0.7rem, 2.4vw, 1.65rem)', lineHeight: 1, marginTop: '0.2em' }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7, duration: 0.5 }}
+                    >
+                        TM
+                    </motion.span>
                 </div>
 
                 {/* Progress Bar */}

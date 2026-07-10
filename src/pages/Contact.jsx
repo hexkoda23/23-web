@@ -47,7 +47,7 @@ export default function Contact() {
               </div>
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest mb-2 text-gray-900">Instagram</h3>
-                <a href="https://instagram.com/twentythreepreppy" target="_blank" rel="noreferrer" className="text-gray-600 hover:underline">twentythreepreppy</a>
+                <a href="https://www.instagram.com/twentythreepreppy?igsh=MXZnY3MybjY1MXVvbA==" target="_blank" rel="noreferrer" className="text-gray-600 hover:underline">twentythreepreppy</a>
               </div>
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest mb-2 text-gray-900">Whatsapp</h3>

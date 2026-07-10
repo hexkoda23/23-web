@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
+import { useCart } from '../contexts/CartContext';
+import { getDefaultSize } from '../lib/styleEngine';
 
 export default function ProductCard({ product }) {
+  const { addToCart } = useCart();
   // All images available for this product
   const allImages = Array.isArray(product.images) && product.images.length > 0
     ? product.images
@@ -124,13 +127,15 @@ export default function ProductCard({ product }) {
           </div>
 
           <button
-            className="w-full py-2 bg-[var(--cream)] hover:bg-[var(--accent)] text-black font-mono text-[10px] uppercase tracking-[0.2em] font-bold transition-colors active:scale-[0.98] mt-1"
+            className="w-full py-2 bg-[var(--cream)] hover:bg-[var(--accent)] text-black font-mono text-[10px] uppercase tracking-[0.2em] font-bold transition-colors active:scale-[0.98] mt-1 disabled:opacity-40 disabled:pointer-events-none"
+            disabled={!product.inStock && product.category !== 'unreleased'}
             onClick={(e) => {
               e.preventDefault();
-              alert(`Added ${product.name} to cart`);
+              e.stopPropagation();
+              addToCart(product, getDefaultSize(product), 1);
             }}
           >
-            Quick Add
+            {(!product.inStock && product.category !== 'unreleased') ? 'Sold Out' : 'Quick Add'}
           </button>
         </div>
       </div>

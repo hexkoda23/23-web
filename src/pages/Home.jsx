@@ -35,7 +35,7 @@ export default function Home() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentHero((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 2500); // 2 seconds + crossfade time
+    }, 5200); // slow, gallery-paced rotation
     return () => clearInterval(timer);
   }, []);
 
@@ -153,10 +153,10 @@ export default function Home() {
             transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
             <h1
-              className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-4 max-w-[10ch]"
-              style={{ fontSize: 'clamp(3rem, 6.5vw, 6rem)' }}
+              className="font-display text-[var(--cream)] leading-[1.02] mb-5 max-w-[12ch]"
+              style={{ fontSize: 'clamp(3.2rem, 7vw, 6.8rem)', textShadow: '0 2px 40px rgba(0,0,0,0.4)' }}
             >
-              WEAR YOUR<br />WORLD
+              Wear Your<br /><span className="serif-italic">World</span>
             </h1>
             <p className="font-mono text-[11px] tracking-[0.2em] font-medium uppercase text-white/80 mb-10 pl-1">
               New Collection · 2026
@@ -196,10 +196,10 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
           <div className="flex items-end justify-between border-b border-black/10 pb-6 mb-12">
             <h2
-              className="font-display attention-heading text-black uppercase leading-[0.9]"
-              style={{ fontSize: 'clamp(3rem, 8vw, 6rem)' }}
+              className="font-display text-black leading-[1.02]"
+              style={{ fontSize: 'clamp(2.8rem, 7vw, 5.5rem)' }}
             >
-              New<br />Arrivals
+              New<br /><span className="serif-italic">Arrivals</span>
             </h2>
             <Link to="/shop" className="nav-link font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-black hover:text-[var(--accent)] mb-2">
               View All →
@@ -265,7 +265,7 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 relative z-10 flex flex-col items-center justify-center text-center">
           <div className="section-tag mb-10 text-white/70 border-white/20">Brand Philosophy</div>
 
-          <h2 className="font-display attention-heading text-white leading-[1.02] max-w-4xl flex flex-wrap justify-center gap-x-[0.25em] gap-y-2 mb-16" style={{ fontSize: 'clamp(2.35rem, 5.8vw, 5.35rem)' }}>
+          <h2 className="font-display text-white leading-[1.12] max-w-4xl flex flex-wrap justify-center gap-x-[0.25em] gap-y-2 mb-16" style={{ fontSize: 'clamp(2.1rem, 5vw, 4.6rem)' }}>
             {words.map((word, i) => (
               <span key={i} className="overflow-hidden inline-block">
                 <motion.span
@@ -296,8 +296,8 @@ export default function Home() {
           <div className="flex items-end justify-between border-b border-black/10 pb-6 mb-12">
             <div>
               <div className="section-tag mb-2">Exclusive Look</div>
-              <h2 className="font-display attention-heading text-black uppercase leading-[0.9]" style={{ fontSize: 'clamp(3rem, 7vw, 5rem)' }}>
-                Unreleased<br />Concepts
+              <h2 className="font-display text-black leading-[1.02]" style={{ fontSize: 'clamp(2.6rem, 6vw, 4.6rem)' }}>
+                Unreleased<br /><span className="serif-italic">Concepts</span>
               </h2>
             </div>
             <Link to="/shop?category=unreleased" className="nav-link font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-black hover:text-[var(--accent)] mb-2">
@@ -339,8 +339,8 @@ export default function Home() {
             </div>
             <div className="lg:col-span-5">
               <div className="section-tag mb-6">Signature Series</div>
-              <h2 className="font-display attention-heading text-black uppercase leading-[0.92] mb-8" style={{ fontSize: 'clamp(3rem, 6vw, 5rem)' }}>
-                THE<br />IDENTITY<br />COLLECTION
+              <h2 className="font-display text-black leading-[1.05] mb-8" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 4.4rem)' }}>
+                The <span className="serif-italic">Identity</span><br />Collection
               </h2>
               <p className="font-body text-black/60 text-lg leading-relaxed mb-10">
                 Our core DNA. A selection of timeless pieces designed to be the foundation of your digital and physical presence. Minimalist in form, maximalist in intent.
@@ -356,14 +356,14 @@ export default function Home() {
       {/* 6. MARQUEE STRIP — DUAL ROWS */}
       <section className="py-24 bg-[var(--black)] text-[var(--accent)] overflow-hidden flex flex-col gap-4 border-y border-white/10" data-cursor="DRAG">
         <Marquee
-          text="23 ✦ WEAR YOUR WORLD ✦ AUTHENTICITY ✦ FROM LAGOS TO THE WORLD ✦ "
-          className="font-display attention-cream text-6xl md:text-8xl lg:text-9xl uppercase"
-          speed="35s"
+          text="TWENTY3 — Wear Your World — Authenticity — From Lagos to the World — "
+          className="font-display text-[var(--cream)] text-5xl md:text-7xl lg:text-8xl"
+          speed="45s"
         />
         <Marquee
-          text="NEW COLLECTION ✦ STYLE IS IDENTITY ✦ STREET LUXURY ✦ FROM LAGOS TO THE WORLD ✦ "
-          className="font-display attention-heading text-6xl md:text-8xl lg:text-9xl uppercase text-[var(--accent)] opacity-40 mix-blend-screen"
-          speed="45s"
+          text="New Collection — Style is Identity — Street Luxury — From Lagos to the World — "
+          className="serif-italic text-5xl md:text-7xl lg:text-8xl text-[var(--accent)] opacity-30"
+          speed="60s"
           reverse={true}
         />
       </section>
@@ -371,8 +371,8 @@ export default function Home() {
       {/* 7. BESTSELLERS CAROUSEL */}
       <section className="py-24 lg:py-40 bg-white overflow-hidden relative group/section">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex items-end justify-between border-b border-black/10 pb-6 mb-12">
-          <h2 className="font-display attention-heading text-black uppercase leading-[0.9]" style={{ fontSize: 'clamp(3rem, 6vw, 4.5rem)' }}>
-            Trending<br />Now
+          <h2 className="font-display text-black leading-[1.02]" style={{ fontSize: 'clamp(2.6rem, 5.5vw, 4.2rem)' }}>
+            Trending<br /><span className="serif-italic">Now</span>
           </h2>
           {/* Arrow navigation handles for desktop hidden until hover */}
           <div className="hidden md:flex gap-2">
@@ -414,8 +414,8 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
             <div className="w-full lg:w-1/2 order-2 lg:order-1">
               <div className="section-tag dark mb-6 border-white/20 text-white/40">Next-Gen curation</div>
-              <h2 className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-8" style={{ fontSize: 'clamp(3.4rem, 7.5vw, 6.4rem)' }}>
-                AI<br /><span className="text-[var(--accent)]">STYLING</span>
+              <h2 className="font-display text-[var(--cream)] leading-[1.02] mb-8" style={{ fontSize: 'clamp(3rem, 6.5vw, 5.6rem)' }}>
+                AI<br /><span className="serif-italic text-[var(--accent)]">Styling</span>
               </h2>
               <p className="font-body text-white/60 text-lg leading-relaxed mb-12 max-w-lg">
                 Unlock the power of neural styling. Our AI engine analyzes your aesthetic and crafts custom outfit combinations that push the boundaries of your personal identity.
@@ -457,15 +457,15 @@ export default function Home() {
       <section className="py-24 lg:py-48 bg-[var(--cream)] overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 mb-24 relative">
           {/* Luxurious background accent text */}
-          <div className="absolute top-0 right-0 hidden lg:block opacity-[0.03] font-display attention-heading text-[12rem] leading-none -translate-y-1/2">
-            BEYOND
+          <div className="absolute top-0 right-0 hidden lg:block opacity-[0.04] serif-italic text-[11rem] leading-none -translate-y-1/2 select-none">
+            Beyond
           </div>
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-12 border-l border-black/10 pl-8 md:pl-12">
             <div className="max-w-2xl">
               <div className="section-tag mb-6 text-black/40 border-black/10">Brand DNA</div>
-              <h2 className="font-display attention-heading text-black uppercase leading-[0.9] mb-8" style={{ fontSize: 'clamp(3.3rem, 7.5vw, 6.3rem)' }}>
-                WHAT MAKES<br />23 DIFFERENT
+              <h2 className="font-display text-black leading-[1.05] mb-8" style={{ fontSize: 'clamp(2.7rem, 6vw, 5rem)' }}>
+                What Makes<br />23 <span className="serif-italic">Different</span>
               </h2>
               <p className="font-body text-lg text-black/70 leading-relaxed mb-8 max-w-lg">
                 Crafted in Lagos, built for the world. We combine local artistry with neural technology to create a wardrobe that moves as fast as you do.
@@ -594,8 +594,8 @@ export default function Home() {
             transition={{ duration: 0.8 }}
           >
             <div className="section-tag dark mb-8">Newsletter</div>
-            <h2 className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.9] mb-6" style={{ fontSize: 'clamp(3rem, 9vw, 8rem)' }}>
-              EXCLUSIVE ACCESS
+            <h2 className="font-display text-[var(--cream)] leading-[1.05] mb-6" style={{ fontSize: 'clamp(2.8rem, 7.5vw, 6.5rem)' }}>
+              Exclusive <span className="serif-italic">Access</span>
             </h2>
             <p className="font-mono text-[11px] tracking-[0.2em] font-medium uppercase text-white/50 mb-12">
               Join the movement and be the first to know about upcoming drops.

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   BarChart3,
   Bookmark,
@@ -213,11 +213,22 @@ async function detectHumanFit(ctx, canvas) {
   const humanDetected = Boolean(face) || (personLikeSubject && (skinRatio > 0.004 || foregroundRatio > 0.08));
 
   if (!humanDetected) {
+    // Never block the preview: fall back to a centered framing estimate so
+    // any photo still produces a styled result.
+    const centerX = box.x + box.width / 2;
+    const torsoWidth = clamp(box.width * 0.78, width * 0.3, width * 0.66);
     return {
       humanDetected: false,
-      confidence: Math.round(clamp((foregroundRatio + skinRatio * 8) * 100, 8, 55)),
-      reason: 'No clear person was detected. Upload a front-facing human photo from head to hips or full body.',
+      confidence: Math.round(clamp((foregroundRatio + skinRatio * 8) * 100, 30, 60)),
+      method: 'centered fit framing',
+      note: 'No clear person detected — the piece was placed with centered framing. A front-facing photo gives the best result.',
       box,
+      torso: {
+        x: clamp(centerX - torsoWidth / 2, width * 0.04, width * 0.96 - torsoWidth),
+        y: clamp(box.y + box.height * 0.22, height * 0.18, height * 0.55),
+        width: torsoWidth,
+        height: clamp(box.height * 0.42, height * 0.24, height * 0.46),
+      },
     };
   }
 
@@ -326,17 +337,14 @@ async function createLocalTryOnPreview(photoSrc, product) {
   const ctx = canvas.getContext('2d');
 
   ctx.drawImage(subjectImage, 0, 0, width, height);
+  // The scan never blocks the preview — when no person is confidently
+  // detected it returns a centered fallback framing instead.
   const scan = await detectHumanFit(ctx, canvas);
-  if (!scan.humanDetected) {
-    const error = new Error(scan.reason);
-    error.scan = scan;
-    throw error;
-  }
 
-  const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, 'rgba(0,0,0,0.02)');
-  gradient.addColorStop(0.58, 'rgba(0,0,0,0)');
-  gradient.addColorStop(1, 'rgba(0,0,0,0.22)');
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(0.72, 'rgba(0,0,0,0)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0.28)');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 
@@ -344,34 +352,27 @@ async function createLocalTryOnPreview(photoSrc, product) {
   const garmentCanvas = drawProductIntoCanvas(productImage, placement.width, placement.height);
 
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.38)';
-  ctx.shadowBlur = width * 0.035;
-  ctx.shadowOffsetY = width * 0.015;
+  ctx.shadowColor = 'rgba(0,0,0,0.32)';
+  ctx.shadowBlur = width * 0.03;
+  ctx.shadowOffsetY = width * 0.012;
   ctx.drawImage(garmentCanvas, placement.x, placement.y, placement.width, placement.height);
   ctx.restore();
 
+  // Minimal atelier caption — thin rule + serif label, no heavy overlay.
   ctx.save();
-  ctx.globalAlpha = 0.15;
-  ctx.strokeStyle = '#F1ECE1';
-  ctx.lineWidth = 2;
-  for (let y = placement.y - 18; y < placement.y + placement.height + 18; y += 22) {
-    ctx.beginPath();
-    ctx.moveTo(placement.x - 20, y);
-    ctx.lineTo(placement.x + placement.width + 20, y + 8);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.72)';
-  ctx.fillRect(18, height - 92, Math.min(width - 36, 520), 64);
-  ctx.fillStyle = '#F1ECE1';
-  ctx.font = `700 ${Math.max(11, width * 0.018)}px DM Sans, sans-serif`;
-  ctx.letterSpacing = '2px';
-  ctx.fillText(`23 SCAN ${scan.confidence}% HUMAN FIT`, 34, height - 62);
-  ctx.fillStyle = 'rgba(255,255,255,0.84)';
-  ctx.font = `600 ${Math.max(10, width * 0.015)}px DM Sans, sans-serif`;
-  ctx.fillText(product.name.slice(0, 42).toUpperCase(), 34, height - 40);
+  const captionSize = Math.max(13, width * 0.02);
+  ctx.strokeStyle = 'rgba(244,240,232,0.85)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(26, height - 54);
+  ctx.lineTo(58, height - 54);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(244,240,232,0.95)';
+  ctx.font = `italic 400 ${captionSize}px "DM Serif Display", Georgia, serif`;
+  ctx.fillText(`TWENTY3 Atelier — ${product.name.slice(0, 42)}`, 68, height - 48);
+  ctx.font = `400 ${Math.max(9, width * 0.011)}px "DM Mono", monospace`;
+  ctx.fillStyle = 'rgba(244,240,232,0.6)';
+  ctx.fillText(`${scan.method.toUpperCase()} · ${scan.confidence}% FIT`, 68, height - 28);
   ctx.restore();
 
   return {
@@ -403,7 +404,7 @@ const MODULE_GUIDES = {
   stylist: {
     title: 'AI Personal Stylist',
     summary: 'Customers answer a few style questions, then 23 recommends real catalog outfits that match their occasion, colors, size, and budget.',
-    steps: ['Pick the occasion and vibe.', 'Choose budget, colors, and size.', 'Review 2 curated looks, save favorites, or add pieces to cart.'],
+    steps: ['Pick the occasion and vibe.', 'Choose budget, colors, and size.', 'Review the curated looks, save favorites, or add pieces to cart.'],
     outcome: 'Best for shoppers who want a complete 23 fit fast.',
   },
   tryon: {
@@ -818,8 +819,8 @@ function StylistExperience({ focusProduct, answers, setAnswers }) {
         <div className="mb-6 border-y border-black/10 py-5 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-black/35">Generated wardrobe edits</p>
-            <h2 className="mt-2 font-display attention-heading text-4xl md:text-5xl uppercase leading-[0.9]">
-              Recommended Looks
+            <h2 className="mt-2 font-display text-4xl md:text-5xl leading-[1.02]">
+              Recommended <span className="serif-italic">Looks</span>
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-black/55 md:text-right">
@@ -956,12 +957,15 @@ function TryOnLab({ initialProduct }) {
           {uploadError && (
             <p className="mt-3 text-xs leading-relaxed text-red-600">{uploadError}</p>
           )}
-          {scanResult?.humanDetected && (
+          {scanResult && (
             <div className="mt-3 border border-black/10 bg-white p-3">
-              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-black/40">Human scan</p>
+              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-black/40">Fit scan</p>
               <p className="mt-1 text-xs leading-relaxed text-black/60">
                 {scanResult.confidence}% confidence using {scanResult.method}. Placement: {scanResult.placement?.type || 'auto'}.
               </p>
+              {scanResult.note && (
+                <p className="mt-1 text-xs leading-relaxed text-black/45 italic">{scanResult.note}</p>
+              )}
             </div>
           )}
 
@@ -1060,7 +1064,7 @@ function TryOnLab({ initialProduct }) {
             </p>
             {scanResult && (
               <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-white/45">
-                Human {scanResult.confidence}%
+                Fit {scanResult.confidence}%
               </p>
             )}
           </div>
@@ -1351,7 +1355,7 @@ function ChallengesArena() {
   );
 }
 
-function TrendPredictor({ onTrendSelect, selectedTrendId }) {
+function TrendPredictor({ onTrendSelect, selectedTrendId, onUseForDesigns }) {
   const catalogStats = useMemo(() => getCatalogStats(PRODUCTS), []);
   const [savedTrendIds, setSavedTrendIds] = useState(() => readJsonStorage(TREND_SAVES_KEY, []));
   const [watchTrendIds, setWatchTrendIds] = useState(() => readJsonStorage(TREND_WATCH_KEY, []));
@@ -1368,6 +1372,7 @@ function TrendPredictor({ onTrendSelect, selectedTrendId }) {
   const selectTrend = (trend, action = 'select') => {
     onTrendSelect(trend.id);
     trackStyleEvent('trend_action', { trendId: trend.id, action });
+    if (action === 'use_for_designs') onUseForDesigns?.();
   };
 
   return (
@@ -1568,7 +1573,7 @@ function DesignEngine({ selectedTrendId }) {
           <div className="min-h-[520px] bg-black text-white flex items-center justify-center text-center p-6">
             <div>
               <Wand2 size={34} className="mx-auto mb-4 text-[var(--accent)]" />
-              <h2 className="font-display attention-heading text-attention-outline text-black text-4xl md:text-6xl uppercase">Design Queue</h2>
+              <h2 className="font-display text-[var(--cream)] text-4xl md:text-6xl">Design <span className="serif-italic">Queue</span></h2>
               <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">
                 Trend selected: {selectedTrend.name}
               </p>
@@ -1672,8 +1677,8 @@ export default function AIStudio() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-end">
               <div className="lg:col-span-7">
                 <div className="section-tag dark mb-5 text-white/70">Atelier Intelligence</div>
-                <h1 className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.88] max-w-[9ch]" style={{ fontSize: 'clamp(4rem, 9vw, 9rem)' }}>
-                  23<br />AI Studio
+                <h1 className="font-display text-[var(--cream)] leading-[1.0] max-w-[10ch]" style={{ fontSize: 'clamp(3.4rem, 7.5vw, 7.5rem)', textShadow: '0 2px 40px rgba(0,0,0,0.4)' }}>
+                  23 <span className="serif-italic">AI</span><br />Studio
                 </h1>
                 <p className="mt-6 max-w-2xl text-white/70 text-base md:text-lg leading-relaxed">
                   A luxury styling system for product discovery, visual try-on, cultural challenges, trend signals, and drop concepts.
@@ -1729,21 +1734,35 @@ export default function AIStudio() {
         <ModuleGuide activeTab={activeTab} />
 
         <section id="ai-studio-workbench" className="max-w-[1400px] mx-auto px-6 lg:px-10 py-10 lg:py-14 scroll-mt-32">
-          {activeTab === 'stylist' && (
-            <StylistExperience focusProduct={focusProduct} answers={answers} setAnswers={setAnswers} />
-          )}
-          {activeTab === 'tryon' && (
-            <TryOnLab key={tryOnProduct?.id || 'default-tryon'} initialProduct={tryOnProduct} />
-          )}
-          {activeTab === 'challenges' && (
-            <ChallengesArena />
-          )}
-          {activeTab === 'trends' && (
-            <TrendPredictor onTrendSelect={setSelectedTrendId} selectedTrendId={selectedTrendId} />
-          )}
-          {activeTab === 'designs' && (
-            <DesignEngine selectedTrendId={selectedTrendId} />
-          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            >
+              {activeTab === 'stylist' && (
+                <StylistExperience focusProduct={focusProduct} answers={answers} setAnswers={setAnswers} />
+              )}
+              {activeTab === 'tryon' && (
+                <TryOnLab key={tryOnProduct?.id || 'default-tryon'} initialProduct={tryOnProduct} />
+              )}
+              {activeTab === 'challenges' && (
+                <ChallengesArena />
+              )}
+              {activeTab === 'trends' && (
+                <TrendPredictor
+                  onTrendSelect={setSelectedTrendId}
+                  selectedTrendId={selectedTrendId}
+                  onUseForDesigns={() => handleTabChange('designs')}
+                />
+              )}
+              {activeTab === 'designs' && (
+                <DesignEngine selectedTrendId={selectedTrendId} />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </section>
 
         <section className="bg-black text-white py-16">

@@ -24,6 +24,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import IdentityForge from './pages/IdentityForge';
 import DigitalProfile from './pages/DigitalProfile';
 import LoadingScreen from './components/LoadingScreen';
+import CustomCursor from './components/CustomCursor';
 
 // ScrollToTop component
 function ScrollToTop() {
@@ -47,6 +48,7 @@ function App() {
       <div className="min-h-screen flex flex-col bg-white text-black font-body antialiased selection:bg-[var(--accent)] selection:text-black">
         {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
 
+        <CustomCursor />
         <ScrollToTop />
         <Navbar />
         <CartDrawer />

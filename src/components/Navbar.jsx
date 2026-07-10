@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import SearchModal from './SearchModal';
 import Marquee from './Marquee';
+import BrandLogo from './BrandLogo';
 
 const navLinks = [
   { label: 'Lookbook', to: '/lookbook' },
@@ -57,13 +58,12 @@ export default function Navbar() {
           <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex justify-between items-center">
 
             {/* Logo mark */}
-            <Link to="/" className="z-50 flex items-center gap-3 group" data-cursor="VIEW">
-              <div className={`w-9 h-9 border flex items-center justify-center transition-colors group-hover:border-[var(--accent)] ${isScrolled || isDarkPage ? 'border-white/30 text-white' : 'border-black/30 text-black'}`}>
-                <span className="font-attention text-base leading-none">23</span>
-              </div>
-              <span className={`hidden sm:block font-mono text-[0.62rem] tracking-[0.2em] uppercase transition-colors group-hover:text-[var(--accent)] ${isScrolled || isDarkPage ? 'text-white/60' : 'text-black/50'}`}>
-                The Brand
-              </span>
+            <Link
+              to="/"
+              className={`z-50 flex items-center group transition-colors group-hover:text-[var(--accent)] ${textColor}`}
+              data-cursor="VIEW"
+            >
+              <BrandLogo className="text-base md:text-lg" />
             </Link>
 
             {/* Desktop nav */}
@@ -124,7 +124,7 @@ export default function Navbar() {
         {/* Marquee Tape below Navbar */}
         <div className={`overflow-hidden transition-all duration-500 border-b ${isScrolled || isDarkPage ? 'bg-black/40 border-white/10 backdrop-blur-md' : 'bg-white border-black/10'}`}>
           <Marquee
-            text="NEW ARRIVALS · FREE SHIPPING OVER ₦50,000 · 23 — WEAR YOUR WORLD · "
+            text="NEW ARRIVALS · FREE SHIPPING OVER ₦50,000 · TWENTY3™ — WEAR YOUR WORLD · "
             speed="30s"
             className={`py-1.5 font-mono text-[0.55rem] tracking-[0.15em] uppercase font-medium ${isScrolled || isDarkPage ? 'text-white/60' : 'text-black/60'}`}
           />
@@ -142,8 +142,8 @@ export default function Navbar() {
             className="fixed inset-0 z-[55] lg:hidden bg-[var(--accent)] flex flex-col pt-32 px-8 pb-12 overflow-hidden"
           >
             {/* Big typographic background texture */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-black/5 font-display attention-heading text-[25vw] whitespace-nowrap pointer-events-none select-none">
-              23
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-black/5 brand-wordmark text-[13vw] pointer-events-none select-none">
+              TWENTY3
             </div>
 
             <div className="flex flex-col gap-6 flex-1 relative z-10 mt-10">
@@ -156,7 +156,7 @@ export default function Navbar() {
                 >
                   <Link
                     to={link.to}
-                    className="block font-display attention-heading text-black text-[3.25rem] uppercase leading-[0.95] hover:opacity-50 transition-opacity"
+                    className="block font-display text-black text-[3rem] leading-[1.05] hover:opacity-50 transition-opacity"
                   >
                     {link.label}
                   </Link>
@@ -178,7 +178,7 @@ export default function Navbar() {
               </Link>
 
               <div className="mt-8 flex justify-center gap-8">
-                <a href="#" className="font-mono text-xs uppercase tracking-widest text-black/60 font-bold">Instagram</a>
+                <a href="https://www.instagram.com/twentythreepreppy?igsh=MXZnY3MybjY1MXVvbA==" target="_blank" rel="noreferrer" className="font-mono text-xs uppercase tracking-widest text-black/60 font-bold">Instagram</a>
                 <a href="#" className="font-mono text-xs uppercase tracking-widest text-black/60 font-bold">Twitter</a>
               </div>
             </motion.div>

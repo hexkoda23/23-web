@@ -530,7 +530,7 @@ export default function ChatBot() {
         aria-label="Open 23 chat"
       >
         <div className="absolute inset-0 bg-[var(--accent)] translate-y-full group-hover/chat:translate-y-0 transition-transform duration-500" />
-        <div className="relative z-10 font-display font-black text-xl group-hover/chat:text-black transition-colors duration-500">
+        <div className="relative z-10 brand-wordmark text-lg group-hover/chat:text-black transition-colors duration-500">
           23
         </div>
         <div className="absolute top-4 right-4 w-1.5 h-1.5 bg-[var(--accent)] rounded-full group-hover/chat:bg-black transition-colors" />

@@ -24,17 +24,17 @@ export default function Footer() {
     <footer className="bg-[#0A0A0A] text-white pt-24 pb-12 relative z-10 overflow-hidden rounded-t-[40px] mt-[-40px]">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10">
 
-        {/* Giant "FROM23" Top Treatment */}
+        {/* Giant TWENTY3 wordmark treatment */}
         <div className="mb-20 text-center select-none overflow-hidden" data-cursor="DRAG">
           <h2
-            className="font-attention attention-heading text-attention-outline uppercase w-full"
+            className="brand-wordmark justify-center w-full"
             style={{
-              fontSize: 'clamp(5rem, 25vw, 25rem)',
-              lineHeight: 0.84,
-              color: 'rgba(255,255,255,0.03)'
+              fontSize: 'clamp(3rem, 12.5vw, 12rem)',
+              lineHeight: 0.9,
+              color: 'rgba(255,255,255,0.05)'
             }}
           >
-            23
+            TWENTY3<span className="tm">TM</span>
           </h2>
         </div>
 
@@ -89,7 +89,7 @@ export default function Footer() {
           <div className="md:col-span-3 flex flex-col justify-start">
             <h4 className="font-mono text-[10px] tracking-[0.2em] font-bold uppercase text-[var(--accent)] mb-6">Connect</h4>
             <div className="flex flex-col gap-6">
-              <a href="https://instagram.com/shop23" target="_blank" className="nav-link font-mono text-[11px] tracking-[0.12em] uppercase text-white hover:text-[var(--accent)] w-max">
+              <a href="https://www.instagram.com/twentythreepreppy?igsh=MXZnY3MybjY1MXVvbA==" target="_blank" rel="noreferrer" className="nav-link font-mono text-[11px] tracking-[0.12em] uppercase text-white hover:text-[var(--accent)] w-max">
                 Instagram ↗
               </a>
               <a href="#" className="nav-link font-mono text-[11px] tracking-[0.12em] uppercase text-white hover:text-[var(--accent)] w-max">
@@ -112,7 +112,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-white/[0.06] flex flex-col-reverse md:flex-row justify-between items-center gap-6">
           <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-white/30">
-            © {new Date().getFullYear()} 23. All rights reserved.
+            © {new Date().getFullYear()} TWENTY3™. All rights reserved.
           </p>
           <div className="flex items-center gap-8">
             <Link to="/terms" className="nav-link font-mono text-[10px] tracking-[0.12em] uppercase text-white/60 hover:text-[var(--accent)] transition-colors">Terms of Service</Link>
