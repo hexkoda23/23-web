@@ -124,12 +124,7 @@ export const PRODUCTS = [
     category: "new",
     price: 50000,
     image: "/wardrobe/23xAscendblack.jpg",
-    images: [
-      "/wardrobe/23xAscendblack.jpg",
-      "/wardrobe/23xAscendblue.jpg",
-      "/wardrobe/23xAscendpink.jpg",
-      "/wardrobe/23xAscendwine.jpg"
-    ],
+    images: ["/wardrobe/23xAscendblack.jpg"],
     variantGroup: "23x-ascend",
     description: "A complete tracksuit elevation. Black as your ambitions. Comfortable enough for a nap that accidentally becomes a spiritual retreat.",
     writeUp: "The Ascent co-ord set was created for the individual who is going somewhere important but would like the option to also sit down dramatically at any point during the journey. The set is high-grade leisure — the kind of thing you wear when you want people to understand that your comfort is a philosophical choice, not a lack of effort. One person wore it to a board meeting and got a promotion. Another wore it to a wedding and accidentally became the most discussed guest. We make no promises. We do make very good fabric.",
@@ -209,7 +204,7 @@ export const PRODUCTS = [
     price: 25000,
     image: "/wardrobe/23x.Motiongreen.jpg",
     images: [
-      "/wardrobe/23x.Motiongreen.jpg", "/wardrobe/red b.jpg",
+      "/wardrobe/23x.Motiongreen.jpg",
       "/lookbook/JF-7.JPG", "/lookbook/JF-8.JPG",
       "/lookbook/JF-9.JPG"
     ],

@@ -1,11 +1,34 @@
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useCart } from '../contexts/CartContext';
-import { getDefaultSize } from '../lib/styleEngine';
+import { getDefaultSize, inferColorTags, inferFunctionalCategory } from '../lib/styleEngine';
+
+// Deep editorial tones per colour family — the product's text rhymes with
+// the garment itself while staying readable on white.
+const COLOR_TONES = {
+  black: { text: '#111111', swatch: '#111111', label: 'Noir' },
+  white: { text: '#7d786e', swatch: '#e8e4da', label: 'White' },
+  cream: { text: '#96814f', swatch: '#e2d5b8', label: 'Cream' },
+  green: { text: '#2f5d3a', swatch: '#2f5d3a', label: 'Green' },
+  blue: { text: '#2b4a7f', swatch: '#2b4a7f', label: 'Blue' },
+  pink: { text: '#b45a77', swatch: '#e4a5b8', label: 'Pink' },
+  orange: { text: '#b45f2d', swatch: '#d97b3f', label: 'Orange' },
+  yellow: { text: '#a8842c', swatch: '#e3b93e', label: 'Yellow' },
+  red: { text: '#8f2d2d', swatch: '#a83232', label: 'Red' },
+  brown: { text: '#6b4a2f', swatch: '#7d5537', label: 'Brown' },
+  denim: { text: '#33506b', swatch: '#3f5d7d', label: 'Denim' },
+  grey: { text: '#5f5f5f', swatch: '#8a8a8a', label: 'Grey' },
+  neutral: { text: '#3a372f', swatch: '#8a857c', label: 'Signature' },
+};
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
+  const tone = useMemo(() => {
+    const colors = inferColorTags(product);
+    return COLOR_TONES[colors[0]] || COLOR_TONES.neutral;
+  }, [product]);
+  const categoryLabel = useMemo(() => inferFunctionalCategory(product).replace('fullFit', 'full set'), [product]);
   // All images available for this product
   const allImages = Array.isArray(product.images) && product.images.length > 0
     ? product.images
@@ -118,10 +141,10 @@ export default function ProductCard({ product }) {
         {/* Slide Up Drawer */}
         <div className="absolute bottom-0 left-0 right-0 h-[90px] bg-white translate-y-full transition-transform duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 p-4 flex flex-col justify-between border-t border-black/5 z-20">
           <div className="flex justify-between items-start gap-4">
-            <h3 className="attention-product text-base text-black line-clamp-1 flex-1">
+            <h3 className="attention-product text-base line-clamp-1 flex-1" style={{ color: tone.text }}>
               {product.name}
             </h3>
-            <span className="font-mono text-[11px] font-medium text-[var(--muted)]">
+            <span className="font-mono text-[11px] font-medium" style={{ color: tone.text }}>
               {formattedPrice}
             </span>
           </div>
@@ -140,17 +163,21 @@ export default function ProductCard({ product }) {
         </div>
       </div>
 
-      {/* Default text underneath product */}
+      {/* Default text underneath product — toned to the garment's colour */}
       <div className="mt-3 flex justify-between items-start group-hover:-translate-y-2 group-hover:opacity-0 transition-all duration-300">
         <div>
-          <h3 className="attention-product text-[15px] text-black max-w-[22ch]">
+          <h3 className="attention-product text-[15px] max-w-[22ch]" style={{ color: tone.text }}>
             {product.name}
           </h3>
-          <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-[#888]">
-            {product.category}
+          <p className="mt-1.5 flex items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-[#8a857c]">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0"
+              style={{ background: tone.swatch }}
+            />
+            {tone.label} · {categoryLabel}
           </p>
         </div>
-        <p className="font-mono text-xs font-semibold text-black">
+        <p className="font-mono text-xs font-semibold" style={{ color: tone.text }}>
           {formattedPrice}
         </p>
       </div>

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, RefreshCw, Plus, Trash2, Check, X, Shirt, Scissors } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, Plus, Trash2, Check, X } from "lucide-react";
 import { getUserData, setUserData } from "../utils/userStorage";
 import { PRODUCTS } from "../data/products";
 import PageTransition from "../components/PageTransition";
@@ -291,76 +291,64 @@ export default function OutfitGenerator() {
                           </div>
                         </div>
                       ) : (
+                        /* Only render the pieces the stylist actually suggested —
+                           an empty slot never shows, not even as a placeholder. */
                         <>
-                          {/* Top Left: Top */}
-                          <div className="col-span-1 space-y-2">
-                            <span className="text-[10px] uppercase tracking-widest text-gray-400">Top</span>
-                            <div className="aspect-[3/4] bg-white shadow-sm p-2">
-                              {generatedOutfit.top ? (
+                          {generatedOutfit.top && (
+                            <div className="col-span-1 space-y-2">
+                              <span className="text-[10px] uppercase tracking-widest text-gray-400">Top</span>
+                              <div className="aspect-[3/4] bg-white shadow-sm p-2">
                                 <img src={generatedOutfit.top.image} className="w-full h-full object-cover" alt="Top" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><Shirt /></div>
-                              )}
+                              </div>
+                              <p className="text-xs uppercase font-bold truncate">{generatedOutfit.top.name}</p>
                             </div>
-                            <p className="text-xs uppercase font-bold truncate">{generatedOutfit.top?.name || "None"}</p>
-                          </div>
+                          )}
 
-                          {/* Top Right: Outerwear */}
-                          <div className="col-span-1 space-y-2 pt-12">
-                            <span className="text-[10px] uppercase tracking-widest text-gray-400">Layer</span>
-                            <div className="aspect-[3/4] bg-white shadow-sm p-2">
-                              {generatedOutfit.outerwear ? (
+                          {generatedOutfit.outerwear && (
+                            <div className="col-span-1 space-y-2 pt-12">
+                              <span className="text-[10px] uppercase tracking-widest text-gray-400">Layer</span>
+                              <div className="aspect-[3/4] bg-white shadow-sm p-2">
                                 <img src={generatedOutfit.outerwear.image} className="w-full h-full object-cover" alt="Outerwear" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 text-xs uppercase">No Layer</div>
-                              )}
+                              </div>
+                              <p className="text-xs uppercase font-bold truncate">{generatedOutfit.outerwear.name}</p>
                             </div>
-                            <p className="text-xs uppercase font-bold truncate">{generatedOutfit.outerwear?.name || "-"}</p>
-                          </div>
+                          )}
 
-                          {/* Bottom Left: Bottom */}
-                          <div className="col-span-1 space-y-2 -mt-12">
-                            <span className="text-[10px] uppercase tracking-widest text-gray-400">Bottom</span>
-                            <div className="aspect-[3/4] bg-white shadow-sm p-2">
-                              {generatedOutfit.bottom ? (
+                          {generatedOutfit.bottom && (
+                            <div className={`col-span-1 space-y-2 ${generatedOutfit.outerwear ? '-mt-12' : ''}`}>
+                              <span className="text-[10px] uppercase tracking-widest text-gray-400">Bottom</span>
+                              <div className="aspect-[3/4] bg-white shadow-sm p-2">
                                 <img src={generatedOutfit.bottom.image} className="w-full h-full object-cover" alt="Bottom" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300"><Scissors /></div>
-                              )}
+                              </div>
+                              <p className="text-xs uppercase font-bold truncate">{generatedOutfit.bottom.name}</p>
                             </div>
-                            <p className="text-xs uppercase font-bold truncate">{generatedOutfit.bottom?.name || "None"}</p>
-                          </div>
+                          )}
                         </>
                       )}
 
-                      {/* Accessories & Shoes — Always visible */}
+                      {generatedOutfit.accessory && (
                       <div className="col-span-2 space-y-2 -mt-4 mb-4">
                         <div className="flex items-center gap-4 bg-white p-3 shadow-sm border border-gray-100">
                           <div className="w-16 h-16 bg-gray-50 flex-shrink-0">
-                            {generatedOutfit.accessory ? (
-                              <img src={generatedOutfit.accessory.image} className="w-full h-full object-cover" alt="Accessory" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-300">?</div>
-                            )}
+                            <img src={generatedOutfit.accessory.image} className="w-full h-full object-cover" alt="Accessory" />
                           </div>
                           <div>
                             <span className="text-[10px] uppercase tracking-widest text-gray-400 block mb-1">Accessory</span>
-                            <p className="text-xs uppercase font-bold">{generatedOutfit.accessory?.name || "None Selected"}</p>
+                            <p className="text-xs uppercase font-bold">{generatedOutfit.accessory.name}</p>
                           </div>
                         </div>
                       </div>
+                      )}
 
-                      <div className="col-span-1 space-y-2">
-                        <span className="text-[10px] uppercase tracking-widest text-gray-400">Footwear</span>
-                        <div className="aspect-[3/4] bg-white shadow-sm p-2">
-                          {generatedOutfit.shoes ? (
+                      {generatedOutfit.shoes && (
+                        <div className="col-span-1 space-y-2">
+                          <span className="text-[10px] uppercase tracking-widest text-gray-400">Footwear</span>
+                          <div className="aspect-[3/4] bg-white shadow-sm p-2">
                             <img src={generatedOutfit.shoes.image} className="w-full h-full object-cover" alt="Shoes" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">No Shoes</div>
-                          )}
+                          </div>
+                          <p className="text-xs uppercase font-bold truncate">{generatedOutfit.shoes.name}</p>
                         </div>
-                        <p className="text-xs uppercase font-bold truncate">{generatedOutfit.shoes?.name || "None"}</p>
-                      </div>
+                      )}
                     </motion.div>
                   ) : (
                     <div className="text-center">

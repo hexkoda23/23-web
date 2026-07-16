@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Menu, X, Search, User } from 'lucide-react';
+import { ShoppingBag, Menu, X, User } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import SearchModal from './SearchModal';
 import Marquee from './Marquee';
 import BrandLogo from './BrandLogo';
 
@@ -20,7 +19,6 @@ const navLinks = [
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { getCartCount, toggleCart } = useCart();
   const { currentUser } = useAuth();
   const location = useLocation();
@@ -84,12 +82,6 @@ export default function Navbar() {
 
             {/* Actions */}
             <div className="flex items-center gap-5 z-50">
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className={`hidden md:block transition-colors hover:text-[var(--accent)] ${isScrolled || isDarkPage ? 'text-white/60' : 'text-black/50'}`}
-              >
-                <Search size={17} />
-              </button>
               <Link
                 to={currentUser ? '/account' : '/login'}
                 className={`hidden md:block transition-colors hover:text-[var(--accent)] ${isScrolled || isDarkPage ? 'text-white/60' : 'text-black/50'}`}
@@ -186,7 +178,6 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      <SearchModal open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 }

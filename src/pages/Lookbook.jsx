@@ -21,9 +21,35 @@ const CURATED = [
   { src: '/lookbook/JF-15.JPG', title: 'The Quiet Luxury', desc: 'Understated. Unmistakable.', tag: 'Signature' },
 ];
 
+const FLOATERS = [
+  { src: '/lookbook/JF-2.JPG', className: 'top-[12%] left-[6%] w-28 md:w-40', r: -8, delay: 0, drift: 14 },
+  { src: '/lookbook/JF-11.JPG', className: 'top-[16%] right-[8%] w-24 md:w-36', r: 7, delay: 0.15, drift: -16 },
+  { src: '/lookbook/JF-19.JPG', className: 'bottom-[18%] left-[12%] w-24 md:w-32', r: 5, delay: 0.3, drift: 12 },
+  { src: '/lookbook/JF-24.JPG', className: 'bottom-[14%] right-[10%] w-28 md:w-40', r: -6, delay: 0.45, drift: -12 },
+];
+
 function LookbookHero() {
   return (
     <section className="relative h-screen bg-[#0A0A0A] flex flex-col items-center justify-center overflow-hidden">
+
+      {/* Scattered editorial polaroids drifting behind the title */}
+      {FLOATERS.map((item, i) => (
+        <motion.div
+          key={item.src}
+          className={`absolute ${item.className} pointer-events-none select-none`}
+          initial={{ opacity: 0, y: 60, rotate: item.r * 2, scale: 0.85 }}
+          animate={{ opacity: 0.5, y: 0, rotate: item.r, scale: 1 }}
+          transition={{ delay: 0.6 + item.delay, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <motion.img
+            src={item.src}
+            alt=""
+            className="w-full aspect-[3/4] object-cover border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
+            animate={{ y: [0, item.drift, 0] }}
+            transition={{ duration: 7 + i, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </motion.div>
+      ))}
 
       {/* Noise texture overlay */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -275,14 +301,21 @@ export default function Lookbook() {
                 {filteredImages.map((src, i) => (
                   <motion.div
                     key={src}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: (i % 8) * 0.05 }}
+                    initial={{
+                      opacity: 0,
+                      y: 70,
+                      x: (i % 3 === 0 ? -40 : i % 3 === 1 ? 40 : 0),
+                      rotate: (i % 2 === 0 ? -3.5 : 3.5),
+                      scale: 0.92,
+                    }}
+                    whileInView={{ opacity: 1, y: 0, x: 0, rotate: 0, scale: 1 }}
+                    whileHover={{ y: -8 }}
+                    viewport={{ once: true, margin: '-40px' }}
+                    transition={{ delay: (i % 8) * 0.06, duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
                     className="editorial-card aspect-[4/5] group overflow-hidden"
                     onClick={() => setLightboxIndex(IMAGES.indexOf(src))}
                   >
-                    <img src={src} className="w-full h-full object-cover" loading="lazy" />
+                    <img src={src} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                     <div className="overlay" />
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="w-8 h-8 glass-dark rounded-full flex items-center justify-center text-white">
@@ -309,9 +342,10 @@ export default function Lookbook() {
                 {filteredImages.map((src, i) => (
                   <motion.div
                     key={src}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    initial={{ opacity: 0, y: 50, rotate: i % 2 === 0 ? -2.5 : 2.5, scale: 0.95 }}
+                    whileInView={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
+                    viewport={{ once: true, margin: '-40px' }}
+                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     className="editorial-card break-inside-avoid group border border-transparent hover:border-[var(--accent)]/30 transition-colors"
                     onClick={() => setLightboxIndex(IMAGES.indexOf(src))}
                   >
@@ -458,10 +492,11 @@ export default function Lookbook() {
               {CURATED.map((item, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 60, rotate: i === 1 ? 0 : i === 0 ? -3 : 3 }}
+                  whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+                  whileHover={{ y: -12, transition: { duration: 0.35 } }}
                   viewport={{ once: true }}
-                  transition={{ delay: i * 0.12, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ delay: i * 0.14, duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
                   className="editorial-card group aspect-[3/4] cursor-pointer"
                   onClick={() => setLightboxIndex(IMAGES.indexOf(item.src))}
                 >

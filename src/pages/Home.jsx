@@ -1,10 +1,35 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useInView } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useInView, useSpring } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { PRODUCTS } from '../data/products';
 import Marquee from '../components/Marquee';
-import { MapPin, Cpu, Truck, Layers } from 'lucide-react';
+
+// Scroll-linked "scattered → gathered" card. Each card starts thrown across
+// the section and glides into its grid slot as the user scrolls.
+function ScatterCard({ progress, seed, className = '', children }) {
+  const x = useTransform(progress, [0, 1], [seed.x, 0]);
+  const y = useTransform(progress, [0, 1], [seed.y, 0]);
+  const rotate = useTransform(progress, [0, 1], [seed.r, 0]);
+  const opacity = useTransform(progress, [0, 0.3, 1], [0, 0.65, 1]);
+  return (
+    <motion.div style={{ x, y, rotate, opacity }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+// Decorative barcode used across the identity storytelling.
+function BarcodeStripes({ className = '', bars = 24, color = 'currentColor' }) {
+  const widths = [2, 1, 3, 1, 2, 4, 1, 2, 1, 3];
+  return (
+    <div className={`flex items-stretch gap-[3px] ${className}`} aria-hidden="true">
+      {Array.from({ length: bars }).map((_, i) => (
+        <span key={i} style={{ width: widths[i % widths.length], background: color }} className="block h-full" />
+      ))}
+    </div>
+  );
+}
 
 // Data for home sections
 const HERO_IMAGES = [
@@ -29,8 +54,17 @@ const SOCIAL_IMAGES = [
 
 export default function Home() {
   const [currentHero, setCurrentHero] = useState(0);
+  const [storyOpen, setStoryOpen] = useState(false);
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 1000], [0, 400]); // Parallax 60% relative to wrapper
+
+  // New Arrivals scatter → gather scroll choreography
+  const arrivalsRef = useRef(null);
+  const { scrollYProgress: arrivalsProgress } = useScroll({
+    target: arrivalsRef,
+    offset: ['start 0.95', 'start 0.35'],
+  });
+  const gather = useSpring(arrivalsProgress, { stiffness: 70, damping: 20, mass: 0.6 });
 
   useEffect(() => {
     // Mobile rotates every 3s; desktop keeps the slower gallery pace.
@@ -154,12 +188,59 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h1
-              className="font-display text-[var(--cream)] leading-[1.02] mb-5 max-w-[12ch]"
-              style={{ fontSize: 'clamp(3.2rem, 7vw, 6.8rem)', textShadow: '0 2px 40px rgba(0,0,0,0.4)' }}
+            <div
+              className="relative inline-block"
+              onMouseEnter={() => setStoryOpen(true)}
+              onMouseLeave={() => setStoryOpen(false)}
             >
-              Wear Your<br /><span className="serif-italic">World</span>
-            </h1>
+              <h1
+                className="font-display leading-[1.02] mb-5 max-w-[12ch] cursor-pointer"
+                style={{ fontSize: 'clamp(3.2rem, 7vw, 6.8rem)', textShadow: '0 2px 40px rgba(0,0,0,0.4)' }}
+                onClick={() => setStoryOpen(prev => !prev)}
+                data-cursor-text="SCAN"
+              >
+                <span className="text-[var(--cream)]">Wear Your</span><br />
+                <span
+                  className="serif-italic"
+                  style={{
+                    background: 'linear-gradient(105deg, #F4F0E8 0%, #E9CF8B 35%, #B49A5E 62%, #E9CF8B 88%, #F4F0E8 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  World
+                </span>
+              </h1>
+
+              {/* The barcode identity story — revealed on hover / tap */}
+              <AnimatePresence>
+                {storyOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    className="absolute left-0 top-full z-30 w-[min(420px,84vw)] bg-black/85 backdrop-blur-xl border border-[#B49A5E]/40 p-6 shadow-[0_40px_100px_rgba(0,0,0,0.5)]"
+                  >
+                    <BarcodeStripes className="h-6 mb-4 text-[var(--cream)]/80" bars={30} />
+                    <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#E9CF8B] mb-3">
+                      What Wear Your World means
+                    </p>
+                    <p className="text-sm leading-relaxed text-white/80">
+                      Every TWENTY3 piece is born with its own barcode — stitched into the garment
+                      and bound to you. Load it with your name, your art, your socials, your story.
+                      When a stranger scans it with any phone, they don't meet a label. They meet
+                      <span className="serif-italic text-[#E9CF8B]"> you</span>.
+                    </p>
+                    <p className="mt-3 text-sm leading-relaxed text-white/60">
+                      One scan and your outfit has introduced you before you've said a word.
+                      That is wearing your world — literally.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             <p className="font-mono text-[11px] tracking-[0.2em] font-medium uppercase text-white/80 mb-10 pl-1">
               New Collection · 2026
             </p>
@@ -208,51 +289,37 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Desktop Asymmetric Grid, Mobile 2-Col */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-3 md:gap-x-6 gap-y-8 md:gap-y-16">
-            {/* Row 1: Large (Span 2) + Small (Span 1) */}
+          {/* Scattered pieces gather into the grid as you scroll */}
+          <div ref={arrivalsRef} className="grid grid-cols-2 md:grid-cols-3 gap-x-3 md:gap-x-6 gap-y-8 md:gap-y-16">
             {newArrivals[0] && (
-              <motion.div
-                className="col-span-1 md:col-span-2"
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              >
+              <ScatterCard progress={gather} seed={{ x: -160, y: 140, r: -8 }} className="col-span-1 md:col-span-2">
                 <div className="aspect-[3/4] md:aspect-[4/5] w-full">
                   <ProductCard product={newArrivals[0]} />
                 </div>
-              </motion.div>
+              </ScatterCard>
             )}
             {newArrivals[1] && (
-              <motion.div
-                className="col-span-1 md:col-span-1"
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              >
+              <ScatterCard progress={gather} seed={{ x: 180, y: -90, r: 9 }} className="col-span-1 md:col-span-1">
                 <div className="aspect-[3/4] w-full mt-0 md:mt-[20%]">
                   <ProductCard product={newArrivals[1]} />
                 </div>
-              </motion.div>
+              </ScatterCard>
             )}
 
-            {/* Row 2: 3 Equal width items */}
-            {newArrivals.slice(2, 5).map((product, i) => (
-              <motion.div
-                key={product.id}
-                className="col-span-1 md:col-span-1"
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <div className="aspect-[3/4] w-full">
-                  <ProductCard product={product} />
-                </div>
-              </motion.div>
-            ))}
+            {newArrivals.slice(2, 5).map((product, i) => {
+              const seeds = [
+                { x: -130, y: -110, r: 6 },
+                { x: 120, y: 150, r: -7 },
+                { x: 200, y: 70, r: 11 },
+              ];
+              return (
+                <ScatterCard key={product.id} progress={gather} seed={seeds[i % seeds.length]} className="col-span-1 md:col-span-1">
+                  <div className="aspect-[3/4] w-full">
+                    <ProductCard product={product} />
+                  </div>
+                </ScatterCard>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -307,14 +374,15 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8" style={{ perspective: '1200px' }}>
             {unreleasedItems.map((product, i) => (
               <motion.div
                 key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.6 }}
+                initial={{ opacity: 0, y: 80, rotate: i % 2 === 0 ? -5 : 5, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
+                whileHover={{ y: -12 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ delay: i * 0.12, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="aspect-[3/4]">
                   <ProductCard product={product} />
@@ -433,9 +501,22 @@ export default function Home() {
             </div>
 
             <div className="w-full lg:w-1/2 order-1 lg:order-2">
-              <div className="relative aspect-square md:aspect-[4/3] rounded-sm overflow-hidden border border-white/10 group/forge">
+              <motion.div
+                className="relative aspect-square md:aspect-[4/3] rounded-sm overflow-hidden border border-white/10 group/forge"
+                initial={{ clipPath: 'inset(12% 12% 12% 12%)', opacity: 0.4 }}
+                whileInView={{ clipPath: 'inset(0% 0% 0% 0%)', opacity: 1 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+              >
                 <img src="/lookbook/JF-8.JPG" alt="AI Styling" className="w-full h-full object-cover transition-transform duration-1000 group-hover/forge:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+                {/* Neural scan sweep */}
+                <motion.div
+                  className="absolute inset-x-0 h-[2px] bg-[var(--accent)]/80 shadow-[0_0_24px_rgba(241,236,225,0.8)]"
+                  animate={{ top: ['4%', '96%', '4%'] }}
+                  transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+                />
 
                 {/* Visual data overlay for luxury feel */}
                 <div className="absolute bottom-6 left-6 right-6">
@@ -449,7 +530,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
@@ -467,16 +548,19 @@ export default function Home() {
             <div className="max-w-2xl">
               <div className="section-tag mb-6 text-black/40 border-black/10">Brand DNA</div>
               <h2 className="font-display text-black leading-[1.05] mb-8" style={{ fontSize: 'clamp(2.7rem, 6vw, 5rem)' }}>
-                What Makes<br />23 <span className="serif-italic">Different</span>
+                What Makes<br />23 <span className="serif-italic" style={{ color: 'var(--gold)' }}>Different</span>
               </h2>
               <p className="font-body text-lg text-black/70 leading-relaxed mb-8 max-w-lg">
-                Crafted in Lagos, built for the world. We combine local artistry with neural technology to create a wardrobe that moves as fast as you do.
+                Every TWENTY3 garment is stitched with its own barcode — a living code bound to
+                the person wearing it. Scan any piece with a phone and the clothing introduces
+                its owner: name, story, socials, world. Fashion that speaks before you do.
               </p>
             </div>
 
             <div className="flex flex-col items-start md:items-end flex-shrink-0">
+              <BarcodeStripes className="h-10 mb-4 text-black/70" bars={28} />
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-black/50 mb-0 max-w-[280px] md:text-right leading-loose">
-                Established in Lagos. <br /> Built for your digital identity.
+                Every piece carries a live code.<br />Scan it. Meet the wearer.
               </p>
             </div>
           </div>
@@ -485,33 +569,40 @@ export default function Home() {
           {(() => {
             const BRAND_PILLARS = [
               {
-                title: "Built for You",
-                subtitle: "Every piece is crafted around your identity. No two pieces alike.",
+                title: "Stitched Identity",
+                subtitle: "Your barcode is woven into the garment itself. One code, one owner — no two pieces alike.",
                 svg: (
                   <svg width="200" height="200" viewBox="0 0 200 200" className="opacity-80">
-                    <path d="M40 60 L160 60 L160 140 L40 140 Z" fill="none" stroke="black" strokeWidth="2" />
-                    <path d="M50 70 L170 70 L170 150 L50 150 Z" fill="none" stroke="black" strokeWidth="2" />
-                    <path d="M60 80 L180 80 L180 160 L60 160 Z" fill="none" stroke="black" strokeWidth="2" />
+                    <path d="M60 55 L85 45 L100 55 L115 45 L140 55 L150 80 L135 88 L135 155 L65 155 L65 88 L50 80 Z" fill="none" stroke="black" strokeWidth="2" />
+                    {[82, 88, 93, 99, 104, 110, 115].map((x, i) => (
+                      <rect key={x} x={x} y="105" width={i % 3 === 0 ? 4 : 2} height="34" fill="black" />
+                    ))}
                   </svg>
                 )
               },
               {
-                title: "Lagos Born",
-                subtitle: "Designed from the streets of Lagos. Worn by those who define culture.",
+                title: "Scan to Meet Me",
+                subtitle: "Any phone camera reads the code. Strangers don't see a label — they meet the real you.",
                 svg: (
                   <svg width="200" height="200" viewBox="0 0 200 200" className="opacity-80">
-                    <path d="M100 60 L140 80 L140 120 L100 140 L60 120 L60 80 Z" fill="none" stroke="black" strokeWidth="2" />
-                    <path d="M100 60 L100 100 L140 120 M100 100 L60 120" fill="none" stroke="black" strokeWidth="2" />
+                    <rect x="72" y="42" width="56" height="116" rx="10" fill="none" stroke="black" strokeWidth="2" />
+                    {[86, 92, 97, 103, 108, 114].map((x, i) => (
+                      <rect key={x} x={x} y="78" width={i % 2 === 0 ? 3 : 2} height="28" fill="black" />
+                    ))}
+                    <line x1="60" y1="122" x2="140" y2="122" stroke="black" strokeWidth="2" strokeDasharray="5 4" />
                   </svg>
                 )
               },
               {
-                title: "Limited Always",
-                subtitle: "Every drop is finite. Once it's gone, it's gone forever.",
+                title: "You Own the Story",
+                subtitle: "Update what your code says anytime — new socials, new work, new chapter. The cloth keeps up.",
                 svg: (
                   <svg width="200" height="200" viewBox="0 0 200 200" className="opacity-80">
-                    <path d="M60 60 L140 60 L120 140 L40 140 Z" fill="none" stroke="black" strokeWidth="2" />
-                    <path d="M80 70 L160 70 L140 150 L60 150 Z" fill="none" stroke="black" strokeWidth="2" />
+                    <circle cx="100" cy="72" r="22" fill="none" stroke="black" strokeWidth="2" />
+                    <path d="M60 150 Q100 108 140 150" fill="none" stroke="black" strokeWidth="2" />
+                    <line x1="120" y1="60" x2="165" y2="60" stroke="black" strokeWidth="2" />
+                    <line x1="126" y1="72" x2="165" y2="72" stroke="black" strokeWidth="2" />
+                    <line x1="120" y1="84" x2="165" y2="84" stroke="black" strokeWidth="2" />
                   </svg>
                 )
               }
