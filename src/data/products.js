@@ -392,7 +392,7 @@ export const PRODUCTS = [
     id: "top-25",
     name: "The Don",
     category: "new",
-    price: 25000,
+    price: 50000,
     image: "/wardrobe/23xdon1.jpg",
     images: [
       "/wardrobe/23xdon1.jpg",
