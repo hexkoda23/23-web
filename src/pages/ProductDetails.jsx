@@ -6,6 +6,7 @@ import { Minus, Plus, ArrowLeft, Camera, Sparkles } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { PRODUCTS } from '../data/products';
+import GarmentMeasurements from '../components/GarmentMeasurements';
 
 // Slide-up animation variants
 const slideUp = {
@@ -383,6 +384,13 @@ export default function ProductDetails() {
               </div>
               {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
             </motion.div>
+
+            {/* Garment Measurements + Size Guide */}
+            <GarmentMeasurements
+              product={product}
+              selectedSize={selectedSize}
+              onSelectSize={(size) => { setSelectedSize(size); setError(''); }}
+            />
 
             {/* Quantity */}
             <motion.div

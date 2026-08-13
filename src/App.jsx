@@ -23,6 +23,7 @@ import { CartProvider } from './contexts/CartContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import IdentityForge from './pages/IdentityForge';
 import DigitalProfile from './pages/DigitalProfile';
+import SizeGuide from './pages/SizeGuide';
 import LoadingScreen from './components/LoadingScreen';
 import CustomCursor from './components/CustomCursor';
 
@@ -71,6 +72,7 @@ function App() {
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/identity-forge" element={<ProtectedRoute><IdentityForge /></ProtectedRoute>} />
             <Route path="/profile/:id" element={<DigitalProfile />} />
+            <Route path="/size-guide" element={<SizeGuide />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </main>
