@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import Marquee from './Marquee';
 import BrandLogo from './BrandLogo';
+import MusicPlayer from './MusicPlayer';
 
 const navLinks = [
   { label: 'Lookbook', to: '/lookbook' },
@@ -82,6 +83,9 @@ export default function Navbar() {
 
             {/* Actions */}
             <div className="flex items-center gap-5 z-50">
+              <MusicPlayer className={isScrolled || isDarkPage ? 'text-white/80' : 'text-black/70'} />
+
+
               <Link
                 to={currentUser ? '/account' : '/login'}
                 className={`hidden md:block transition-colors hover:text-[var(--accent)] ${isScrolled || isDarkPage ? 'text-white/60' : 'text-black/50'}`}
