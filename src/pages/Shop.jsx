@@ -1,8 +1,8 @@
 
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, X } from 'lucide-react';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
+import { Filter } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { PRODUCTS } from '../data/products';
 
@@ -17,41 +17,42 @@ const CATEGORIES = [
   { id: 'accessories', name: 'Accessories' },
 ];
 
+const REPRESENTATIVE_BY_GROUP = {
+  '23x-color': 'top-21',
+  '23x-gym': 'gym-1',
+  '23x-denim': 'bottom-10',
+  '23x-twentythree': 'top-xxiii-coll',
+  '23x-xxiii': 'top-20',
+  '23x-motion': 'top-29',
+  '23x-ascend': 'top-30',
+  '23x-hoodie': 'top-11',
+  '23x-sweats': 'top-37',
+};
+
+const compressByVariantGroup = (list) => {
+  const out = [];
+  const seen = new Set();
+  const indexById = new Map(list.map(p => [p.id, p]));
+  for (const p of list) {
+    if (p.variantGroup) {
+      if (seen.has(p.variantGroup)) continue;
+      const preferredId = REPRESENTATIVE_BY_GROUP[p.variantGroup];
+      const preferred = preferredId && indexById.get(preferredId);
+      out.push(preferred || p);
+      seen.add(p.variantGroup);
+    } else {
+      out.push(p);
+    }
+  }
+  return out;
+};
+
+
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentCategory = searchParams.get('category') || 'all';
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [priceRange, setPriceRange] = useState(100000);
-
-  const REPRESENTATIVE_BY_GROUP = {
-    '23x-color': 'top-21',
-    '23x-gym': 'gym-1',
-    '23x-denim': 'bottom-10',
-    '23x-twentythree': 'top-xxiii-coll',
-    '23x-xxiii': 'top-20',
-    '23x-motion': 'top-29',
-    '23x-ascend': 'top-30',
-    '23x-hoodie': 'top-11',
-    '23x-sweats': 'top-37',
-  };
-
-  const compressByVariantGroup = (list) => {
-    const out = [];
-    const seen = new Set();
-    const indexById = new Map(list.map(p => [p.id, p]));
-    for (const p of list) {
-      if (p.variantGroup) {
-        if (seen.has(p.variantGroup)) continue;
-        const preferredId = REPRESENTATIVE_BY_GROUP[p.variantGroup];
-        const preferred = preferredId && indexById.get(preferredId);
-        out.push(preferred || p);
-        seen.add(p.variantGroup);
-      } else {
-        out.push(p);
-      }
-    }
-    return out;
-  };
 
   const newProducts = useMemo(() => {
     const list = PRODUCTS.filter(p => p.category === 'new' && !p.hidden && p.price <= priceRange);
@@ -87,7 +88,14 @@ export default function Shop() {
       }
       return product.category === currentCategory;
     };
-    return PRODUCTS.filter(product => matchCategory(product) && !product.hidden && product.price <= priceRange);
+    const matches = PRODUCTS.filter(product => matchCategory(product) && !product.hidden && product.price <= priceRange);
+    const seenNewGroups = new Set();
+    return matches.filter(product => {
+      if (!product.collectionName) return true;
+      if (seenNewGroups.has(product.variantGroup)) return false;
+      seenNewGroups.add(product.variantGroup);
+      return true;
+    });
   }, [currentCategory, priceRange]);
 
   const handleCategoryChange = (category) => {
@@ -96,31 +104,19 @@ export default function Shop() {
   };
 
   return (
-    <div className="pt-24 pb-20 min-h-screen">
+    <div className="pb-20 min-h-screen">
+      <section className="shop-intro"><p className="eyebrow">Twenty3 · Ready-to-wear</p><h1>The collection</h1><p>Discover our latest collection of premium essentials, crafted for the modern individual. Luxury. Identity. Exclusivity.</p></section>
       <div className="container mx-auto px-6">
 
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12">
-          <div>
-            <h1 className="font-display attention-heading text-attention-outline text-black text-5xl md:text-7xl uppercase leading-[0.9] mb-4">Shop</h1>
-            <p className="text-gray-500 text-sm md:text-base max-w-md">
-              Discover our latest collection of premium essentials, crafted for the modern individual.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="mt-6 md:mt-0 flex items-center space-x-2 text-sm font-bold uppercase tracking-widest hover:text-gray-500 transition-colors"
-          >
-            <Filter size={18} />
-            <span>Filter</span>
-          </button>
+        <div className="shop-toolbar">
+          <nav className="shop-categories" aria-label="Product categories">{CATEGORIES.map(cat => <button key={cat.id} onClick={() => handleCategoryChange(cat.id)} className={currentCategory === cat.id ? 'active' : ''} aria-pressed={currentCategory === cat.id}>{cat.name}</button>)}</nav>
+          <button onClick={() => setIsFilterOpen(!isFilterOpen)} aria-expanded={isFilterOpen} className="flex items-center gap-2 text-[10px] uppercase tracking-widest"><Filter size={15} strokeWidth={1.3} />Refine selection</button>
         </div>
 
         {/* Mobile/Desktop Filters */}
         <AnimatePresence>
           {isFilterOpen && (
-            <motion.div
+            <Motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -163,7 +159,7 @@ export default function Shop() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 

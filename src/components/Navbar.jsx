@@ -1,187 +1,61 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Menu, X, User } from 'lucide-react';
+import { ShoppingBag, Menu, X, User, Search, ArrowUpRight } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import Marquee from './Marquee';
 import BrandLogo from './BrandLogo';
 import MusicPlayer from './MusicPlayer';
+import SearchModal from './SearchModal';
 
-const navLinks = [
-  { label: 'Lookbook', to: '/lookbook' },
-  { label: 'Shop', to: '/shop' },
-  { label: '23 AI', to: '/ai-studio' },
-  { label: 'Generate Fit', to: '/outfit-generator' },
-  { label: 'About', to: '/about' },
-  { label: 'Contact', to: '/contact' },
-];
+const links = [['New arrivals', '/shop?category=new'], ['Collection', '/shop'], ['Lookbook', '/lookbook'], ['23 AI Studio', '/ai-studio'], ['Create a fit', '/outfit-generator'], ['The house', '/about']];
+const services = [['Your identity', '/identity-forge'], ['My account', '/account'], ['Messages', '/messages'], ['Size guide', '/size-guide'], ['Client services', '/contact'], ['Questions & answers', '/faq']];
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const { getCartCount, toggleCart } = useCart();
   const { currentUser } = useAuth();
   const location = useLocation();
-
-  const isDarkPage = ['/', '/lookbook'].includes(location.pathname);
-
+  const menuRef = useRef(null);
+  const triggerRef = useRef(null);
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 40);
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 60);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => { setIsMobileMenuOpen(false); }, [location]);
-
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-  }, [isMobileMenuOpen]);
-
-  const navBg = isScrolled
-    ? 'bg-black/70 backdrop-blur-xl shadow-[0_1px_0_rgba(255,255,255,0.06)]'
-    : isDarkPage ? 'bg-transparent' : 'bg-white border-b border-black/[0.06]';
-
-  const textColor = isScrolled || isDarkPage ? 'text-white' : 'text-black';
-
-  return (
-    <>
-      <div className={`fixed w-full z-50 transition-all duration-500`}>
-        {/* Main Navbar */}
-        <nav className={`py-5 transition-colors duration-500 ${navBg}`}>
-          <div className="max-w-[1400px] mx-auto px-6 lg:px-10 flex justify-between items-center">
-
-            {/* Logo mark */}
-            <Link
-              to="/"
-              className={`z-50 flex items-center group transition-colors group-hover:text-[var(--accent)] ${textColor}`}
-              data-cursor="VIEW"
-            >
-              <BrandLogo className="text-base md:text-lg" />
-            </Link>
-
-            {/* Desktop nav */}
-            <div className="hidden lg:flex items-center gap-10">
-              {navLinks.map(link => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  className={`nav-link font-mono text-[0.68rem] font-medium tracking-[0.15em] uppercase transition-all duration-200 ${location.pathname === link.to
-                    ? isScrolled || isDarkPage ? 'text-white' : 'text-black'
-                    : isScrolled || isDarkPage ? 'text-white/50 hover:text-white' : 'text-black/45 hover:text-black'
-                    }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-5 z-50">
-              <MusicPlayer className={isScrolled || isDarkPage ? 'text-white/80' : 'text-black/70'} />
-
-
-              <Link
-                to={currentUser ? '/account' : '/login'}
-                className={`hidden md:block transition-colors hover:text-[var(--accent)] ${isScrolled || isDarkPage ? 'text-white/60' : 'text-black/50'}`}
-              >
-                <User size={17} />
-              </Link>
-
-              <button
-                onClick={toggleCart}
-                className={`relative transition-colors hover:text-[var(--accent)] ${isScrolled || isDarkPage ? 'text-white/80' : 'text-black/70'}`}
-              >
-                <ShoppingBag size={17} />
-                {getCartCount() > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[var(--accent)] text-black w-2 h-2 rounded-full ring-2 ring-black" />
-                )}
-              </button>
-
-              {/* Mobile Menu Toggle */}
-              <button
-                className={`lg:hidden transition-colors hover:text-[var(--accent)] ${isScrolled || isDarkPage || isMobileMenuOpen ? 'text-white' : 'text-black'}`}
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                style={{ zIndex: 60 }} // ensure it is above the menu
-              >
-                <motion.div animate={{ rotate: isMobileMenuOpen ? 90 : 0 }}>
-                  {isMobileMenuOpen ? <X size={26} color="black" /> : <Menu size={22} />}
-                </motion.div>
-              </button>
-            </div>
-          </div>
-        </nav>
-
-        {/* Marquee Tape below Navbar */}
-        <div className={`overflow-hidden transition-all duration-500 border-b ${isScrolled || isDarkPage ? 'bg-black/40 border-white/10 backdrop-blur-md' : 'bg-white border-black/10'}`}>
-          <Marquee
-            text="NEW ARRIVALS · FREE SHIPPING OVER ₦50,000 · TWENTY3™ — WEAR YOUR WORLD · "
-            speed="30s"
-            className={`py-1.5 font-mono text-[0.55rem] tracking-[0.15em] uppercase font-medium ${isScrolled || isDarkPage ? 'text-white/60' : 'text-black/60'}`}
-          />
-        </div>
+    if (!menuOpen && !searchOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = e => {
+      if (e.key === 'Escape') { setMenuOpen(false); setSearchOpen(false); triggerRef.current?.focus(); }
+      if (e.key === 'Tab' && menuOpen) {
+        const controls = menuRef.current?.querySelectorAll('a, button');
+        if (!controls?.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    if (menuOpen) menuRef.current?.querySelector('button')?.focus();
+    window.addEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = previous; window.removeEventListener('keydown', onKey); };
+  }, [menuOpen, searchOpen]);
+  const closeMenu = () => { setMenuOpen(false); triggerRef.current?.focus(); };
+  return <>
+    <a href="#main-content" className="skip-link">Skip to content</a>
+    <header className={`house-header ${scrolled ? 'is-scrolled' : ''}`}>
+      <div className="house-announcement">From Lagos to the world <span>·</span> Complimentary shipping on orders over ₦50,000</div>
+      <div className="house-masthead">
+        <div className="header-start"><button ref={triggerRef} onClick={() => setMenuOpen(true)} aria-label="Open menu" aria-expanded={menuOpen}><Menu size={20} strokeWidth={1.4} /><span>Menu</span></button><MusicPlayer className="header-music" /><Link to="/contact" className="client-link">Client services</Link></div>
+        <Link to="/" aria-label="Twenty3 home" className="masthead-logo"><BrandLogo /></Link>
+        <div className="header-actions"><button onClick={() => setSearchOpen(true)} aria-label="Search products"><Search size={20} strokeWidth={1.4} /></button><Link to={currentUser ? '/account' : '/login'} aria-label={currentUser ? 'My account' : 'Sign in'}><User size={20} strokeWidth={1.4} /></Link><button onClick={toggleCart} aria-label={`Shopping bag, ${getCartCount()} items`} className="bag-action"><ShoppingBag size={20} strokeWidth={1.4} />{getCartCount() > 0 && <span className="bag-count">{getCartCount()}</span>}</button></div>
       </div>
-
-      {/* Full Screen Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: "tween", duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-[55] lg:hidden bg-[var(--accent)] flex flex-col pt-32 px-8 pb-12 overflow-hidden"
-          >
-            {/* Big typographic background texture */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-black/5 brand-wordmark text-[13vw] pointer-events-none select-none">
-              TWENTY3
-            </div>
-
-            <div className="flex flex-col gap-6 flex-1 relative z-10 mt-10">
-              {navLinks.map((link, i) => (
-                <motion.div
-                  key={link.to}
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 + (i * 0.08), duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <Link
-                    to={link.to}
-                    className="block font-display text-black text-[3rem] leading-[1.05] hover:opacity-50 transition-opacity"
-                  >
-                    {link.label}
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-
-            <motion.div
-              className="pt-8 relative z-10"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
-            >
-              <Link
-                to="/shop"
-                className="w-full flex items-center justify-center py-5 bg-black font-mono text-[0.62rem] tracking-[0.2em] uppercase text-white hover:bg-white hover:text-black transition-all duration-300"
-              >
-                Shop Collection →
-              </Link>
-
-              <div className="mt-8 flex justify-center gap-8">
-                <a href="https://www.instagram.com/twentythreepreppy?igsh=MXZnY3MybjY1MXVvbA==" target="_blank" rel="noreferrer" className="font-mono text-xs uppercase tracking-widest text-black/60 font-bold">Instagram</a>
-                <a href="#" className="font-mono text-xs uppercase tracking-widest text-black/60 font-bold">Twitter</a>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-    </>
-  );
+      <nav className="house-nav" aria-label="Main navigation">{links.map(([label, to]) => <Link key={to} to={to} aria-current={`${location.pathname}${location.search}` === to ? 'page' : undefined}>{label}</Link>)}</nav>
+    </header>
+    {menuOpen && <div className="menu-overlay" onClick={closeMenu}><section ref={menuRef} className="house-menu" role="dialog" aria-modal="true" aria-label="Explore Twenty3" onClick={e => e.stopPropagation()}><div className="menu-top"><span className="eyebrow">Explore Twenty3</span><button onClick={closeMenu} aria-label="Close menu"><X size={24} strokeWidth={1.2} /></button></div><nav aria-label="Collection navigation">{links.map(([label, to]) => <Link key={to} to={to} onClick={closeMenu}>{label}<ArrowUpRight size={18} strokeWidth={1} /></Link>)}</nav><div className="menu-services">{services.map(([label, to]) => <Link key={to} to={to} onClick={closeMenu}>{label}</Link>)}</div><p className="menu-note">Luxury. Identity. Exclusivity.<br />Lagos, Nigeria.</p></section></div>}
+    <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
+  </>;
 }

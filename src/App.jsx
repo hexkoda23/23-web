@@ -25,7 +25,6 @@ import IdentityForge from './pages/IdentityForge';
 import DigitalProfile from './pages/DigitalProfile';
 import SizeGuide from './pages/SizeGuide';
 import LoadingScreen from './components/LoadingScreen';
-import CustomCursor from './components/CustomCursor';
 
 // ScrollToTop component
 function ScrollToTop() {
@@ -49,16 +48,15 @@ function App() {
       <div className="min-h-screen flex flex-col bg-white text-black font-body antialiased selection:bg-[var(--accent)] selection:text-black">
         {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
 
-        <CustomCursor />
         <ScrollToTop />
         <Navbar />
         <CartDrawer />
-        <main className={`flex-grow overflow-x-hidden ${isDarkPage ? '' : 'pt-[76px] lg:pt-[82px]'}`}>
+        <main id="main-content" className={`site-main page-${location.pathname.split('/')[1] || 'home'} flex-grow ${isDarkPage ? 'campaign-page' : ''}`}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/lookbook" element={<Lookbook />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/product/:id" element={<ProductDetails key={location.pathname} />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/about" element={<About />} />

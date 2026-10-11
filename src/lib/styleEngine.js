@@ -62,6 +62,7 @@ export function formatPrice(value) {
 }
 
 export function inferFunctionalCategory(product) {
+  if (Object.hasOwn(CATEGORY_LABELS, product.functionalCategory)) return product.functionalCategory;
   const text = getText(product);
 
   if (product.isSet) return 'fullFit';
@@ -82,6 +83,7 @@ export function inferFunctionalCategory(product) {
 }
 
 export function inferColorTags(product) {
+  if (Array.isArray(product.colors) && product.colors.length) return [...new Set(product.colors)];
   const text = getColorText(product);
   const matches = COLOR_RULES
     .filter(rule => rule.terms.some(term => text.includes(term)))

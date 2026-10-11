@@ -75,7 +75,7 @@ function BarcodeStripes({ className = '', bars = 26 }) {
 export default function About() {
   return (
     <PageTransition>
-      <div className="w-full bg-[#0A0A0A]">
+      <div className="w-full bg-[#faf9f6]">
 
         {/* Hero */}
         <section className="relative min-h-[58vh] flex items-end pb-14 px-6 lg:px-16 overflow-hidden">
@@ -88,7 +88,7 @@ export default function About() {
               animate={{ scale: 1 }}
               transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-[#0A0A0A]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/15 to-black/70" />
           </div>
           <div className="max-w-[1200px] mx-auto w-full relative z-10">
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
@@ -101,28 +101,28 @@ export default function About() {
         </section>
 
         {/* Manifesto + values */}
-        <section className="py-20 bg-[#0A0A0A]">
+        <section className="py-20 bg-[#faf9f6]">
           <div className="max-w-[1200px] mx-auto px-6 lg:px-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
               <motion.div {...fadeUp}>
-                <div className="section-tag mb-6 text-white/80">What We Believe</div>
-                <p className="text-white/70 text-lg leading-relaxed mb-6">
+                <div className="section-tag mb-6 text-black/70">What We Believe</div>
+                <p className="text-black/65 text-lg leading-relaxed mb-6">
                   TWENTY3 is luxury personalized for you. Born from the bold spirit of Lagos,
                   we craft exclusive pieces where style meets identity — clothing that carries
                   your story in its thread.
                 </p>
-                <p className="text-white/45 leading-relaxed mb-6">
+                <p className="text-black/60 leading-relaxed mb-6">
                   Every item carries a unique barcode, making it truly yours. Scan any piece
                   and it introduces its owner — because at 23, you don't just wear fashion,
                   you own it, and it knows you back.
                 </p>
-                <p className="text-white/45 leading-relaxed mb-8">
+                <p className="text-black/60 leading-relaxed mb-8">
                   Our designs are a fusion of culture and modern luxury, created for those who
                   value individuality, expression, and exclusivity. From the wide-leg Script
                   Trousers to the archive-named colourways, every drop is finite and every
                   piece is a first edition.
                 </p>
-                <BarcodeStripes className="h-8 text-white/30" />
+                <BarcodeStripes className="h-8 text-black/30" />
               </motion.div>
               <div className="grid grid-cols-1 gap-4">
                 {values.map((v, i) => (
@@ -135,10 +135,10 @@ export default function About() {
                     className="glass-dark rounded-xl p-6 hover:border-[var(--accent)]/30 transition-colors"
                   >
                     <div className="flex items-start gap-5">
-                      <span className="font-mono text-[0.6rem] text-[var(--accent)] tracking-[0.15em] flex-shrink-0 mt-0.5">{v.num}</span>
+                      <span className="font-mono text-[0.6rem] text-[#7b694d] tracking-[0.15em] flex-shrink-0 mt-0.5">{v.num}</span>
                       <div>
-                        <h4 className="font-bold text-white text-sm uppercase tracking-wide mb-1">{v.title}</h4>
-                        <p className="text-white/40 text-sm font-light leading-relaxed">{v.body}</p>
+                        <h4 className="font-bold text-black text-sm uppercase tracking-wide mb-1">{v.title}</h4>
+                        <p className="text-black/55 text-sm font-light leading-relaxed">{v.body}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -149,25 +149,25 @@ export default function About() {
         </section>
 
         {/* The Barcode chapter */}
-        <section className="py-20 bg-[#111111] border-y border-white/[0.06] overflow-hidden">
+        <section className="py-20 bg-[#f0eee8] border-y border-black/10 overflow-hidden">
           <div className="max-w-[1200px] mx-auto px-6 lg:px-16">
             <motion.div {...fadeUp} className="max-w-3xl">
-              <div className="section-tag mb-5 text-white/80">The Code</div>
-              <h2 className="font-display text-white leading-[1.06] mb-8" style={{ fontSize: 'clamp(2rem, 4.5vw, 3.6rem)' }}>
+              <div className="section-tag mb-5 text-black/70">The Code</div>
+              <h2 className="font-display text-black leading-[1.06] mb-8" style={{ fontSize: 'clamp(2rem, 4.5vw, 3.6rem)' }}>
                 Your clothes <span className="serif-italic" style={{ color: 'var(--gold)' }}>introduce</span> you
               </h2>
-              <p className="text-white/55 leading-relaxed mb-5">
+              <p className="text-black/60 leading-relaxed mb-5">
                 Somewhere in every TWENTY3 piece — along a hem, across a pocket, under a collar —
                 lives a barcode that belongs to one person on earth: you. It is not decoration.
                 It is a door.
               </p>
-              <p className="text-white/45 leading-relaxed mb-5">
+              <p className="text-black/60 leading-relaxed mb-5">
                 Point any phone camera at it and your world opens: the name you go by, the work
                 you are proud of, the socials you actually use. A stranger at a gallery, a
                 collaborator at a show, someone across the room who noticed the fit — one scan
                 and they've met you properly.
               </p>
-              <p className="text-white/45 leading-relaxed">
+              <p className="text-black/60 leading-relaxed">
                 And when your chapter changes, the code changes with you. New portfolio, new
                 handle, new city — update it anytime. The garment stays the same; the story it
                 tells keeps growing. That is what "Wear Your World" means.
@@ -183,11 +183,11 @@ export default function About() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-40px' }}
                   transition={{ delay: i * 0.12, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                  className="border-t border-white/15 pt-5"
+                  className="border-t border-black/15 pt-5"
                 >
-                  <p className="font-mono text-[0.6rem] tracking-[0.25em] uppercase text-[var(--accent)]/80 mb-3">{chapter.year}</p>
-                  <h3 className="font-display text-white text-xl leading-snug mb-3 normal-case" style={{ textTransform: 'none' }}>{chapter.title}</h3>
-                  <p className="text-white/40 text-sm font-light leading-relaxed">{chapter.body}</p>
+                  <p className="font-mono text-[0.6rem] tracking-[0.25em] uppercase text-[#7b694d] mb-3">{chapter.year}</p>
+                  <h3 className="font-display text-black text-xl leading-snug mb-3 normal-case" style={{ textTransform: 'none' }}>{chapter.title}</h3>
+                  <p className="text-black/55 text-sm font-light leading-relaxed">{chapter.body}</p>
                 </motion.div>
               ))}
             </div>
@@ -195,11 +195,11 @@ export default function About() {
         </section>
 
         {/* Team */}
-        <section className="py-20 bg-[#0A0A0A]">
+        <section className="py-20 bg-[#faf9f6]">
           <div className="max-w-[1200px] mx-auto px-6 lg:px-16">
             <motion.div {...fadeUp}>
-              <div className="section-tag mb-5 text-white/80">The Team</div>
-              <h2 className="font-display text-white leading-[1.05] mb-14" style={{ fontSize: 'clamp(1.9rem, 4vw, 3.2rem)' }}>
+              <div className="section-tag mb-5 text-black/70">The Team</div>
+              <h2 className="font-display text-black leading-[1.05] mb-14" style={{ fontSize: 'clamp(1.9rem, 4vw, 3.2rem)' }}>
                 The Minds <span className="serif-italic" style={{ color: 'var(--gold)' }}>Behind</span> 23
               </h2>
             </motion.div>
@@ -214,13 +214,13 @@ export default function About() {
                   className="glass-dark rounded-2xl p-8 hover:border-[var(--accent)]/30 transition-all duration-300"
                 >
                   <div className="w-12 h-12 rounded-full bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center mb-6">
-                    <span className="font-mono font-bold text-[var(--accent)] text-sm">
+                    <span className="font-mono font-bold text-[#7b694d] text-sm">
                       {member.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                     </span>
                   </div>
-                  <div className="section-tag text-[var(--accent)] mb-3">{member.role}</div>
-                  <h3 className="font-bold text-white text-base mb-4 leading-tight">{member.name}</h3>
-                  <p className="text-white/40 text-sm font-light leading-relaxed">{member.bio}</p>
+                  <div className="section-tag text-[#7b694d] mb-3">{member.role}</div>
+                  <h3 className="font-bold text-black text-base mb-4 leading-tight">{member.name}</h3>
+                  <p className="text-black/55 text-sm font-light leading-relaxed">{member.bio}</p>
                 </motion.div>
               ))}
             </div>
@@ -228,11 +228,11 @@ export default function About() {
         </section>
 
         {/* CTA */}
-        <section className="py-16 bg-[#0A0A0A] border-t border-white/[0.06]">
+        <section className="py-16 bg-[#faf9f6] border-t border-black/10">
           <div className="max-w-[1200px] mx-auto px-6 lg:px-16 text-center">
             <motion.div {...fadeUp}>
-              <div className="section-tag justify-center mb-5 text-white/80">Start Here</div>
-              <h2 className="font-display text-white leading-[1.05] mb-8" style={{ fontSize: 'clamp(2.2rem, 5vw, 4rem)' }}>
+              <div className="section-tag justify-center mb-5 text-black/70">Start Here</div>
+              <h2 className="font-display text-black leading-[1.05] mb-8" style={{ fontSize: 'clamp(2.2rem, 5vw, 4rem)' }}>
                 Wear Your <span className="serif-italic" style={{ color: 'var(--gold)' }}>Identity</span>
               </h2>
               <Link

@@ -188,6 +188,7 @@ export default function OutfitGenerator() {
       <div className="min-h-screen bg-white pt-24 pb-20">
         <div className="container mx-auto px-6">
           <div className="flex flex-col items-center mb-12">
+            <p className="eyebrow mb-5">Personal styling</p>
             <h1 className="text-3xl md:text-5xl font-bold uppercase tracking-tighter mb-4 text-center">
               Outfit Generator
             </h1>

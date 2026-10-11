@@ -1,5 +1,8 @@
 
+import { NEW_DROP_PRODUCTS } from './newDrop';
+
 export const PRODUCTS = [
+  ...NEW_DROP_PRODUCTS,
   {
     id: "top-xxiii-black",
     name: "The Eclipse",

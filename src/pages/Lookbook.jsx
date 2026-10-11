@@ -21,103 +21,10 @@ const CURATED = [
   { src: '/lookbook/JF-15.JPG', title: 'The Quiet Luxury', desc: 'Understated. Unmistakable.', tag: 'Signature' },
 ];
 
-const FLOATERS = [
-  { src: '/lookbook/JF-2.JPG', className: 'top-[12%] left-[6%] w-28 md:w-40', r: -8, delay: 0, drift: 14 },
-  { src: '/lookbook/JF-11.JPG', className: 'top-[16%] right-[8%] w-24 md:w-36', r: 7, delay: 0.15, drift: -16 },
-  { src: '/lookbook/JF-19.JPG', className: 'bottom-[18%] left-[12%] w-24 md:w-32', r: 5, delay: 0.3, drift: 12 },
-  { src: '/lookbook/JF-24.JPG', className: 'bottom-[14%] right-[10%] w-28 md:w-40', r: -6, delay: 0.45, drift: -12 },
-];
+
 
 function LookbookHero() {
-  return (
-    <section className="relative h-screen bg-[#0A0A0A] flex flex-col items-center justify-center overflow-hidden">
-
-      {/* Scattered editorial polaroids drifting behind the title */}
-      {FLOATERS.map((item, i) => (
-        <motion.div
-          key={item.src}
-          className={`absolute ${item.className} pointer-events-none select-none`}
-          initial={{ opacity: 0, y: 60, rotate: item.r * 2, scale: 0.85 }}
-          animate={{ opacity: 0.5, y: 0, rotate: item.r, scale: 1 }}
-          transition={{ delay: 0.6 + item.delay, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <motion.img
-            src={item.src}
-            alt=""
-            className="w-full aspect-[3/4] object-cover border border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
-            animate={{ y: [0, item.drift, 0] }}
-            transition={{ duration: 7 + i, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        </motion.div>
-      ))}
-
-      {/* Noise texture overlay */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")",
-          backgroundRepeat: 'repeat',
-          backgroundSize: '200px 200px',
-        }}
-      />
-
-      {/* Gold glow orb behind text */}
-      <div className="absolute w-[600px] h-[300px] bg-[var(--accent)]/5 blur-[120px] rounded-full" />
-
-      {/* LOOKBOOK title — splits open */}
-      <div className="relative z-10 text-center overflow-hidden">
-        {/* Top half */}
-        <div className="overflow-hidden">
-          <motion.h1
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="font-display attention-heading text-attention-outline text-black uppercase leading-[0.88]"
-            style={{ fontSize: 'clamp(4.8rem, 17vw, 18rem)' }}
-          >
-            LOOK
-          </motion.h1>
-        </div>
-        {/* Bottom half */}
-        <div className="overflow-hidden">
-          <motion.h1
-            initial={{ y: '-100%' }}
-            animate={{ y: 0 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
-            className="font-display attention-heading text-attention-outline uppercase leading-[0.88]"
-            style={{
-              fontSize: 'clamp(4.8rem, 17vw, 18rem)',
-              background: 'linear-gradient(135deg, #C8A96E 0%, #F5DFA0 50%, #C8A96E 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}
-          >
-            BOOK
-          </motion.h1>
-        </div>
-      </div>
-
-      {/* Year label */}
-      <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9, duration: 0.8 }}
-        className="font-mono text-[0.65rem] tracking-[0.3em] text-white/30 uppercase mt-6 z-10"
-      >
-        Visual Archive — 2025 · 2026
-      </motion.p>
-
-      {/* Scroll indicator */}
-      <motion.div
-        animate={{ y: [0, 8, 0] }}
-        transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10"
-      >
-        <span className="font-mono text-[0.55rem] tracking-[0.25em] text-white/20 uppercase">Scroll</span>
-        <div className="w-px h-8 bg-gradient-to-b from-white/20 to-transparent" />
-      </motion.div>
-    </section>
-  );
+  return <section className="lookbook-campaign"><img src="/lookbook/JF-24.JPG" alt="Twenty3 visual archive, the Lagos collection" fetchPriority="high" /><div className="campaign-shade" /><div className="campaign-caption"><p className="eyebrow">Visual archive · 2025 — 2026</p><h1>The lookbook</h1><p>An expression of Lagos. A world of your own.</p><div className="campaign-links"><Link className="house-button light" to="/shop">Discover the collection</Link></div></div></section>;
 }
 
 function Lightbox({ images, currentIndex, onClose, onNext, onPrev }) {

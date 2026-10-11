@@ -7,6 +7,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { PRODUCTS } from '../data/products';
 import GarmentMeasurements from '../components/GarmentMeasurements';
+import ColorwayPicker from '../components/ColorwayPicker';
 
 // Slide-up animation variants
 const slideUp = {
@@ -176,17 +177,20 @@ export default function ProductDetails() {
               >
                 <img
                   src={allImages[selectedImageIndex] || product.image}
-                  alt={product.name}
+                  alt={`${product.name}, ${product.imageLabels?.[selectedImageIndex] || 'product view'}`}
                   className="w-full h-full object-contain"
                 />
               </motion.div>
             </AnimatePresence>
+            {product.imageLabels && <p className="product-view-caption">{product.imageLabels[selectedImageIndex]}{product.generatedBackView && selectedImageIndex === 1 && ' — inferred from the supplied front; rear details are not verified.'}</p>}
 
             {/* Thumbnail Strip */}
             <div className="flex gap-3 overflow-x-auto pb-1">
               {allImages.map((img, idx) => (
                 <button
                   key={img + idx}
+                  aria-label={product.imageLabels?.[idx] || `${product.name} view ${idx + 1}`}
+                  aria-pressed={selectedImageIndex === idx}
                   onClick={() => setSelectedImageIndex(idx)}
                   className={`w-20 h-24 border flex-shrink-0 transition-all duration-200 ${
                     selectedImageIndex === idx ? 'border-black' : 'border-gray-200 hover:border-gray-400'
@@ -198,7 +202,7 @@ export default function ProductDetails() {
             </div>
 
             {/* Sibling Variants */}
-            {siblingVariants.length > 0 && (
+            {!product.collectionName && siblingVariants.length > 0 && (
               <div className="pt-2">
                 <h4 className="text-xs font-bold uppercase tracking-widest mb-3 text-gray-700">
                   Other Colourways
@@ -222,6 +226,7 @@ export default function ProductDetails() {
           {/* Product Info — slide-up entrance */}
           <motion.div
             className="md:pt-10 space-y-8"
+            key={product.id}
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
@@ -251,6 +256,7 @@ export default function ProductDetails() {
             </div>
 
             {/* Description */}
+            <ColorwayPicker product={product} />
             <motion.div
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
@@ -386,11 +392,11 @@ export default function ProductDetails() {
             </motion.div>
 
             {/* Garment Measurements + Size Guide */}
-            <GarmentMeasurements
+            {product.collectionName ? <div className="border-t border-gray-100 pt-5 text-sm text-gray-600"><Link className="text-link" to="/size-guide">Size guide</Link><p className="mt-3">For help choosing your size, <Link className="underline" to="/contact">contact Twenty3</Link>.</p></div> : <GarmentMeasurements
               product={product}
               selectedSize={selectedSize}
               onSelectSize={(size) => { setSelectedSize(size); setError(''); }}
-            />
+            />}
 
             {/* Quantity */}
             <motion.div

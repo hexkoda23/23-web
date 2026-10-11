@@ -34,6 +34,7 @@ export default function Contact() {
       <div className="container mx-auto px-6 max-w-5xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
           <div>
+            <p className="eyebrow mb-5">Client services</p>
             <h1 className="text-4xl md:text-5xl font-bold tracking-tighter uppercase mb-8">Get in Touch</h1>
             <p className="text-gray-600 mb-12 leading-relaxed">
               Have a question about an order, product, or collaboration? 

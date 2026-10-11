@@ -32,7 +32,8 @@ export default function FAQ() {
   return (
     <div className="pt-32 pb-20 min-h-screen">
       <div className="container mx-auto px-6 max-w-3xl">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tighter uppercase mb-12 text-center">
+        <p className="eyebrow mb-5">Here to help</p>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tighter uppercase mb-12 text-center">
           Frequently Asked Questions
         </h1>
 

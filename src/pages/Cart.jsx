@@ -26,7 +26,8 @@ export default function Cart() {
   if (cart.length === 0) {
     return (
       <div className="pt-32 pb-20 min-h-screen flex flex-col items-center justify-center text-center px-6">
-        <h1 className="text-2xl font-bold uppercase tracking-tighter mb-4">Your Cart is Empty</h1>
+        <p className="eyebrow mb-5">Your selection</p>
+            <h1 className="text-2xl font-bold uppercase tracking-tighter mb-4">Your Cart is Empty</h1>
         <p className="text-gray-500 mb-8">Looks like you haven't added anything yet.</p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Link

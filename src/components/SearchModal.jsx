@@ -15,6 +15,7 @@ export default function SearchModal({ open, onClose }) {
     const q = query.trim().toLowerCase();
     if (!q) return [];
     return PRODUCTS.filter(p => {
+      if (p.hidden) return false;
       return (
         p.name.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
@@ -48,11 +49,12 @@ export default function SearchModal({ open, onClose }) {
                   autoFocus
                   value={query}
                   onChange={e => setQuery(e.target.value)}
+                  aria-label="Search products"
                   type="text"
                   placeholder="Search products"
                   className="ml-3 flex-1 outline-none text-sm"
                 />
-                <button onClick={onClose} className="text-gray-500 hover:text-black transition-colors">
+                <button aria-label="Close search" onClick={onClose} className="text-gray-500 hover:text-black transition-colors">
                   <X size={18} />
                 </button>
               </div>

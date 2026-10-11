@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Serif+Text:ital@0;1&family=Archivo+Black&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -73,15 +73,7 @@
   }
 }
 
-/* Custom cursor: native cursor is hidden ONLY when the custom cursor is
-   actually mounted (html.has-custom-cursor) and on precise pointers. */
-@media (pointer: fine) {
-
-  html.has-custom-cursor,
-  html.has-custom-cursor * {
-    cursor: none !important;
-  }
-}
+/* Keep the native pointer available during movement and scrolling. */
 
 /* ————————————————————————————————————————————————
    TWENTY3 luxury serif display system (DM Serif Display)

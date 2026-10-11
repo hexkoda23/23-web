@@ -37,7 +37,8 @@ export default function Account() {
     <PageTransition>
       <div className="pt-32 pb-20 min-h-screen bg-white">
         <div className="container mx-auto px-6 max-w-2xl">
-          <h1 className="text-4xl font-bold tracking-tighter uppercase mb-12">My Account</h1>
+          <p className="eyebrow mb-5">Your Twenty3 world</p>
+            <h1 className="text-4xl font-bold tracking-tighter uppercase mb-12">My Account</h1>
           
           <div className="bg-gray-50 p-8 rounded-lg mb-8">
             <h2 className="text-xl font-bold uppercase tracking-wide mb-6">Profile</h2>

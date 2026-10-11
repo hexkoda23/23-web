@@ -14,7 +14,8 @@ export default function SizeGuide() {
           ← Back to Shop
         </Link>
 
-        <h1 className="attention-product attention-heading text-4xl sm:text-5xl text-black mb-4">
+        <p className="eyebrow mb-5">The perfect fit</p>
+            <h1 className="attention-product attention-heading text-4xl sm:text-5xl text-black mb-4">
           Size Guide
         </h1>
         <p className="text-gray-600 leading-relaxed max-w-2xl mb-12">

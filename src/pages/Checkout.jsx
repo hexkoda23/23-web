@@ -62,7 +62,8 @@ export default function Checkout() {
     return (
       <PageTransition>
         <div className="pt-32 pb-20 min-h-screen flex flex-col items-center justify-center text-center px-6">
-          <h1 className="text-2xl font-bold uppercase tracking-tighter mb-4">Your Cart is Empty</h1>
+          <p className="eyebrow mb-5">The final details</p>
+            <h1 className="text-2xl font-bold uppercase tracking-tighter mb-4">Your Cart is Empty</h1>
           <p className="text-gray-500 mb-8">Add items to your cart to continue to checkout.</p>
           <button onClick={() => navigate("/shop")} className="bg-black text-white px-8 py-3 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors">
             Go to Shop

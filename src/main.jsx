@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import './index.css'
+import './house.css'
 import App from './App.jsx'
 
 // Mount the React application with React Router and Auth Provider
