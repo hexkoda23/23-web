@@ -15,7 +15,7 @@ calls SerpAPI, confirms payments, publishes campaigns, or sends messages.
 2. Review and deploy the Firestore access rules described below. No production
    rules were available locally, so do not replace existing rules wholesale.
 3. Add `FIREBASE_SERVICE_ACCOUNT` (Firebase service-account JSON), `SITE_URL`
-   (`https://shopfrom23.com`, the exact public origin without a trailing path), and a long random
+   (`https://www.shopfrom23.com`, the exact public origin without a trailing path), and a long random
    `CRON_SECRET` to Vercel's server environment. Add `SERPAPI_API_KEY` when ready
    for search. **Do not use VITE_ prefixes or paste keys into chat, URLs, or source.**
 4. Set `GROWTH_STORAGE_READY=true` only after the rules are deployed and tested.
