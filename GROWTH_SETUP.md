@@ -6,6 +6,12 @@ calls SerpAPI, confirms payments, publishes campaigns, or sends messages.
 
 ## Activate securely
 
+Vercel requires `NODE_OPTIONS=--experimental-require-module` for the installed
+Firebase Admin 14 dependency chain. Set it in every hosting environment that
+runs the API, then redeploy. Without it the functions fail on startup with
+`ERR_REQUIRE_ESM` before they can return an authentication or setup response.
+See [Vercel's Node configuration](https://vercel.com/docs/functions/runtimes/node-js/advanced-node-configuration#experimental-nodejs-require-of-es-module).
+
 1. Sign in with `kehindeadeleke92@gmail.com`. Verify the email through the admin
    access screen, then choose **Refresh access**. The server verifies a Firebase
    ID token on every request, including revocation. It allows this verified email,
