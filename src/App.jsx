@@ -25,6 +25,9 @@ import IdentityForge from './pages/IdentityForge';
 import DigitalProfile from './pages/DigitalProfile';
 import SizeGuide from './pages/SizeGuide';
 import LoadingScreen from './components/LoadingScreen';
+import GrowthAdmin from './pages/GrowthAdmin';
+import StoreAnalytics from './components/StoreAnalytics';
+import Privacy from './pages/Privacy';
 
 // ScrollToTop component
 function ScrollToTop() {
@@ -41,7 +44,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
   const isDarkPage = ['/', '/lookbook'].includes(location.pathname);
-  const hideChat = location.pathname === '/ai-studio';
+  const hideChat = location.pathname === '/ai-studio' || location.pathname.startsWith('/admin');
 
   return (
     <CartProvider>
@@ -49,6 +52,7 @@ function App() {
         {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
 
         <ScrollToTop />
+        <StoreAnalytics />
         <Navbar />
         <CartDrawer />
         <main id="main-content" className={`site-main page-${location.pathname.split('/')[1] || 'home'} flex-grow ${isDarkPage ? 'campaign-page' : ''}`}>
@@ -71,6 +75,9 @@ function App() {
             <Route path="/identity-forge" element={<ProtectedRoute><IdentityForge /></ProtectedRoute>} />
             <Route path="/profile/:id" element={<DigitalProfile />} />
             <Route path="/size-guide" element={<SizeGuide />} />
+            <Route path="/admin" element={<GrowthAdmin />} />
+            <Route path="/admin/growth" element={<GrowthAdmin />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </main>

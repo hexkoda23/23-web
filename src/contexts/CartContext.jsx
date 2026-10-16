@@ -1,5 +1,6 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { track } from '../lib/analytics';
 
 const CartContext = createContext();
 
@@ -22,6 +23,7 @@ export const CartProvider = ({ children }) => {
   }, [cart]);
 
   const addToCart = (product, size, quantity = 1) => {
+    track('add_to_cart', { productId: product.id, quantity });
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(
         item => item.id === product.id && item.size === size
@@ -39,6 +41,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (id, size) => {
+    track('remove_from_cart', { productId: id });
     setCart(prevCart => prevCart.filter(item => !(item.id === id && item.size === size)));
   };
 

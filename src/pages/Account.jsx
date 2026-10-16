@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import PageTransition from "../components/PageTransition";
 
@@ -56,6 +56,7 @@ export default function Account() {
             </div>
           </div>
 
+          <Link to="/admin/growth" className="block border border-gray-300 p-4 mb-6 text-sm">Store owner? Open the Growth Room →</Link>
           <button 
             onClick={handleLogout}
             className="w-full bg-black text-white py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"

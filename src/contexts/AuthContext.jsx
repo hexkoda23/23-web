@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
+import { track } from '../lib/analytics';
 
 const AuthContext = createContext({});
 
@@ -66,6 +67,7 @@ export const AuthProvider = ({ children }) => {
         // Don't fail signup if Firestore write fails
       }
 
+      track('signup');
       return user;
     } catch (error) {
       throw error;
@@ -75,6 +77,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      track('login');
       return userCredential.user;
     } catch (error) {
       throw error;
@@ -83,6 +86,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      track('logout');
       await signOut(auth);
     } catch (error) {
       throw error;

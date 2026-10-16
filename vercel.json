@@ -3,6 +3,7 @@
     { "source": "/((?!api/).*)", "destination": "/" }
   ],
   "crons": [
-    { "path": "/api/weekly-email", "schedule": "0 10 * * 1" }
+    { "path": "/api/weekly-email", "schedule": "0 10 * * 1" },
+    { "path": "/api/growth-cron", "schedule": "0 9 * * *" }
   ]
 }

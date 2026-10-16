@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { AlertTriangle } from "lucide-react";
@@ -6,6 +6,7 @@ import PageTransition from "../components/PageTransition";
 import { useCart } from "../contexts/CartContext";
 import { useAuth } from "../contexts/AuthContext";
 import { db } from "../lib/firebase";
+import { track } from '../lib/analytics';
 
 const OPAY_ACCOUNT_NAME = "Adeleke Kehinde Boluwatife";
 const OPAY_ACCOUNT_NUMBER = "9034212617";
@@ -16,10 +17,18 @@ export default function Checkout() {
   const navigate = useNavigate();
   const [orderId, setOrderId] = useState("");
   const [creating, setCreating] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const hasCart = cart.length > 0;
+  useEffect(() => {
+    if (!hasCart) return;
+    const timer = setTimeout(() => track('checkout_start'), 0);
+    return () => clearTimeout(timer);
+  }, [hasCart]);
 
   const createOrder = async () => {
     if (!currentUser || cart.length === 0) return;
     setCreating(true);
+    setOrderError('');
     try {
       const docRef = await addDoc(collection(db, "orders"), {
         userId: currentUser.uid,
@@ -37,14 +46,17 @@ export default function Checkout() {
         createdAt: serverTimestamp(),
       });
       setOrderId(docRef.id);
+      track('order_created');
     } catch (e) {
       console.error("Failed to create order", e);
+      setOrderError('We could not create your order. Please try again, or contact us on WhatsApp.');
     } finally {
       setCreating(false);
     }
   };
 
   const openWhatsApp = () => {
+    track('whatsapp_click');
     const phoneIntl = "2348107869063";
     const text = encodeURIComponent(
       `Hello, I have paid for Order ID: ${orderId}. Attaching receipt now.`
@@ -132,6 +144,7 @@ export default function Checkout() {
                 </div>
 
                 <div className="mt-6">
+                  {orderError && <p role="alert" className="mb-4 text-sm text-red-700">{orderError}</p>}
                   {orderId ? (
                     <div className="bg-white border border-gray-200 p-6">
                       <p className="text-xs uppercase tracking-widest text-gray-500">Your Order ID</p>
