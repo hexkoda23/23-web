@@ -3,7 +3,7 @@ export function growthApiPlugin() {
   return { name: 'twenty3-growth-api', configureServer(server) {
     server.middlewares.use(async (req, res, next) => {
       const url = new URL(req.url, 'http://localhost');
-      const endpoints = { '/api/growth': () => import('../api/growth.js'), '/api/events': () => import('../api/events.js'), '/api/profile-scans': () => import('../api/profile-scans.js'), '/api/growth-cron': () => import('../api/growth-cron.js') };
+      const endpoints = { '/api/growth': () => import('../api/growth.js'), '/api/events': () => import('../api/events.js'), '/api/profile-scans': () => import('../api/profile-scans.js'), '/api/community': () => import('../api/community.js'), '/api/unsubscribe': () => import('../api/unsubscribe.js'), '/api/growth-cron': () => import('../api/growth-cron.js') };
       const endpoint = endpoints[url.pathname];
       if (!endpoint) return next();
       res.status = status => { res.statusCode = status; return res; };

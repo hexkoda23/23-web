@@ -1,5 +1,5 @@
 
-import { NEW_DROP_PRODUCTS } from './newDrop';
+import { NEW_DROP_PRODUCTS } from './newDrop.js';
 
 export const PRODUCTS = [
   ...NEW_DROP_PRODUCTS,

@@ -34,6 +34,7 @@ function IdentityForge() {
     city: "",
     bio: "",
     openForWork: true,
+    wantsFeature: false,
     workContact: "",
     igHandle: "",
     xHandle: "",
@@ -335,7 +336,7 @@ function IdentityForge() {
       <div className="pt-32 pb-20 min-h-screen">
         <div className="container mx-auto px-6 max-w-2xl">
           <div className="mb-12 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter uppercase mb-4">{editId ? "Edit your profile" : "Identity Forge"}</h1>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter uppercase mb-4">{editId ? "Edit your profile" : "Your creative profile"}</h1>
             <p className="text-gray-500 text-sm md:text-base max-w-md mx-auto">
               Tell people who you are and what you make. This is the public page your 23 code opens, so only add what you want strangers to see.
             </p>
@@ -409,6 +410,11 @@ function IdentityForge() {
               <label className="flex items-center gap-3 text-sm text-gray-600">
                 <input type="checkbox" name="openForWork" checked={formData.openForWork} onChange={handleInputChange} />
                 I'm open for work
+              </label>
+
+              <label className="flex items-center gap-3 text-sm text-gray-600">
+                <input type="checkbox" name="wantsFeature" checked={formData.wantsFeature} onChange={handleInputChange} />
+                Feature me in the Twenty3 community (we review every request)
               </label>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

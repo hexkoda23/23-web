@@ -34,6 +34,15 @@ See [Vercel's Node configuration](https://vercel.com/docs/functions/runtimes/nod
    at 09:00 UTC / 10:00 Nigeria time, with `Authorization: Bearer CRON_SECRET`.
    Hobby execution can fall within that hour. The job stays paused until enabled.
 
+## The weekly letter
+
+`/api/weekly-email` runs every Monday at 10:00 UTC but sends nothing until the
+owner selects **Start sending** in the Growth Room **Weekly letter** tab. It needs
+`RESEND_API_KEY` and `EMAIL_FROM` on a domain verified in Resend, plus `CRON_SECRET`,
+which also signs unsubscribe links, so changing it invalidates links in old emails.
+Each issue is claimed once in `_growth_email_runs`, so a retry cannot send twice.
+Unsubscribes are stored as hashes in `_growth_email_optouts`.
+
 ## Wearer profiles
 
 `digitalProfiles` is publicly readable, including by listing the whole collection,

@@ -1,9 +1,10 @@
 import { createElement, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sendEmailVerification } from 'firebase/auth';
-import { Activity, ArrowUpRight, BarChart3, Compass, Copy, LayoutDashboard, Megaphone, RefreshCw, Settings, ShoppingBag, Users } from 'lucide-react';
+import { Activity, ArrowUpRight, BarChart3, Compass, Copy, LayoutDashboard, Mail, Megaphone, RefreshCw, Settings, ShoppingBag, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { growthRequest, campaignLink } from '../lib/growth-api';
+import { buildLetter, EDITION_NAMES, issueNumber, pickProducts } from '../../server/weekly-letter';
 import { growthDemo } from '../data/growthDemo';
 import { PRODUCTS } from '../data/products';
 import { FOCUSES } from '../../server/growth-model';
@@ -12,7 +13,7 @@ import '../growth.css';
 const money = n => `₦${Number(n || 0).toLocaleString('en-NG')}`;
 const date = n => n ? new Date(n).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }) : 'Not available';
 const names = { page_view: 'Page visit', product_view: 'Product view', add_to_cart: 'Added to bag', remove_from_cart: 'Removed from bag', checkout_start: 'Checkout opened', order_created: 'Order created', login: 'Signed in', signup: 'Account created', logout: 'Signed out', scroll_depth: 'Scroll depth', page_engagement: 'Active reading time', navigation: 'Link clicked', whatsapp_click: 'WhatsApp opened' };
-const tabs = [['overview', 'Overview', LayoutDashboard], ['journeys', 'Visitor journeys', Activity], ['orders', 'Orders & payments', ShoppingBag], ['people', 'Accounts', Users], ['radar', 'Opportunity radar', Compass], ['studio', 'Campaign studio', Megaphone], ['settings', 'Connections', Settings]];
+const tabs = [['overview', 'Overview', LayoutDashboard], ['journeys', 'Visitor journeys', Activity], ['orders', 'Orders & payments', ShoppingBag], ['people', 'Accounts', Users], ['letter', 'Weekly letter', Mail], ['creatives', 'First 23', Sparkles], ['radar', 'Opportunity radar', Compass], ['studio', 'Campaign studio', Megaphone], ['settings', 'Connections', Settings]];
 const weeklyPlan = [
   ['Monday', 'Show the fit', 'Film a 15-second front, side, and back view in daylight. Include your height and the size you wear.'],
   ['Tuesday', 'Make the details clear', 'Show stitching, the barcode experience, the price, and available colors. Answer a real sizing question.'],
@@ -72,6 +73,8 @@ export default function GrowthAdmin() {
       {tab === 'journeys' && <Journeys data={display} />}
       {tab === 'orders' && <Orders data={display} act={act} busy={busy} />}
       {tab === 'people' && <People data={display} />}
+      {tab === 'letter' && <WeeklyLetter data={display} act={act} busy={busy} />}
+      {tab === 'creatives' && <FirstTwentyThree data={display} act={act} busy={busy} />}
       {tab === 'radar' && <Radar data={display} act={act} busy={busy} />}
       {tab === 'studio' && <Studio data={display} act={act} busy={busy} />}
       {tab === 'settings' && <Connections key={JSON.stringify(display.settings)} data={display} act={act} busy={busy} />}
@@ -100,6 +103,19 @@ function Orders({ data, act, busy }) {
 }
 function People({ data }) {
   return <><Heading label="Account activity" title="Who has joined the store."><p>Account creation and latest sign-in come from Firebase. Individual historical login events begin only with the new consented tracking.</p></Heading><div className="growth-stats"><article><p>Accounts loaded</p><strong>{data.accounts.length}</strong><span>All-time account list</span></article><article><p>Tracked logins</p><strong>{data.totals.logins}</strong><span>Selected period, consenting users</span></article><article><p>Tracked signups</p><strong>{data.totals.signups}</strong><span>Selected period, consenting users</span></article></div><section className="growth-panel">{data.accountListTruncated && <p>Showing the first 1,000 accounts; this is not a complete account total.</p>}{!data.accounts.length ? <Empty>No accounts loaded in this view.</Empty> : <div className="growth-table-wrap"><table><thead><tr><th>Account</th><th>Joined</th><th>Last sign-in</th><th>Method</th></tr></thead><tbody>{data.accounts.map(a => <tr key={a.id}><td>{a.email}<small>{a.verified ? 'Email verified' : 'Email not verified'}</small></td><td>{date(a.createdAt)}</td><td>{date(a.lastSignIn)}</td><td>{a.providers.join(', ') || 'Unknown'}</td></tr>)}</tbody></table></div>}</section></>;
+}
+function WeeklyLetter({ data, act, busy }) {
+  const letter = data.letter || { enabled: false, optOuts: 0, runs: [] };
+  const ready = !!data.configured?.email;
+  const nextIssue = issueNumber();
+  const [issue, setIssue] = useState(((nextIssue - 1) % EDITION_NAMES.length) + 1);
+  const recipients = Math.max(0, data.accounts.length - letter.optOuts);
+  const preview = buildLetter({ issue, firstName: 'Ada', products: pickProducts(PRODUCTS, issue), siteUrl: window.location.origin, unsubscribeUrl: '#' });
+  return <><Heading label="Every Monday, 11:00 Nigeria time" title="The weekly letter."><p>Six editions rotate so no two weeks look alike. It goes to every account except people who unsubscribed, and nothing sends until you turn it on.</p></Heading><div className="growth-stats"><article><p>Status</p><strong className="growth-connection">{letter.enabled ? 'On' : 'Paused'}</strong><span>{letter.enabled ? 'Sends next Monday' : 'Nothing is being sent'}</span></article><article><p>Would receive it</p><strong>{recipients}</strong><span>Accounts, minus unsubscribes</span></article><article><p>Unsubscribed</p><strong>{letter.optOuts}</strong><span>Never emailed again</span></article><article><p>Email service</p><strong className="growth-connection">{ready ? 'Configured' : 'Needs setup'}</strong><span>Resend and your domain</span></article></div>{!ready && <section className="growth-panel"><h2>Connect your email once</h2><p>1. Create a <a href="https://resend.com" target="_blank" rel="noreferrer">Resend</a> account. 2. Add and verify shopfrom23.com there, by adding the DNS records it gives you. 3. In Vercel, add RESEND_API_KEY and EMAIL_FROM, for example Twenty3 &lt;letter@shopfrom23.com&gt;. 4. Redeploy.</p></section>}<section className="growth-panel"><h2>Preview</h2><div className="growth-letter-tabs">{EDITION_NAMES.map((name, index) => <button key={name} aria-pressed={issue === index + 1} onClick={() => setIssue(index + 1)}>{name}</button>)}</div><p><strong>Subject:</strong> {preview.subject}</p><iframe className="growth-letter-frame" title={`${preview.edition} email preview`} srcDoc={preview.html} sandbox="" /><div className="growth-letter-actions"><button disabled={busy || !ready} onClick={() => act('letter_test', { issue }, 'Test sent to your owner email.')}>Send this to me as a test</button><button disabled={busy || (!ready && !letter.enabled)} onClick={() => act('letter_settings', { enabled: !letter.enabled }, letter.enabled ? 'Weekly letter paused.' : 'Weekly letter is on. It sends next Monday.')}>{letter.enabled ? 'Pause the weekly letter' : `Start sending to ${recipients} accounts`}</button></div></section>{letter.runs.length > 0 && <section className="growth-panel"><h2>Sent so far</h2><div className="growth-table-wrap"><table><thead><tr><th>Issue</th><th>Status</th><th>Sent</th><th>Failed</th></tr></thead><tbody>{letter.runs.map(run => <tr key={run.issue}><td>Nº {run.issue}</td><td>{run.status}</td><td>{run.sent ?? 0}</td><td>{run.failed ?? 0}</td></tr>)}</tbody></table></div></section>}</>;
+}
+function FirstTwentyThree({ data, act, busy }) {
+  const creatives = data.creatives || { applications: [], requests: [], featured: [] };
+  return <><Heading label="The people behind the code" title="The First 23."><p>Applications from the For Creatives page, and wearers asking to appear on the homepage. Nobody appears publicly until you approve them.</p></Heading><div className="growth-stats"><article><p>Applications</p><strong>{creatives.applications.length}</strong><span>From the For Creatives page</span></article><article><p>On the homepage</p><strong>{creatives.featured.length}</strong><span>Up to 4 show at once</span></article></div><section className="growth-panel"><h2>Applications</h2>{!creatives.applications.length ? <Empty>Applications will appear here.</Empty> : <div className="growth-table-wrap"><table><thead><tr><th>Name</th><th>Craft</th><th>City</th><th>Contact</th><th>Work</th><th>Why</th></tr></thead><tbody>{creatives.applications.map(a => <tr key={a.id}><td>{a.name}</td><td>{a.craft}</td><td>{a.city}</td><td>{a.email}<br />{a.instagram}</td><td>{a.link}</td><td>{a.why}</td></tr>)}</tbody></table></div>}</section><section className="growth-panel"><h2>Homepage requests</h2>{!creatives.requests.length ? <Empty>Wearers who ask to be featured will appear here.</Empty> : <div className="growth-table-wrap"><table><thead><tr><th>Name</th><th>Craft</th><th>Profile</th><th>Homepage</th></tr></thead><tbody>{creatives.requests.map(person => { const live = creatives.featured.includes(person.id); return <tr key={person.id}><td>{person.name}</td><td>{[person.craft, person.city].filter(Boolean).join(' · ')}</td><td><Link to={`/profile/${person.id}`}>View</Link></td><td>{person.hasImage ? <button disabled={busy} onClick={() => act('feature_creative', { id: person.id, approved: !live }, live ? 'Removed from the homepage.' : 'Added to the homepage.')}>{live ? 'Remove' : 'Approve'}</button> : 'Needs a work image'}</td></tr>; })}</tbody></table></div>}</section></>;
 }
 function Radar({ data, act, busy }) {
   const [filter, setFilter] = useState('all');

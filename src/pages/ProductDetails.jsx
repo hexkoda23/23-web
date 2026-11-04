@@ -116,9 +116,9 @@ export default function ProductDetails() {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="bg-white p-8 max-w-md w-full shadow-2xl space-y-6 text-center"
             >
-              <h2 className="attention-product attention-heading text-3xl">Choose Your Identity</h2>
+              <h2 className="attention-product attention-heading text-3xl">Link this piece to your work?</h2>
               <p className="text-gray-600 text-sm">
-                Would you like to customize your barcode with your personal digital signature, or proceed with the standard 23 barcode?
+                Your code can open your own page, so anyone who scans you sees your work and can hire you. Or keep the standard 23 code.
               </p>
 
               <div className="space-y-3 pt-4">
@@ -126,13 +126,13 @@ export default function ProductDetails() {
                   onClick={() => confirmAddToCart(true)}
                   className="w-full bg-black text-white py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
                 >
-                  Customize Barcode
+                  Link my work
                 </button>
                 <button
                   onClick={() => confirmAddToCart(false)}
                   className="w-full bg-transparent border border-gray-200 text-black py-4 text-sm font-bold uppercase tracking-widest hover:border-black transition-colors"
                 >
-                  Use Initial Barcode
+                  Keep the standard code
                 </button>
               </div>
 
@@ -453,6 +453,10 @@ export default function ProductDetails() {
                       ? 'Add to Cart'
                       : 'Out of Stock'}
               </button>
+              <Link to="/creatives" className="product-scan-strip">
+                <strong>This piece can open your page.</strong>
+                <span>Anyone who scans it sees your work and can hire you. How it works →</span>
+              </Link>
             </motion.div>
 
             {/* Additional Info */}

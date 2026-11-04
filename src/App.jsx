@@ -13,6 +13,7 @@ import OutfitGenerator from './pages/OutfitGenerator';
 import AIStudio from './pages/AIStudio';
 import Login from './pages/Login';
 import Signup from './pages/SignUp';
+import Creatives from './pages/Creatives';
 import Account from './pages/Account';
 import Messages from './pages/Messages';
 import Checkout from './pages/Checkout';
@@ -64,6 +65,7 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/about" element={<About />} />
+            <Route path="/creatives" element={<Creatives />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/outfit-generator" element={<OutfitGenerator />} />
             <Route path="/ai-studio" element={<AIStudio />} />

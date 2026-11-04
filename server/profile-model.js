@@ -14,7 +14,7 @@ export function profileFields(form) {
   const showPhone = form.showPhone === true;
   return {
     name: text(form.name, 80), craft: text(form.craft, 60), city: text(form.city, 60), bio: text(form.bio, 200),
-    openForWork: form.openForWork !== false, workContact: text(form.workContact, 200),
+    openForWork: form.openForWork !== false, wantsFeature: form.wantsFeature === true, workContact: text(form.workContact, 200),
     igHandle: text(form.igHandle, 60), xHandle: text(form.xHandle, 60), snapchat: text(form.snapchat, 60), tiktok: text(form.tiktok, 60), website: text(form.website, 200),
     showPhone, phone: showPhone ? text(form.phone, 30) : '',
     craftFiles: (form.craftFiles || []).filter(file => file.status !== 'uploading'),

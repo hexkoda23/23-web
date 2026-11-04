@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Fingerprint, ScanLine, Shirt } from 'lucide-reac
 import ProductCard from '../components/ProductCard';
 import { PRODUCTS } from '../data/products';
 import NewDropPopup from '../components/NewDropPopup';
+import ScanFilm from '../components/ScanFilm';
 import * as QRCode from 'qrcode';
 import { SAMPLE_PROFILE } from '../../server/profile-model';
 
@@ -14,13 +15,22 @@ const pillars = [[Shirt, 'Stitched identity', 'Your barcode is woven into the ga
 function Collection({ label, title, products, to }) {
   return <section className="home-collection"><div className="editorial-heading"><p className="eyebrow">{label}</p><h2>{title}</h2><Link className="text-link" to={to}>Discover the collection</Link></div><div className="home-product-grid">{products.map(product => <ProductCard key={product.id} product={product} />)}</div></section>;
 }
+// Real wearers the owner has approved come first; the lookbook fills the rest.
+function Community() {
+  const [people, setPeople] = useState([]);
+  useEffect(() => {
+    fetch('/api/community').then(response => response.ok ? response.json() : { people: [] }).then(result => setPeople(result.people || [])).catch(() => {});
+  }, []);
+  const fill = ['1.jpg', '6.jpg', 'JF-15.JPG', 'JF-1.JPG'].slice(0, Math.max(0, 4 - people.length));
+  return <section className="community-story"><div className="editorial-heading"><p className="eyebrow">From Lagos to the world</p><h2>The Twenty3 community</h2><Link to="/creatives" className="text-link">Join the First 23</Link></div><div className="community-grid">{people.slice(0, 4).map(person => <Link key={person.id} to={`/profile/${person.id}`}><img src={person.image} alt={person.name} loading="lazy" /><span><strong>{person.name}</strong>{[person.craft, person.city].filter(Boolean).join(' · ')}</span></Link>)}{fill.map(src => <Link key={src} to="/lookbook"><img src={`/lookbook/${src}`} alt="Style from the Twenty3 community" loading="lazy" /></Link>)}</div></section>;
+}
 function ScanDemo() {
   const [code, setCode] = useState('');
   const path = `/profile/${SAMPLE_PROFILE.id}`;
   useEffect(() => {
     QRCode.toDataURL(`${import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin}${path}`, { width: 480, margin: 1, color: { dark: '#171717', light: '#ffffff' } }).then(setCode).catch(() => {});
   }, [path]);
-  return <section className="scan-demo"><Link to={path} className="scan-demo-code" aria-label="Open the sample Twenty3 profile">{code && <img src={code} alt="Code that opens a sample Twenty3 profile" />}</Link><div className="scan-demo-copy"><p className="eyebrow">Try it now</p><h2>Scan this.<br /><em>Meet the wearer.</em></h2><p>Every Twenty3 piece carries a code like this one. Someone notices your fit, scans it, and lands on your work, with a way to hire you. Point your phone at the code to see it, or tap it if you're already on your phone.</p><div className="scan-demo-links"><Link to="/identity-forge" className="house-button">Create your profile</Link><Link to={path} className="text-link">See a sample profile</Link></div></div></section>;
+  return <section className="scan-demo"><ScanFilm /><div className="scan-demo-copy"><p className="eyebrow">How it works</p><h2>Scan this.<br /><em>Meet the wearer.</em></h2><p>Every Twenty3 piece carries a code. Someone notices your fit, scans it, and lands on your work, with a way to hire you.</p><Link to={path} className="scan-demo-try" aria-label="Open the sample Twenty3 profile">{code && <img src={code} alt="Code that opens a sample Twenty3 profile" />}<span>Try it. Point your phone at this code, or tap it.</span></Link><div className="scan-demo-links"><Link to="/creatives" className="house-button">For creatives</Link><Link to={path} className="text-link">See a sample profile</Link></div></div></section>;
 }
 export default function Home() {
   const carousel = useRef(null);
@@ -37,7 +47,7 @@ export default function Home() {
     <section className="home-collection trending-section"><div className="editorial-heading"><p className="eyebrow">The pieces you return to</p><h2>Trending now</h2><div className="carousel-controls"><button aria-label="Previous products" onClick={() => carousel.current.scrollBy({ left: -carousel.current.clientWidth, behavior: 'smooth' })}><ArrowLeft size={18} strokeWidth={1.2} /></button><button aria-label="Next products" onClick={() => carousel.current.scrollBy({ left: carousel.current.clientWidth, behavior: 'smooth' })}><ArrowRight size={18} strokeWidth={1.2} /></button></div></div><div ref={carousel} className="trending-carousel">{bestsellers.map(product => <ProductCard key={product.id} product={product} />)}</div></section>
     <section className="studio-story"><img src="/lookbook/18.jpg" alt="Twenty3 styling inspiration" loading="lazy" /><div className="campaign-shade" /><div className="studio-caption"><p className="eyebrow">Atelier intelligence</p><h2>Your style.<br /><em>A new perspective.</em></h2><p>Discover outfits from the Twenty3 catalog, try pieces on your own photo, and explore a style that is entirely yours.</p><div className="campaign-links"><Link to="/ai-studio" className="house-button light">Explore 23 AI Studio</Link><Link to="/outfit-generator" className="house-button outline-light">Generate an outfit</Link></div></div></section>
     <section className="brand-pillars"><div className="editorial-heading"><p className="eyebrow">Luxury. Identity. Exclusivity.</p><h2>Only at Twenty3</h2></div><div className="pillar-grid">{pillars.map(([Icon, title, body]) => <div key={title}>{createElement(Icon, { size: 38, strokeWidth: 0.8 })}<h3>{title}</h3><p>{body}</p></div>)}</div></section>
-    <section className="community-story"><div className="editorial-heading"><p className="eyebrow">From Lagos to the world</p><h2>The Twenty3 community</h2><a href="https://www.instagram.com/twentythreepreppy" target="_blank" rel="noreferrer" className="text-link">Follow @twentythreepreppy ↗</a></div><div className="community-grid">{['1.jpg', '6.jpg', 'JF-15.JPG', 'JF-1.JPG'].map(src => <Link key={src} to="/lookbook"><img src={`/lookbook/${src}`} alt="Style from the Twenty3 community" loading="lazy" /></Link>)}</div></section>
+    <Community />
     <section className="exclusive-access"><p className="eyebrow">Exclusive access</p><h2>Be part of the next chapter.</h2><p>Join the movement and discover upcoming drops.</p><Link to="/signup" className="house-button">Join Twenty3</Link></section>
   </div>;
 }

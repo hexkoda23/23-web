@@ -7,8 +7,8 @@ import BrandLogo from './BrandLogo';
 import MusicPlayer from './MusicPlayer';
 import SearchModal from './SearchModal';
 
-const links = [['New arrivals', '/shop?category=new'], ['Collection', '/shop'], ['Lookbook', '/lookbook'], ['23 AI Studio', '/ai-studio'], ['Create a fit', '/outfit-generator'], ['The house', '/about']];
-const services = [['Your identity', '/identity-forge'], ['My account', '/account'], ['Messages', '/messages'], ['Size guide', '/size-guide'], ['Client services', '/contact'], ['Questions & answers', '/faq']];
+const links = [['New arrivals', '/shop?category=new'], ['Collection', '/shop'], ['Lookbook', '/lookbook'], ['For creatives', '/creatives'], ['23 AI Studio', '/ai-studio'], ['Create a fit', '/outfit-generator'], ['The house', '/about']];
+const services = [['Your creative profile', '/identity-forge'], ['My account', '/account'], ['Messages', '/messages'], ['Size guide', '/size-guide'], ['Client services', '/contact'], ['Questions & answers', '/faq']];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -47,7 +47,7 @@ export default function Navbar() {
   return <>
     <a href="#main-content" className="skip-link">Skip to content</a>
     <header className={`house-header ${scrolled ? 'is-scrolled' : ''}`}>
-      <div className="house-announcement">From Lagos to the world <span>·</span> Complimentary shipping on orders over ₦50,000</div>
+      <div className="house-announcement"><Link to="/creatives">Your work, on your back. For creatives →</Link><span>·</span><span>Complimentary shipping on orders over ₦50,000</span></div>
       <div className="house-masthead">
         <div className="header-start"><button ref={triggerRef} onClick={() => setMenuOpen(true)} aria-label="Open menu" aria-expanded={menuOpen}><Menu size={20} strokeWidth={1.4} /><span>Menu</span></button><MusicPlayer className="header-music" /><Link to="/contact" className="client-link">Client services</Link></div>
         <Link to="/" aria-label="Twenty3 home" className="masthead-logo"><BrandLogo /></Link>

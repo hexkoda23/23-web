@@ -7,7 +7,7 @@ export const EVENTS = ['page_view', 'product_view', 'add_to_cart', 'remove_from_
 export function publicPath(value) {
   const path = String(value || '').split(/[?#]/)[0];
   if (/^\/product\/[a-zA-Z0-9_-]{1,100}$/.test(path)) return path;
-  return ['/', '/shop', '/lookbook', '/cart', '/checkout', '/login', '/signup', '/about', '/contact', '/faq', '/size-guide', '/ai-studio', '/outfit-generator'].includes(path) ? path : '/private';
+  return ['/', '/shop', '/lookbook', '/cart', '/checkout', '/login', '/signup', '/about', '/contact', '/faq', '/size-guide', '/ai-studio', '/outfit-generator', '/creatives'].includes(path) ? path : '/private';
 }
 const tag = (value, limit = 80) => String(value || '').replace(/[^a-zA-Z0-9 _./-]/g, '').slice(0, limit);
 export function sanitizeEvent(input) {
