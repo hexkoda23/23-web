@@ -1,4 +1,5 @@
 import { auth } from './firebase';
+export const isStoreOwner = user => user?.email?.toLowerCase() === 'kehindeadeleke92@gmail.com' && user.emailVerified === true;
 export async function growthRequest(action, input = {}) {
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error('Sign in with the owner account first.');

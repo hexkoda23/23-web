@@ -5,6 +5,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import PageTransition from "../components/PageTransition";
+import { isStoreOwner } from "../lib/growth-api";
 
 export default function Account() {
   const { currentUser, logout, getUserData } = useAuth();
@@ -104,7 +105,12 @@ export default function Account() {
             )}
           </div>
 
-          <Link to="/admin/growth" className="block border border-gray-300 p-4 mb-6 text-sm">Store owner? Open the Growth Room →</Link>
+          {isStoreOwner(currentUser) && (
+            <>
+              <Link to="/admin/growth" className="block border border-gray-300 p-4 mb-3 text-sm">Open the Growth Room →</Link>
+              <Link to="/messages" className="block border border-gray-300 p-4 mb-6 text-sm">Read contact messages →</Link>
+            </>
+          )}
           <button 
             onClick={handleLogout}
             className="w-full bg-black text-white py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"

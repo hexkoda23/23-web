@@ -8,7 +8,7 @@ import MusicPlayer from './MusicPlayer';
 import SearchModal from './SearchModal';
 
 const links = [['New arrivals', '/shop?category=new'], ['Collection', '/shop'], ['Lookbook', '/lookbook'], ['For creatives', '/creatives'], ['23 AI Studio', '/ai-studio'], ['Create a fit', '/outfit-generator'], ['The house', '/about']];
-const services = [['Your creative profile', '/identity-forge'], ['My account', '/account'], ['Messages', '/messages'], ['Size guide', '/size-guide'], ['Client services', '/contact'], ['Questions & answers', '/faq']];
+const services = [['Your creative profile', '/identity-forge'], ['My account', '/account'], ['Size guide', '/size-guide'], ['Client services', '/contact'], ['Questions & answers', '/faq']];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);

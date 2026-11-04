@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import PageTransition from "../components/PageTransition";
 import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { isStoreOwner } from "../lib/growth-api";
 
 export default function Messages() {
-  const { currentUser } = useAuth();
+  const { currentUser, loading: authLoading } = useAuth();
+  const owner = isStoreOwner(currentUser);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!owner) return undefined;
     const q = query(collection(db, "contactMessages"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
@@ -24,7 +28,9 @@ export default function Messages() {
       setLoading(false);
     });
     return unsub;
-  }, []);
+  }, [owner]);
+
+  if (!authLoading && currentUser && !owner) return <Navigate to="/account" replace />;
 
   return (
     <ProtectedRoute>
