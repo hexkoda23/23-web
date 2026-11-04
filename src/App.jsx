@@ -44,7 +44,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const location = useLocation();
   const isDarkPage = ['/', '/lookbook'].includes(location.pathname);
-  const hideChat = location.pathname === '/ai-studio' || location.pathname.startsWith('/admin');
+  const hideChat = location.pathname === '/ai-studio' || location.pathname.startsWith('/admin') || location.pathname.startsWith('/profile');
 
   return (
     <CartProvider>

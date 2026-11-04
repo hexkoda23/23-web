@@ -34,6 +34,15 @@ See [Vercel's Node configuration](https://vercel.com/docs/functions/runtimes/nod
    at 09:00 UTC / 10:00 Nigeria time, with `Authorization: Bearer CRON_SECRET`.
    Hobby execution can fall within that hour. The job stays paused until enabled.
 
+## Wearer profiles
+
+`digitalProfiles` is publicly readable, including by listing the whole collection,
+so nothing private may be stored on it. New profiles never save the account email
+and save a phone number only when the wearer chooses to show it. After deploying,
+open **Connections** in the Growth Room and select **Protect profiles** once to move
+those details off older profiles into the server-only `_growth_profile_private`.
+Scan totals live in the server-only `_growth_profile_scans`.
+
 ## Firestore rules — required before activation
 
 All collections beginning `_growth_` are server-only. The frontend uses the

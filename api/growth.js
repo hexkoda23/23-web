@@ -1,7 +1,9 @@
 import { getAuth } from 'firebase-admin/auth';
+import { FieldValue } from 'firebase-admin/firestore';
 import { requireAdmin, database, body, HttpError, respondError, milliseconds, throttle, timestamp } from '../server/growth-store.js';
 import { DEFAULT_SETTINGS, FOCUSES, summarize } from '../server/growth-model.js';
 import { runResearch } from '../server/growth-research.js';
+import { protectProfiles } from '../server/profile-store.js';
 
 const docId = value => { if (!/^[a-zA-Z0-9_-]{1,128}$/.test(value || '')) throw new HttpError(400, 'Invalid record.'); return value; };
 export default async function handler(req, res) {
@@ -49,6 +51,8 @@ export default async function handler(req, res) {
       await db.collection('_growth_settings').doc('workspace').set({ ...DEFAULT_SETTINGS, focus: input.focus, monthlyBudget: Number(input.monthlyBudget), enabled: input.enabled, updatedAt: Date.now(), updatedBy: owner.uid });
     } else if (input.action === 'research') {
       return res.status(200).json(await runResearch());
+    } else if (input.action === 'protect_profiles') {
+      return res.status(200).json({ protected: await protectProfiles(db, FieldValue.delete) });
     } else if (input.action === 'opportunity') {
       if (!['new', 'shortlisted', 'contacted', 'partnered', 'dismissed'].includes(input.status)) throw new HttpError(400, 'Invalid opportunity status.');
       await db.collection('_growth_opportunities').doc(docId(input.id)).update({ status: input.status, notes: String(input.notes || '').slice(0, 1000), updatedAt: Date.now() });

@@ -2,22 +2,24 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
-import { doc, setDoc, serverTimestamp, collection, addDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, deleteField, serverTimestamp, collection, addDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../lib/firebase";
 import { uploadFileCloudinary } from "../lib/uploader";
 import PageTransition from "../components/PageTransition.jsx";
 import * as QRCode from "qrcode";
 import { useCart } from "../contexts/CartContext";
+import { CRAFTS, profileFields } from "../../server/profile-model";
 
 function IdentityForge() {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useAuth();
   const { addToCart } = useCart();
+  const editId = new URLSearchParams(location.search).get("edit");
   
   // Get product data passed from ProductDetails or fallback from localStorage
-  const productData = location.state?.productData || (() => {
+  const productData = editId ? null : location.state?.productData || (() => {
     try {
       const raw = localStorage.getItem('pendingCustomization');
       return raw ? JSON.parse(raw) : null;
@@ -28,9 +30,15 @@ function IdentityForge() {
 
   const [formData, setFormData] = useState({
     name: "",
+    craft: "",
+    city: "",
+    bio: "",
+    openForWork: true,
+    workContact: "",
     igHandle: "",
     xHandle: "",
     phone: "",
+    showPhone: false,
     snapchat: "",
     tiktok: "",
     website: "",
@@ -47,11 +55,24 @@ function IdentityForge() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
+  useEffect(() => {
+    if (!editId || !currentUser) return;
+    getDoc(doc(db, "digitalProfiles", editId))
+      .then(snapshot => {
+        if (!snapshot.exists() || snapshot.data().userId !== currentUser.uid) {
+          navigate("/account");
+          return;
+        }
+        setFormData(prev => ({ ...prev, ...profileFields(snapshot.data()) }));
+      })
+      .catch(() => navigate("/account"));
+  }, [editId, currentUser, navigate]);
+
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === "checkbox" ? checked : value
     }));
   };
 
@@ -223,13 +244,18 @@ function IdentityForge() {
     setIsSubmitting(true);
 
     try {
+      if (editId) {
+        await updateDoc(doc(db, "digitalProfiles", editId), { ...profileFields(formData), userEmail: deleteField() });
+        navigate("/account");
+        return;
+      }
+
       // Create a unique profile ID
       // If user is logged in, we can use their ID + timestamp, otherwise random
       const profileRef = collection(db, "digitalProfiles");
       const newProfileRef = await addDoc(profileRef, {
-        ...formData,
+        ...profileFields(formData),
         userId: currentUser.uid,
-        userEmail: currentUser.email || "",
         createdAt: serverTimestamp(),
       });
       
@@ -267,7 +293,7 @@ function IdentityForge() {
         // Wait a bit to show success then redirect
       }
       setTimeout(() => {
-        navigate("/checkout");
+        navigate(productData ? "/checkout" : "/account");
       }, 2000);
 
     } catch (error) {
@@ -309,9 +335,9 @@ function IdentityForge() {
       <div className="pt-32 pb-20 min-h-screen">
         <div className="container mx-auto px-6 max-w-2xl">
           <div className="mb-12 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter uppercase mb-4">Identity Forge</h1>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tighter uppercase mb-4">{editId ? "Edit your profile" : "Identity Forge"}</h1>
             <p className="text-gray-500 text-sm md:text-base max-w-md mx-auto">
-              Create your unique digital signature. This information will be embedded in your 23 custom barcode.
+              Tell people who you are and what you make. This is the public page your 23 code opens, so only add what you want strangers to see.
             </p>
           </div>
 
@@ -328,6 +354,62 @@ function IdentityForge() {
                   required
                 />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="group relative">
+                  <input
+                    type="text"
+                    name="craft"
+                    list="craft-options"
+                    value={formData.craft}
+                    onChange={handleInputChange}
+                    placeholder="Your craft (e.g. Photographer)"
+                    className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                  />
+                  <datalist id="craft-options">
+                    {CRAFTS.map(craft => <option key={craft} value={craft} />)}
+                  </datalist>
+                </div>
+                <div className="group relative">
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    placeholder="City"
+                    className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                  />
+                </div>
+              </div>
+
+              <div className="group relative">
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  maxLength={200}
+                  rows={2}
+                  placeholder="One line about your work"
+                  className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300 resize-none"
+                />
+              </div>
+
+              <div className="group relative">
+                <input
+                  type="text"
+                  name="workContact"
+                  value={formData.workContact}
+                  onChange={handleInputChange}
+                  placeholder="WhatsApp number, email or link for work"
+                  className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                />
+                <p className="text-xs text-gray-400 mt-2">Public. This powers your Work with me button. Leave it blank to use your Instagram.</p>
+              </div>
+
+              <label className="flex items-center gap-3 text-sm text-gray-600">
+                <input type="checkbox" name="openForWork" checked={formData.openForWork} onChange={handleInputChange} />
+                I'm open for work
+              </label>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="group relative">
@@ -362,6 +444,10 @@ function IdentityForge() {
                     placeholder="Phone Number"
                     className="w-full bg-transparent border-b border-gray-200 py-4 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
                   />
+                  <label className="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                    <input type="checkbox" name="showPhone" checked={formData.showPhone} onChange={handleInputChange} />
+                    Show on my public profile (not saved otherwise)
+                  </label>
                 </div>
                 <div className="group relative">
                   <input
@@ -459,7 +545,7 @@ function IdentityForge() {
               disabled={isSubmitting}
               className="w-full bg-black text-white py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Forging Identity..." : "Generate Digital Signature"}
+              {isSubmitting ? "Saving..." : editId ? "Save changes" : "Generate Digital Signature"}
             </button>
           </form>
         </div>

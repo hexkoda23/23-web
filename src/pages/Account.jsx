@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import PageTransition from "../components/PageTransition";
 
@@ -8,6 +10,8 @@ export default function Account() {
   const { currentUser, logout, getUserData } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
+  const [profiles, setProfiles] = useState([]);
+  const [scans, setScans] = useState({});
 
   useEffect(() => {
     if (!currentUser) {
@@ -21,6 +25,24 @@ export default function Account() {
     };
     loadData();
   }, [currentUser, navigate, getUserData]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const loadProfiles = async () => {
+      try {
+        const snapshot = await getDocs(query(collection(db, "digitalProfiles"), where("userId", "==", currentUser.uid)));
+        setProfiles(snapshot.docs.map(profile => ({ id: profile.id, ...profile.data() })));
+      } catch (error) {
+        console.error("Failed to load profiles", error);
+      }
+      try {
+        const token = await currentUser.getIdToken();
+        const response = await fetch("/api/profile-scans", { headers: { Authorization: `Bearer ${token}` } });
+        if (response.ok) setScans((await response.json()).scans);
+      } catch { /* Scan totals are optional. */ }
+    };
+    loadProfiles();
+  }, [currentUser]);
 
   const handleLogout = async () => {
     try {
@@ -54,6 +76,32 @@ export default function Account() {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="bg-gray-50 p-8 rounded-lg mb-8">
+            <h2 className="text-xl font-bold uppercase tracking-wide mb-6">Your creative profile</h2>
+            {profiles.length === 0 ? (
+              <>
+                <p className="text-gray-600 mb-4">Create the page your 23 code opens, so people who scan your outfit can see your work and hire you.</p>
+                <Link to="/identity-forge" className="underline font-medium">Create your profile</Link>
+              </>
+            ) : (
+              <div className="space-y-6">
+                {profiles.map(profile => (
+                  <div key={profile.id}>
+                    <p className="font-medium">{profile.name}</p>
+                    {(profile.craft || profile.city) && <p className="text-sm text-gray-500">{[profile.craft, profile.city].filter(Boolean).join(" · ")}</p>}
+                    {scans[profile.id] && (
+                      <p className="text-sm mt-2"><strong>{scans[profile.id].week}</strong> scans and visits this week · <strong>{scans[profile.id].total}</strong> all time</p>
+                    )}
+                    <p className="text-sm mt-2 space-x-4">
+                      <Link to={`/profile/${profile.id}`} className="underline">View</Link>
+                      <Link to={`/identity-forge?edit=${profile.id}`} className="underline">Edit</Link>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <Link to="/admin/growth" className="block border border-gray-300 p-4 mb-6 text-sm">Store owner? Open the Growth Room →</Link>

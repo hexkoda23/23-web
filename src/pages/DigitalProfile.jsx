@@ -1,18 +1,28 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { useAuth } from "../contexts/AuthContext";
 import PageTransition from "../components/PageTransition";
 import { motion } from "framer-motion";
+import { SAMPLE_PROFILE, workLink } from "../../server/profile-model";
+
+const isImage = file => !file.type || file.type.startsWith("image/");
 
 export default function DigitalProfile() {
   const { id } = useParams();
+  const { currentUser, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
+      if (id === SAMPLE_PROFILE.id) {
+        setProfile(SAMPLE_PROFILE);
+        setLoading(false);
+        return;
+      }
       try {
         const docRef = doc(db, "digitalProfiles", id);
         const docSnap = await getDoc(docRef);
@@ -35,6 +45,16 @@ export default function DigitalProfile() {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (!profile || profile.isSample || authLoading || profile.userId === currentUser?.uid) return;
+    try {
+      const counted = `twenty3-scan-${id}`;
+      if (sessionStorage.getItem(counted)) return;
+      sessionStorage.setItem(counted, "1");
+    } catch { /* Storage may be disabled. */ }
+    fetch("/api/profile-scans", { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }).catch(() => {});
+  }, [profile, id, currentUser, authLoading]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black text-white">
@@ -53,6 +73,8 @@ export default function DigitalProfile() {
       </div>
     );
   }
+
+  const contactLink = profile.openForWork !== false ? workLink(profile) : null;
 
   return (
     <PageTransition>
@@ -80,7 +102,7 @@ export default function DigitalProfile() {
                     {profile.name}
                 </h1>
                 <div className="flex items-center space-x-4 text-sm md:text-base tracking-widest text-gray-400 uppercase">
-                    <span>Verified Identity</span>
+                    <span>{[profile.craft, profile.city].filter(Boolean).join(" · ") || "Twenty3 wearer"}</span>
                     <span className="w-1 h-1 bg-gray-400 rounded-full" />
                     <span>23 Exclusive</span>
                 </div>
@@ -90,6 +112,25 @@ export default function DigitalProfile() {
 
         {/* Content */}
         <div className="container mx-auto px-6 py-12 max-w-5xl">
+            {profile.isSample && (
+                <p className="text-xs uppercase tracking-widest text-gray-500 mb-8">Sample profile. Yours could look like this.</p>
+            )}
+            {(profile.bio || profile.openForWork === true || contactLink) && (
+                <section className="mb-16 pb-12 border-b border-gray-800">
+                    {profile.openForWork === true && (
+                        <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-green-400 mb-5">
+                            <span className="w-2 h-2 bg-green-400 rounded-full" />
+                            Open for work
+                        </p>
+                    )}
+                    {profile.bio && <p className="text-xl md:text-2xl text-gray-200 max-w-2xl mb-8">{profile.bio}</p>}
+                    {contactLink && (
+                        <a href={contactLink} target="_blank" rel="noopener noreferrer" className="house-button light">
+                            Work with me
+                        </a>
+                    )}
+                </section>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24">
                 
                 {/* Details Column */}
@@ -164,12 +205,12 @@ export default function DigitalProfile() {
                                     </a>
                                 </div>
                             )}
-                             {profile.phone && (
+                             {profile.showPhone === true && profile.phone && (
                                 <div className="group flex items-center justify-between">
                                     <span className="text-gray-400">Contact</span>
-                                    <span className="text-xl font-medium group-hover:text-gray-300 transition-colors blur-[2px] hover:blur-none cursor-pointer">
+                                    <a href={`tel:${profile.phone.replace(/[^0-9+]/g, "")}`} className="text-xl font-medium group-hover:text-gray-300 transition-colors">
                                         {profile.phone}
-                                    </span>
+                                    </a>
                                 </div>
                             )}
                         </div>
@@ -196,7 +237,7 @@ export default function DigitalProfile() {
                 {/* Gallery Column */}
                 <div className="space-y-8">
                      <h2 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-6 border-b border-gray-800 pb-2">
-                            Crafted Assets
+                            Selected Work
                     </h2>
                     {profile.craftFiles && profile.craftFiles.length > 0 ? (
                         <div className="grid grid-cols-1 gap-6">
@@ -208,22 +249,38 @@ export default function DigitalProfile() {
                                     viewport={{ once: true }}
                                     className="aspect-square bg-neutral-900 rounded-lg overflow-hidden border border-gray-800"
                                 >
-                                    <img 
-                                        src={file.url || file.data} 
-                                        alt={`Asset ${idx}`} 
-                                        className="w-full h-full object-cover"
-                                    />
+                                    {isImage(file) ? (
+                                        <img
+                                            src={file.url || file.data}
+                                            alt={`${profile.name} work ${idx + 1}`}
+                                            loading="lazy"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <a href={file.url} target="_blank" rel="noopener noreferrer" className="w-full h-full flex items-center justify-center p-6 text-center text-gray-300 underline">
+                                            {file.name || "Open file"}
+                                        </a>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>
                     ) : (
                         <div className="h-64 flex items-center justify-center border border-gray-800 border-dashed rounded-lg text-gray-600">
-                            No assets uploaded
+                            No work added yet
                         </div>
                     )}
                 </div>
 
             </div>
+
+            <section className="mt-20 pt-12 border-t border-gray-800 text-center">
+                <p className="text-xs uppercase tracking-widest text-gray-500 mb-4">Saw this on someone's outfit?</p>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tighter uppercase mb-4">Get your own code</h2>
+                <p className="text-gray-400 max-w-md mx-auto mb-8">Every Twenty3 piece opens a page like this one. Wear your work, get scanned, get seen.</p>
+                <Link to="/shop?utm_source=profile&utm_medium=scan&utm_campaign=get-your-own" className="house-button light">
+                    Shop Twenty3
+                </Link>
+            </section>
         </div>
       </div>
     </PageTransition>

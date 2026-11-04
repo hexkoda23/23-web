@@ -1,9 +1,11 @@
-import { createElement, useRef, useState } from 'react';
+import { createElement, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Fingerprint, ScanLine, Shirt } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { PRODUCTS } from '../data/products';
 import NewDropPopup from '../components/NewDropPopup';
+import * as QRCode from 'qrcode';
+import { SAMPLE_PROFILE } from '../../server/profile-model';
 
 const arrivals = ['top-raglan-green', 'top-terrain-blue', 'top-xxiii-black', 'top-35'].map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
 const unreleased = ['acc-5', 'top-29', 'top-6', 'top-8'].map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
@@ -12,12 +14,21 @@ const pillars = [[Shirt, 'Stitched identity', 'Your barcode is woven into the ga
 function Collection({ label, title, products, to }) {
   return <section className="home-collection"><div className="editorial-heading"><p className="eyebrow">{label}</p><h2>{title}</h2><Link className="text-link" to={to}>Discover the collection</Link></div><div className="home-product-grid">{products.map(product => <ProductCard key={product.id} product={product} />)}</div></section>;
 }
+function ScanDemo() {
+  const [code, setCode] = useState('');
+  const path = `/profile/${SAMPLE_PROFILE.id}`;
+  useEffect(() => {
+    QRCode.toDataURL(`${import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin}${path}`, { width: 480, margin: 1, color: { dark: '#171717', light: '#ffffff' } }).then(setCode).catch(() => {});
+  }, [path]);
+  return <section className="scan-demo"><Link to={path} className="scan-demo-code" aria-label="Open the sample Twenty3 profile">{code && <img src={code} alt="Code that opens a sample Twenty3 profile" />}</Link><div className="scan-demo-copy"><p className="eyebrow">Try it now</p><h2>Scan this.<br /><em>Meet the wearer.</em></h2><p>Every Twenty3 piece carries a code like this one. Someone notices your fit, scans it, and lands on your work, with a way to hire you. Point your phone at the code to see it, or tap it if you're already on your phone.</p><div className="scan-demo-links"><Link to="/identity-forge" className="house-button">Create your profile</Link><Link to={path} className="text-link">See a sample profile</Link></div></div></section>;
+}
 export default function Home() {
   const carousel = useRef(null);
   const [storyOpen, setStoryOpen] = useState(false);
   return <div className="editorial-home">
     <NewDropPopup />
-    <section className="campaign-hero"><div className="campaign-images"><img src="/lookbook/JF-11.JPG" alt="Twenty3 collection editorial in Lagos" fetchPriority="high" /><img src="/lookbook/6.jpg" alt="Twenty3 black statement shirt portrait" fetchPriority="high" /></div><div className="campaign-shade" /><div className="campaign-caption"><p className="eyebrow">The Twenty3 collection · 2026</p><h1>Wear your world.</h1><p>Luxury with a life of its own.</p><div className="campaign-links"><Link className="house-button light" to="/shop">Shop the collection</Link><Link className="house-button outline-light" to="/ai-studio">Find your 23 fit</Link></div></div><div className="campaign-footnote"><span>Lagos. Everywhere.</span><a href="#new-arrivals">Discover Twenty3 ↓</a><span>01 / The collection</span></div></section>
+    <section className="campaign-hero"><div className="campaign-images"><img src="/lookbook/JF-11.JPG" alt="Twenty3 collection editorial in Lagos" fetchPriority="high" /><img src="/lookbook/6.jpg" alt="Twenty3 black statement shirt portrait" fetchPriority="high" /></div><div className="campaign-shade" /><div className="campaign-caption"><p className="eyebrow">The Twenty3 collection · 2026</p><h1>Wear your world.</h1><p>Your work, on your back.</p><div className="campaign-links"><Link className="house-button light" to="/shop">Shop the collection</Link><Link className="house-button outline-light" to="/ai-studio">Find your 23 fit</Link></div></div><div className="campaign-footnote"><span>Lagos. Everywhere.</span><a href="#new-arrivals">Discover Twenty3 ↓</a><span>01 / The collection</span></div></section>
+    <ScanDemo />
     <div id="new-arrivals"><Collection label="A new chapter" title="New arrivals" products={arrivals} to="/shop?category=new" /></div>
     <section className="editorial-pair"><Link to="/shop?category=tops" className="image-story"><img src="/lookbook/JF-1.JPG" alt="Twenty3 statement tops" loading="lazy" /><div><p className="eyebrow">The everyday, elevated</p><h2>Signature pieces</h2><span className="text-link">Explore ready-to-wear</span></div></Link><Link to="/lookbook" className="image-story image-story--lagos"><img src="/lookbook/13.jpg" alt="The Lagos edit featuring a colorful Twenty3 plaid shirt and cap" loading="lazy" /><div><p className="eyebrow">An expression of individuality</p><h2>The Lagos edit</h2><span className="text-link">Explore the lookbook</span></div></Link></section>
     <section className="house-manifesto"><p className="eyebrow">The house of Twenty3</p><h2>Clothes that move with you.<br /><em>Style that speaks before you do.</em></h2><Link to="/about" className="text-link">Explore our vision</Link></section>
