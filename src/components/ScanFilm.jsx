@@ -13,5 +13,5 @@ export default function ScanFilm() {
     return () => observer.disconnect();
   }, [paused]);
   const toggle = () => { if (!paused) film.current.pause(); setPaused(!paused); };
-  return <div className="scan-demo-film"><video ref={film} muted loop playsInline preload="none" poster="/video/scan-story-poster.jpg" aria-label="How Twenty3 works: someone notices your outfit, scans the code on it, lands on your work and can hire you."><source src="/video/scan-story.mp4" type="video/mp4" /></video><button type="button" onClick={toggle} aria-label={paused ? 'Play video' : 'Pause video'}>{paused ? <Play size={15} strokeWidth={1.5} /> : <Pause size={15} strokeWidth={1.5} />}</button></div>;
+  return <div className="scan-demo-film"><video ref={film} muted loop playsInline preload="none" poster="/video/scan-story-poster.jpg" aria-label="How Twenty3 works: someone notices your outfit, scans the code on it, lands on your work and can hire you. A singer gets their song heard, and a clothing seller gets an order."><source src="/video/scan-story.mp4" type="video/mp4" /></video><button type="button" onClick={toggle} aria-label={paused ? 'Play video' : 'Pause video'}>{paused ? <Play size={15} strokeWidth={1.5} /> : <Pause size={15} strokeWidth={1.5} />}</button></div>;
 }
