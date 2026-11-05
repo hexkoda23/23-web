@@ -14,11 +14,11 @@ export default async function handler(req, res) {
   if (!validUnsubscribe(email, token)) return res.status(400).end(page('Link not valid', 'This unsubscribe link is incomplete. Please use the link in your latest email.'));
   if (req.method === 'GET') {
     const action = `/api/unsubscribe?e=${encodeURIComponent(email)}&t=${escapeHtml(token)}`;
-    return res.status(200).end(page('Leave the letter?', `We will stop sending the weekly letter to ${escapeHtml(email)}.`, `<form method="post" action="${action}"><button style="background:#171717;color:#fff;border:0;padding:15px 28px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Unsubscribe</button></form>`));
+    return res.status(200).end(page('Leave the letter?', `We will stop sending the Twenty3 letter to ${escapeHtml(email)}.`, `<form method="post" action="${action}"><button style="background:#171717;color:#fff;border:0;padding:15px 28px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Unsubscribe</button></form>`));
   }
   try {
     await optOutRef(database(), email).set({ at: Date.now() });
-    return res.status(200).end(page('You are unsubscribed', 'You will not get the weekly letter again. Your account is unchanged.'));
+    return res.status(200).end(page('You are unsubscribed', 'You will not get the Twenty3 letter again. Your account is unchanged.'));
   } catch {
     return res.status(500).end(page('Please try again', 'We could not save that just now. Please try the link again in a moment.'));
   }

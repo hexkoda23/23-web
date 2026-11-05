@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { hash, HttpError } from './growth-store.js';
-import { buildLetter, cleanLetterEdit, issueNumber, pickProducts } from './weekly-letter.js';
+import { buildLetter, cleanLetterEdit, EDITION_NAMES, pickProducts } from './weekly-letter.js';
 
 const RESEND = 'https://api.resend.com';
 const siteUrl = () => (process.env.SITE_URL || 'https://www.shopfrom23.com').replace(/\/$/, '');
@@ -58,7 +58,7 @@ function message(person, issue, products, options = {}) {
     headers: { 'List-Unsubscribe': `<${link}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } };
 }
 export async function sendLetters(recipients, issue, catalog, { fetcher = fetch, pause = 600, edits, edition, runId = `issue-${issue}` } = {}) {
-  const products = pickProducts(catalog, issue);
+  const products = pickProducts(catalog, issue, edits?.[EDITION_NAMES[edition ?? (issue - 1) % EDITION_NAMES.length]]?.products);
   let sent = 0;
   let failed = 0;
   for (let start = 0; start < recipients.length; start += 100) {
@@ -71,6 +71,8 @@ export async function sendLetters(recipients, issue, catalog, { fetcher = fetch,
   }
   return { sent, failed };
 }
+// Each letter that reached someone takes the next number, however often they go out.
+const nextIssue = async db => (await db.collection('_growth_email_runs').get()).docs.filter(doc => doc.data().sent > 0).length + 1;
 const savedEdits = async db => (await editsRef(db).get()).data()?.editions || {};
 export async function saveLetterEdit(db, name, input) {
   const fields = cleanLetterEdit(name, input);
@@ -80,9 +82,9 @@ export async function saveLetterEdit(db, name, input) {
   await editsRef(db).set({ editions, updatedAt: Date.now() });
 }
 // The test goes through the same batch route as a real send, so it proves that route works.
-export async function sendTest(db, email, name, issue, edition, catalog, { now = Date.now(), fetcher = fetch } = {}) {
+export async function sendTest(db, email, name, edition, catalog, { now = Date.now(), fetcher = fetch } = {}) {
   if (!emailConfigured()) throw new HttpError(400, 'Connect Resend first: add RESEND_API_KEY and EMAIL_FROM, then redeploy.');
-  const { failed } = await sendLetters([{ email, firstName: firstName(name) }], issue, catalog, { fetcher, pause: 0, edition, edits: await savedEdits(db), runId: `test-${now}` });
+  const { failed } = await sendLetters([{ email, firstName: firstName(name) }], await nextIssue(db), catalog, { fetcher, pause: 0, edition, edits: await savedEdits(db), runId: `test-${now}` });
   if (failed) throw new HttpError(502, 'Resend did not accept the test email. Check that your sending domain is verified.');
 }
 // The owner's send-now button. The lock means a double press cannot email everyone twice.
@@ -94,32 +96,16 @@ export async function sendNow(db, auth, catalog, edition, { now = Date.now(), fe
     return true;
   });
   if (!claimed) throw new HttpError(429, 'A letter went out in the last 10 minutes. Wait a little before sending again.');
-  const issue = issueNumber(now);
-  const runId = `manual-${now}`;
+  const issue = await nextIssue(db);
+  const runId = `letter-${now}`;
   const recipients = await audience(db, auth);
   const result = await sendLetters(recipients, issue, catalog, { fetcher, pause, edition, edits: await savedEdits(db), runId });
-  await db.collection('_growth_email_runs').doc(runId).set({ issue, edition, manual: true, status: result.failed ? (result.sent ? 'partial' : 'failed') : 'sent', startedAt: now, finishedAt: Date.now(), recipients: recipients.length, ...result });
+  await db.collection('_growth_email_runs').doc(runId).set({ issue, edition, status: result.failed ? (result.sent ? 'partial' : 'failed') : 'sent', startedAt: now, finishedAt: Date.now(), recipients: recipients.length, ...result });
   // A send that reached nobody should not block trying again.
   if (!result.sent) await lockRef(db).set({ at: 0 });
   return { recipients: recipients.length, ...result };
 }
-// One claim per issue: a retried schedule can never email people twice.
-export async function runWeeklyLetter(db, auth, catalog, { now = Date.now(), fetcher, pause } = {}) {
-  if ((await db.collection('_growth_settings').doc('email').get()).data()?.enabled !== true) return { skipped: 'paused' };
-  const issue = issueNumber(now);
-  const ref = db.collection('_growth_email_runs').doc(`issue-${issue}`);
-  const claimed = await db.runTransaction(async tx => {
-    if ((await tx.get(ref)).exists) return false;
-    tx.set(ref, { issue, status: 'sending', startedAt: now });
-    return true;
-  });
-  if (!claimed) return { skipped: 'already-sent', issue };
-  const recipients = await audience(db, auth);
-  const result = await sendLetters(recipients, issue, catalog, { fetcher, pause, edits: await savedEdits(db) });
-  await ref.set({ issue, status: result.failed ? 'partial' : 'sent', startedAt: now, finishedAt: Date.now(), recipients: recipients.length, ...result });
-  return { issue, recipients: recipients.length, ...result };
-}
 export async function letterOverview(db) {
-  const [settings, runs, optOuts, edits] = await Promise.all([db.collection('_growth_settings').doc('email').get(), db.collection('_growth_email_runs').orderBy('startedAt', 'desc').limit(10).get(), db.collection('_growth_email_optouts').count().get(), savedEdits(db)]);
-  return { enabled: settings.data()?.enabled === true, optOuts: optOuts.data().count, edits, runs: runs.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
+  const [runs, optOuts, edits, issue] = await Promise.all([db.collection('_growth_email_runs').orderBy('startedAt', 'desc').limit(10).get(), db.collection('_growth_email_optouts').count().get(), savedEdits(db), nextIssue(db)]);
+  return { nextIssue: issue, optOuts: optOuts.data().count, edits, runs: runs.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
 }

@@ -1,18 +1,20 @@
-// The weekly letter. Six editions rotate so no two Mondays look alike.
+// The Twenty3 letter. Six editions, sent whenever the owner presses the button.
 // Pure on purpose: the Growth Room previews these same templates in the browser.
-const WEEK = 7 * 86400000;
-const FIRST_ISSUE = Date.UTC(2026, 10, 9);
 const SERIF = "'Cormorant Garamond',Georgia,'Times New Roman',serif";
 const SANS = 'Helvetica,Arial,sans-serif';
 const MONO = "'Courier New',Courier,monospace";
 
-export const issueNumber = (now = Date.now()) => Math.max(1, Math.floor((now - FIRST_ISSUE) / WEEK) + 1);
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const price = value => `₦${Number(value || 0).toLocaleString('en-NG')}`;
 
-export function pickProducts(products, issue, count = 2) {
-  const pool = products.filter(p => p.inStock && !p.hidden && p.category !== 'unreleased' && /\.jpe?g$/i.test(p.image || ''));
+export const LETTER_PIECES = 2;
+export const letterPool = products => products.filter(p => p.inStock && !p.hidden && p.category !== 'unreleased' && /\.jpe?g$/i.test(p.image || ''));
+// The owner's picks win. A pick that has sold out drops away, and with none left the rotation takes over.
+export function pickProducts(products, issue, chosen = [], count = LETTER_PIECES) {
+  const pool = letterPool(products);
   if (!pool.length) return [];
+  const picked = chosen.map(id => pool.find(p => p.id === id)).filter(Boolean);
+  if (picked.length) return picked;
   const start = (issue * 5) % pool.length;
   return [...new Map(Array.from({ length: count }, (_, i) => pool[(start + i * 7) % pool.length]).map(p => [p.id, p])).values()];
 }
@@ -27,7 +29,7 @@ const image = (src, alt, width = 600) => `<img src="${src}" alt="${escapeHtml(al
 
 function pieces({ products, url, img }, ink, line) {
   const cells = products.map(p => `<td width="50%" valign="top" style="padding:0 6px;"><a href="${url(`/product/${p.id}`)}" style="text-decoration:none;color:${ink};">${image(img(p.image), p.name, 270)}<p style="margin:12px 0 2px;font-family:${SERIF};font-size:21px;color:${ink};">${escapeHtml(p.name)}</p><p style="margin:0;font-family:${SANS};font-size:12px;color:${ink};opacity:.72;">${price(p.price)}</p></a></td>`).join('');
-  return `<tr><td class="pad" style="padding:34px 34px 6px;border-top:1px solid ${line};"><p style="margin:0 0 16px;font-family:${SANS};font-size:10px;letter-spacing:3px;text-transform:uppercase;color:${ink};">Pieces this week</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table></td></tr>`;
+  return `<tr><td class="pad" style="padding:34px 34px 6px;border-top:1px solid ${line};"><p style="margin:0 0 16px;font-family:${SANS};font-size:10px;letter-spacing:3px;text-transform:uppercase;color:${ink};">Pieces to see</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${cells}</tr></table></td></tr>`;
 }
 const salute = (name, color) => name ? `<p style="margin:0 0 16px;font-family:${SANS};font-size:13px;color:${color};">${escapeHtml(name)},</p>` : '';
 
@@ -60,7 +62,7 @@ const EDITIONS = [
 export const EDITION_NAMES = EDITIONS.map(e => e.name);
 // What the owner can change on an edition. Anything left blank falls back to the original wording.
 const LIMITS = { subject: 120, preheader: 160, headline: 80, copy: 1500, ctaLabel: 40, ctaLink: 200 };
-const original = name => { const e = EDITIONS.find(item => item.name === name); return e && { subject: e.subject, preheader: e.preheader, headline: e.headline, copy: e.copy, ctaLabel: e.cta[0], ctaLink: e.cta[1] }; };
+const original = name => { const e = EDITIONS.find(item => item.name === name); return e && { subject: e.subject, preheader: e.preheader, headline: e.headline, copy: e.copy, ctaLabel: e.cta[0], ctaLink: e.cta[1], products: [] }; };
 export const letterFields = (name, edits = {}) => ({ ...original(name), ...edits[name] });
 export function cleanLetterEdit(name, input) {
   const base = original(name);
@@ -71,6 +73,8 @@ export function cleanLetterEdit(name, input) {
     if (value && value !== base[key]) fields[key] = value;
   }
   if (fields.ctaLink && !/^\/[^\s"'<>]*$/.test(fields.ctaLink)) return null;
+  const pieces = [...new Set((Array.isArray(input?.products) ? input.products : []).map(String))].filter(id => /^[\w-]{1,80}$/.test(id)).slice(0, LETTER_PIECES);
+  if (pieces.length) fields.products = pieces;
   return fields;
 }
 
@@ -80,7 +84,7 @@ export function buildLetter({ issue, edition: chosen, edits = {}, firstName = ''
   const edition = { ...base, ...fields, cta: [fields.ctaLabel, fields.ctaLink] };
   // Editions are written by hand, so everything the owner can type is escaped here, once.
   const safe = { ...edition, headline: escapeHtml(edition.headline), copy: escapeHtml(edition.copy).replace(/\r?\n/g, '<br/>'), cta: [escapeHtml(edition.cta[0]), edition.cta[1]] };
-  const tag = `utm_source=email&utm_medium=weekly-letter&utm_campaign=issue-${issue}`;
+  const tag = `utm_source=email&utm_medium=letter&utm_campaign=issue-${issue}`;
   const url = path => `${siteUrl}${path}${path.includes('?') ? '&' : '?'}${tag}`;
   const img = path => `${siteUrl}${path}`;
   const x = { issue, firstName, products, url, img };

@@ -6,6 +6,7 @@ export const SAMPLE_PROFILE = {
   igHandle: 'twentythreepreppy', workContact: 'https://www.shopfrom23.com/contact',
   craftFiles: ['6.jpg', 'JF-11.JPG', '13.jpg', 'JF-8.JPG'].map(file => ({ name: file, type: 'image/jpeg', url: `/lookbook/${file}` })),
 };
+export const signatureRef = id => `T23-${String(id).slice(0, 6).toUpperCase()}`;
 export const isSong = file => /^audio\//.test(file?.type || '') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file?.name || '');
 export const songsFirst = files => [...(files || [])].sort((a, b) => isSong(b) - isSong(a));
 const DAY = 86400000;

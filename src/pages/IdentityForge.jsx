@@ -10,6 +10,7 @@ import PageTransition from "../components/PageTransition.jsx";
 import * as QRCode from "qrcode";
 import { useCart } from "../contexts/CartContext";
 import { CRAFTS, isSong, profileFields } from "../../server/profile-model";
+import SignatureCode from "../components/SignatureCode";
 
 function IdentityForge() {
   const navigate = useNavigate();
@@ -47,7 +48,6 @@ function IdentityForge() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedProfileId, setGeneratedProfileId] = useState(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
   const MAX_SONG_SIZE = 15 * 1024 * 1024;
@@ -268,7 +268,6 @@ function IdentityForge() {
       
       // Generate QR Code
       const qrUrl = await QRCode.toDataURL(profileUrl);
-      setQrCodeUrl(qrUrl);
       setGeneratedProfileId(profileId);
 
       // Update the doc with the QR code and URL
@@ -295,9 +294,8 @@ function IdentityForge() {
         
         // Wait a bit to show success then redirect
       }
-      setTimeout(() => {
-        navigate(productData ? "/checkout" : "/account");
-      }, 2000);
+      // With a product, the success screen stays up so they can save their signature first.
+      if (!productData) setTimeout(() => navigate("/account"), 2000);
 
     } catch (error) {
       console.error("Error creating identity:", error);
@@ -323,10 +321,11 @@ function IdentityForge() {
                     </div>
                     <h2 className="text-3xl font-bold uppercase tracking-tighter">Identity Forged</h2>
                     <p className="text-gray-500">Your digital signature has been created and attached to your order.</p>
-                    <div className="bg-white p-4 rounded-lg shadow-lg inline-block">
-                        <img src={qrCodeUrl} alt="Identity QR" className="w-48 h-48" />
+                    <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center gap-4">
+                        <SignatureCode profile={{ id: generatedProfileId, name: formData.name, craft: formData.craft, city: formData.city, profileUrl: `${import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin}/profile/${generatedProfileId}` }} imageClass="w-48 h-48" buttonClass="border border-black px-4 py-2 text-xs uppercase tracking-widest" />
                     </div>
-                    <p className="text-sm text-gray-400">Redirecting to checkout...</p>
+                    <p className="text-sm text-gray-500">You can also find it any time in My account.</p>
+                    <button type="button" onClick={() => navigate("/checkout")} className="w-full bg-black text-white py-4 text-xs uppercase tracking-widest">Continue to checkout</button>
                 </motion.div>
             </div>
         </PageTransition>

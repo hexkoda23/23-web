@@ -6,6 +6,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import PageTransition from "../components/PageTransition";
 import { isStoreOwner } from "../lib/growth-api";
+import SignatureCode from "../components/SignatureCode";
 
 export default function Account() {
   const { currentUser, logout, getUserData } = useAuth();
@@ -99,6 +100,9 @@ export default function Account() {
                       <Link to={`/profile/${profile.id}`} className="underline">View</Link>
                       <Link to={`/identity-forge?edit=${profile.id}`} className="underline">Edit</Link>
                     </p>
+                    <div className="mt-4 flex items-center gap-4">
+                      <SignatureCode profile={profile} imageClass="w-28 h-28 border border-gray-200" buttonClass="border border-black px-4 py-2 text-xs uppercase tracking-widest" label="Save my signature" />
+                    </div>
                   </div>
                 ))}
               </div>

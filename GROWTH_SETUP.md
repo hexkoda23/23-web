@@ -34,13 +34,14 @@ See [Vercel's Node configuration](https://vercel.com/docs/functions/runtimes/nod
    at 09:00 UTC / 10:00 Nigeria time, with `Authorization: Bearer CRON_SECRET`.
    Hobby execution can fall within that hour. The job stays paused until enabled.
 
-## The weekly letter
+## The Twenty3 letter
 
-`/api/weekly-email` runs every Monday at 10:00 UTC but sends nothing until the
-owner selects **Start sending** in the Growth Room **Weekly letter** tab. It needs
+There is no schedule. The owner edits an edition and presses **Send to everyone now**
+in the Growth Room **Letters** tab, as often as they like. It needs
 `RESEND_API_KEY` and `EMAIL_FROM` on a domain verified in Resend, plus `CRON_SECRET`,
 which also signs unsubscribe links, so changing it invalidates links in old emails.
-Each issue is claimed once in `_growth_email_runs`, so a retry cannot send twice.
+A 10 minute lock stops a double press sending twice. Each send is logged in
+`_growth_email_runs`. Resend's free plan allows 100 emails a day.
 Unsubscribes are stored as hashes in `_growth_email_optouts`.
 
 ## Wearer profiles

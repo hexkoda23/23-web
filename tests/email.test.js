@@ -1,11 +1,11 @@
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { audience, optOutRef, runWeeklyLetter, saveLetterEdit, sendLetters, sendNow, sendTest, unsubscribeToken, unsubscribeUrl, validUnsubscribe } from '../server/email-store.js';
-import { buildLetter, cleanLetterEdit, EDITION_NAMES, issueNumber, letterFields, pickProducts } from '../server/weekly-letter.js';
+import { audience, optOutRef, saveLetterEdit, sendLetters, sendNow, sendTest, unsubscribeToken, unsubscribeUrl, validUnsubscribe } from '../server/email-store.js';
+import { buildLetter, cleanLetterEdit, EDITION_NAMES, letterFields, letterPool, pickProducts } from '../server/weekly-letter.js';
 import { cleanApplication, publicPerson, setFeatured, featuredPeople, slumBookEntry } from '../server/community-store.js';
 import { publicPath } from '../server/growth-model.js';
 import { PRODUCTS } from '../src/data/products.js';
-import weeklyHandler from '../api/weekly-email.js';
 import unsubscribeHandler from '../api/unsubscribe.js';
 
 process.env.CRON_SECRET = 'test-secret';
@@ -44,10 +44,6 @@ test('names cannot inject markup into the email', () => {
   const letter = buildLetter({ issue: 1, firstName: '<img src=x>', products: [], siteUrl: 'https://s.example', unsubscribeUrl: 'https://s.example/u' });
   assert.equal(letter.html.includes('<img src=x>'), false);
 });
-test('issue numbers advance each Monday', () => {
-  assert.equal(issueNumber(Date.UTC(2026, 10, 9, 10)), 1); assert.equal(issueNumber(Date.UTC(2026, 10, 16, 10)), 2);
-  assert.equal(issueNumber(Date.UTC(2026, 10, 4)), 1);
-});
 test('all accounts receive it once, except people who opted out or were disabled', async () => {
   const db = fakeDb({ 'subscribers/a@x.co': { email: 'a@x.co' }, 'subscribers/old@x.co': { email: 'old@x.co' }, 'subscribers/gone@x.co': { email: 'gone@x.co', unsubscribed: true } });
   await optOutRef(db, 'left@x.co').set({ at: 1 });
@@ -55,20 +51,6 @@ test('all accounts receive it once, except people who opted out or were disabled
   const people = await audience(db, fakeAuth(users));
   assert.deepEqual(people.map(p => p.email).sort(), ['a@x.co', 'new@x.co', 'old@x.co']);
   assert.equal(people.find(p => p.email === 'a@x.co').firstName, 'Ada');
-});
-test('nothing is sent until the owner turns it on', async () => {
-  const { calls, fetcher } = recorder();
-  const result = await runWeeklyLetter(fakeDb(), fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, { fetcher, pause: 0 });
-  assert.equal(result.skipped, 'paused'); assert.equal(calls.length, 0);
-});
-test('a retried schedule cannot email anyone twice', async () => {
-  const db = fakeDb({ '_growth_settings/email': { enabled: true } });
-  const { calls, fetcher } = recorder();
-  const now = Date.UTC(2026, 10, 9, 10);
-  const first = await runWeeklyLetter(db, fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, { now, fetcher, pause: 0 });
-  const second = await runWeeklyLetter(db, fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, { now, fetcher, pause: 0 });
-  assert.equal(first.sent, 1); assert.equal(second.skipped, 'already-sent'); assert.equal(calls.length, 1);
-  assert.equal((await runWeeklyLetter(db, fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, { now: now + 7 * 86400000, fetcher, pause: 0 })).sent, 1);
 });
 test('each email has its own one-click unsubscribe and large lists are split', async () => {
   const { calls, fetcher } = recorder();
@@ -92,10 +74,6 @@ test('unsubscribe links only work for the address they were made for', () => {
   assert.match(unsubscribeUrl('a@x.co'), /^https:\/\/shop\.example\.com\/api\/unsubscribe\?e=a%40x\.co&t=/);
 });
 const call = async (handler, req) => { const out = { headers: {} }; const res = { setHeader(k, v) { out.headers[k] = v; }, status(code) { out.status = code; return this; }, json(data) { out.data = data; return this; }, end(data) { out.body = data; return this; } }; await handler({ headers: {}, query: {}, ...req }, res); return out; };
-test('the weekly job refuses anyone but the schedule', async () => {
-  assert.equal((await call(weeklyHandler, { method: 'GET' })).status, 401);
-  assert.equal((await call(weeklyHandler, { method: 'GET', query: { key: 'test-secret' } })).status, 401);
-});
 test('opening an unsubscribe link only asks, so mail scanners cannot unsubscribe people', async () => {
   const query = { e: 'a@x.co', t: unsubscribeToken('a@x.co') };
   const asked = await call(unsubscribeHandler, { method: 'GET', query });
@@ -181,6 +159,38 @@ test('a send that reaches nobody can be tried again straight away', async () => 
 test('the test letter uses saved edits and the chosen edition', async () => {
   const db = fakeDb({ '_growth_settings/letter_edits': { editions: { Wanted: { subject: 'Edited' } } } });
   const { calls, fetcher } = recorder();
-  await sendTest(db, 'owner@x.co', 'Owner Name', 3, 4, PRODUCTS, { now: 7, fetcher });
+  await sendTest(db, 'owner@x.co', 'Owner Name', 4, PRODUCTS, { now: 7, fetcher });
   assert.equal(calls[0].body[0].subject, 'Edited'); assert.deepEqual(calls[0].body[0].to, ['owner@x.co']);
+});
+
+test('nothing is on a schedule, and letters can go out as often as the owner likes', async () => {
+  assert.equal(readFileSync('vercel.json', 'utf8').includes('weekly-email'), false);
+  const db = fakeDb();
+  const { calls, fetcher } = recorder();
+  const users = [{ email: 'a@x.co' }];
+  for (let send = 0; send < 3; send++) await sendNow(db, fakeAuth(users), PRODUCTS, send, { now: 1000000 + send * 86400000, fetcher, pause: 0 });
+  assert.equal(calls.length, 3);
+  assert.deepEqual(calls.map(call => /Nº (\d+)/.exec(call.body[0].html)[1]), ['1', '2', '3']);
+});
+
+test('the owner can swap the clothes, and a piece that sells out drops away', () => {
+  const [a, b, c] = letterPool(PRODUCTS);
+  assert.deepEqual(pickProducts(PRODUCTS, 1, [b.id, a.id]).map(p => p.id), [b.id, a.id]);
+  const soldOut = PRODUCTS.map(p => p.id === b.id ? { ...p, inStock: false } : p);
+  assert.deepEqual(pickProducts(soldOut, 1, [b.id, a.id]).map(p => p.id), [a.id]);
+  assert.equal(pickProducts(soldOut, 1, [b.id]).length, 2);
+  assert.equal(pickProducts(PRODUCTS, 1, ['not-a-real-piece']).length, 2);
+  assert.deepEqual(cleanLetterEdit('Wanted', { ...letterFields('Wanted'), products: [a.id, a.id, b.id, c.id] }).products, [a.id, b.id]);
+  assert.equal('products' in cleanLetterEdit('Wanted', { ...letterFields('Wanted'), products: ['<bad>'] }), false);
+});
+test('tests and sends use the clothes picked for that edition', async () => {
+  const [, , , one, two] = letterPool(PRODUCTS);
+  const db = fakeDb();
+  await saveLetterEdit(db, 'Wanted', { ...letterFields('Wanted'), products: [one.id, two.id] });
+  const { calls, fetcher } = recorder();
+  await sendTest(db, 'owner@x.co', 'Owner', 4, PRODUCTS, { now: 1, fetcher });
+  await sendNow(db, fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, 4, { now: 2000000, fetcher, pause: 0 });
+  for (const call of calls) { assert.match(call.body[0].html, new RegExp(`/product/${one.id}\\?`)); assert.match(call.body[0].html, new RegExp(`/product/${two.id}\\?`)); }
+  await sendNow(db, fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, 0, { now: 3000000, fetcher, pause: 0 });
+  assert.equal(calls[2].body[0].html.includes(`/product/${one.id}?`) && calls[2].body[0].html.includes(`/product/${two.id}?`), false);
 });

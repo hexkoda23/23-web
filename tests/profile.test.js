@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isSong, privateFields, profileFields, recordScan, scanSummary, songsFirst, workLink } from '../server/profile-model.js';
-import { protectProfiles, saveScan } from '../server/profile-store.js';
+import { isSong, signatureRef, privateFields, profileFields, recordScan, scanSummary, songsFirst, workLink } from '../server/profile-model.js';
+import { protectProfiles, saveScan, signatureRow } from '../server/profile-store.js';
 import scanHandler from '../api/profile-scans.js';
 
 function fakeDb(profiles = {}) {
@@ -78,4 +78,12 @@ test('songs are recognised and listed before other work', () => {
   const files = [{ name: 'a.jpg', type: 'image/jpeg' }, { name: 'b.mp3', type: 'audio/mpeg' }, { name: 'c.jpg', type: 'image/jpeg' }];
   assert.deepEqual(songsFirst(files).map(file => file.name), ['b.mp3', 'a.jpg', 'c.jpg']);
   assert.deepEqual(songsFirst(undefined), []);
+});
+
+test('signatures are labelled for the owner and keep the link the code was made with', () => {
+  assert.equal(signatureRef('abCdef123'), 'T23-ABCDEF');
+  const row = signatureRow('abCdef123', { name: 'Ada', craft: 'DJ', city: 'Lagos', userId: 'u1', profileUrl: 'https://old.example/profile/abCdef123', qrCodeUrl: 'data:image/png;base64,AAAA', userEmail: 'a@x.co', createdAt: 5 }, { total: 4, days: {} }, Date.UTC(2026, 10, 5));
+  assert.equal(row.url, 'https://old.example/profile/abCdef123'); assert.equal(row.ref, 'T23-ABCDEF'); assert.equal(row.scans.total, 4); assert.equal(row.createdAt, 5);
+  assert.equal('qrCodeUrl' in row, false); assert.equal('userEmail' in row, false);
+  assert.match(signatureRow('x', {}, undefined).url, /\/profile\/x$/);
 });

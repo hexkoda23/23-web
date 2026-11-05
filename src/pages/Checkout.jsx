@@ -40,6 +40,7 @@ export default function Checkout() {
           quantity: i.quantity,
           price: i.price,
           image: i.image || "",
+          signature: i.customization?.profileId || "",
         })),
         total: getCartTotal(),
         status: "awaiting_payment",

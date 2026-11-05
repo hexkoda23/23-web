@@ -186,7 +186,7 @@ function SignUp() {
                 </div>
               </div>
 
-              <p className="text-xs text-gray-400">Your account includes the Twenty3 weekly letter by email. Unsubscribe any time.</p>
+              <p className="text-xs text-gray-400">Your account includes the Twenty3 letter by email. Unsubscribe any time.</p>
               <button
                 type="submit"
                 disabled={loading}

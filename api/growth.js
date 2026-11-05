@@ -3,9 +3,9 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { requireAdmin, database, body, HttpError, respondError, milliseconds, throttle, timestamp } from '../server/growth-store.js';
 import { DEFAULT_SETTINGS, FOCUSES, summarize } from '../server/growth-model.js';
 import { runResearch } from '../server/growth-research.js';
-import { protectProfiles } from '../server/profile-store.js';
+import { protectProfiles, signaturesOverview } from '../server/profile-store.js';
 import { emailConfigured, letterOverview, saveLetterEdit, sendNow, sendTest } from '../server/email-store.js';
-import { EDITION_NAMES, issueNumber } from '../server/weekly-letter.js';
+import { EDITION_NAMES } from '../server/weekly-letter.js';
 import { creativesOverview, setFeatured, slumBookOverview } from '../server/community-store.js';
 import { PRODUCTS } from '../src/data/products.js';
 
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const days = [7, 30, 90].includes(Number(req.query.days)) ? Number(req.query.days) : 30;
       const since = Date.now() - days * 86400000;
-      const [events, orders, settings, opportunities, runs, campaigns, accounts, letter, creatives, slumBook] = await Promise.all([
+      const [events, orders, settings, opportunities, runs, campaigns, accounts, letter, creatives, slumBook, signatures] = await Promise.all([
         db.collection('_growth_events').where('at', '>=', since).orderBy('at', 'desc').limit(5001).get(),
         db.collection('orders').where('createdAt', '>=', timestamp.fromMillis(since)).orderBy('createdAt', 'desc').limit(301).get(),
         db.collection('_growth_settings').doc('workspace').get(),
@@ -31,18 +31,19 @@ export default async function handler(req, res) {
         letterOverview(db),
         creativesOverview(db),
         slumBookOverview(db),
+        signaturesOverview(db),
       ]);
       const eventRows = events.docs.slice(0, 5000).map(d => d.data());
       const orderRows = orders.docs.slice(0, 300).map(d => {
         const o = d.data();
         return { id: d.id, email: String(o.email || '').slice(0, 200), total: Number(o.total) || 0,
           createdAt: milliseconds(o.createdAt), status: String(o.status || 'awaiting_payment'),
-          items: (Array.isArray(o.items) ? o.items : []).slice(0, 30).map(i => ({ name: String(i.name || ''), quantity: Number(i.quantity) || 0, size: String(i.size || '') })) };
+          items: (Array.isArray(o.items) ? o.items : []).slice(0, 30).map(i => ({ name: String(i.name || ''), quantity: Number(i.quantity) || 0, size: String(i.size || ''), signature: String(i.signature || '').slice(0, 128) })) };
       });
       const reviews = orderRows.length ? await db.getAll(...orderRows.map(o => db.collection('_growth_order_reviews').doc(o.id))) : [];
       return res.status(200).json({
         ...summarize(eventRows, orderRows, reviews.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() }))),
-        letter, creatives, slumBook, ownerUid: owner.uid, days, siteUrl: process.env.SITE_URL || '', sampled: events.size > 5000 || orders.size > 300, accountListTruncated: !!accounts.pageToken,
+        letter, creatives, slumBook, signatures, ownerUid: owner.uid, days, siteUrl: process.env.SITE_URL || '', sampled: events.size > 5000 || orders.size > 300, accountListTruncated: !!accounts.pageToken,
         settings: { ...DEFAULT_SETTINGS, ...settings.data() },
         configured: { search: !!process.env.SERPAPI_API_KEY, analytics: !!process.env.CRON_SECRET && !!process.env.SITE_URL, cron: !!process.env.CRON_SECRET, email: emailConfigured() },
         dailyLimit: Math.min(5, Math.max(1, Number(process.env.RESEARCH_DAILY_LIMIT) || 2)),
@@ -59,12 +60,8 @@ export default async function handler(req, res) {
       await db.collection('_growth_settings').doc('workspace').set({ ...DEFAULT_SETTINGS, focus: input.focus, monthlyBudget: Number(input.monthlyBudget), enabled: input.enabled, updatedAt: Date.now(), updatedBy: owner.uid });
     } else if (input.action === 'research') {
       return res.status(200).json(await runResearch());
-    } else if (input.action === 'letter_settings') {
-      if (typeof input.enabled !== 'boolean') throw new HttpError(400, 'Invalid letter setting.');
-      if (input.enabled && !emailConfigured()) throw new HttpError(400, 'Connect Resend first: add RESEND_API_KEY and EMAIL_FROM, then redeploy.');
-      await db.collection('_growth_settings').doc('email').set({ enabled: input.enabled, updatedAt: Date.now(), updatedBy: owner.uid });
     } else if (input.action === 'letter_test') {
-      await sendTest(db, owner.email, owner.name, issueNumber(), editionIndex(input.edition), PRODUCTS);
+      await sendTest(db, owner.email, owner.name, editionIndex(input.edition), PRODUCTS);
     } else if (input.action === 'letter_edit') {
       await saveLetterEdit(db, EDITION_NAMES[editionIndex(input.edition)], input.reset === true ? {} : input.fields);
     } else if (input.action === 'letter_send_now') {

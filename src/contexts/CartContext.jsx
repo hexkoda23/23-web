@@ -26,7 +26,7 @@ export const CartProvider = ({ children }) => {
     track('add_to_cart', { productId: product.id, quantity });
     setCart(prevCart => {
       const existingItemIndex = prevCart.findIndex(
-        item => item.id === product.id && item.size === size
+        item => item.id === product.id && item.size === size && item.customization?.profileId === product.customization?.profileId
       );
 
       if (existingItemIndex > -1) {
