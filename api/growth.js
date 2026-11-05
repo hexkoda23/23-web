@@ -4,7 +4,7 @@ import { requireAdmin, database, body, HttpError, respondError, milliseconds, th
 import { DEFAULT_SETTINGS, FOCUSES, summarize } from '../server/growth-model.js';
 import { runResearch } from '../server/growth-research.js';
 import { protectProfiles, signaturesOverview } from '../server/profile-store.js';
-import { emailConfigured, letterOverview, saveLetterEdit, sendNow, sendTest } from '../server/email-store.js';
+import { emailConfigured, letterOverview, saveLetterEdit, sendMissed, sendNow, sendTest } from '../server/email-store.js';
 import { EDITION_NAMES } from '../server/weekly-letter.js';
 import { creativesOverview, setFeatured, slumBookOverview } from '../server/community-store.js';
 import { PRODUCTS } from '../src/data/products.js';
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
         db.collection('_growth_runs').orderBy('at', 'desc').limit(10).get(),
         db.collection('_growth_campaigns').orderBy('updatedAt', 'desc').limit(40).get(),
         getAuth().listUsers(1000),
-        letterOverview(db),
+        letterOverview(db, getAuth()),
         creativesOverview(db),
         slumBookOverview(db),
         signaturesOverview(db),
@@ -66,6 +66,8 @@ export default async function handler(req, res) {
       await saveLetterEdit(db, EDITION_NAMES[editionIndex(input.edition)], input.reset === true ? {} : input.fields);
     } else if (input.action === 'letter_send_now') {
       return res.status(200).json(await sendNow(db, getAuth(), PRODUCTS, editionIndex(input.edition)));
+    } else if (input.action === 'letter_send_missed') {
+      return res.status(200).json(await sendMissed(db, getAuth(), PRODUCTS, docId(input.id)));
     } else if (input.action === 'feature_creative') {
       await setFeatured(db, docId(input.id), input.approved === true);
     } else if (input.action === 'protect_profiles') {

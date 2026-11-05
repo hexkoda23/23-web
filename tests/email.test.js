@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { audience, optOutRef, saveLetterEdit, sendLetters, sendNow, sendTest, unsubscribeToken, unsubscribeUrl, validUnsubscribe } from '../server/email-store.js';
+import { audience, optOutRef, saveLetterEdit, sendLetters, sendMissed, sendNow, sendTest, unsubscribeToken, unsubscribeUrl, validUnsubscribe } from '../server/email-store.js';
 import { buildLetter, cleanLetterEdit, EDITION_NAMES, letterFields, letterPool, pickProducts } from '../server/weekly-letter.js';
 import { cleanApplication, publicPerson, setFeatured, featuredPeople, slumBookEntry } from '../server/community-store.js';
 import { publicPath } from '../server/growth-model.js';
@@ -55,7 +55,7 @@ test('all accounts receive it once, except people who opted out or were disabled
 test('each email has its own one-click unsubscribe and large lists are split', async () => {
   const { calls, fetcher } = recorder();
   const recipients = Array.from({ length: 150 }, (_, i) => ({ email: `p${i}@x.co`, firstName: '' }));
-  assert.deepEqual(await sendLetters(recipients, 1, PRODUCTS, { fetcher, pause: 0 }), { sent: 150, failed: 0 });
+  assert.deepEqual(await sendLetters(recipients, 1, PRODUCTS, { fetcher, pause: 0 }), { sent: 150, failed: 0, missed: [] });
   assert.equal(calls.length, 2); assert.equal(calls[0].body.length, 100);
   const one = calls[0].body[3];
   assert.equal(one.headers['List-Unsubscribe-Post'], 'List-Unsubscribe=One-Click');
@@ -65,7 +65,7 @@ test('each email has its own one-click unsubscribe and large lists are split', a
 });
 test('failed batches are reported, not hidden', async () => {
   const result = await sendLetters([{ email: 'a@x.co', firstName: '' }], 1, PRODUCTS, { fetcher: async () => ({ ok: false }), pause: 0 });
-  assert.deepEqual(result, { sent: 0, failed: 1 });
+  assert.deepEqual([result.sent, result.failed, result.missed[0].email], [0, 1, 'a@x.co']);
 });
 test('unsubscribe links only work for the address they were made for', () => {
   const token = unsubscribeToken('a@x.co');
@@ -193,4 +193,41 @@ test('tests and sends use the clothes picked for that edition', async () => {
   for (const call of calls) { assert.match(call.body[0].html, new RegExp(`/product/${one.id}\\?`)); assert.match(call.body[0].html, new RegExp(`/product/${two.id}\\?`)); }
   await sendNow(db, fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, 0, { now: 3000000, fetcher, pause: 0 });
   assert.equal(calls[2].body[0].html.includes(`/product/${one.id}?`) && calls[2].body[0].html.includes(`/product/${two.id}?`), false);
+});
+
+test('fake test addresses never reach the send list', async () => {
+  const db = fakeDb({ 'subscribers/fake@example.com': { email: 'fake@example.com' }, 'subscribers/old@x.co': { email: 'old@x.co' } });
+  const people = await audience(db, fakeAuth([{ email: 'a@x.co' }, { email: 'b@sub.example.org' }, { email: 'c@site.test' }]));
+  assert.deepEqual(people.map(p => p.email).sort(), ['a@x.co', 'old@x.co']);
+  assert.equal(people.find(p => p.email === 'old@x.co').account, false);
+});
+// Behaves like Resend: one refused address fails the whole batch it is in.
+const pickyFetcher = (bad, calls = []) => async (url, options) => { const mails = JSON.parse(options.body); calls.push(mails.length); return mails.some(mail => mail.to[0] === bad) ? { ok: false, status: 422 } : { ok: true, status: 200 }; };
+test('one refused address no longer takes the rest of the batch down with it', async () => {
+  const recipients = Array.from({ length: 30 }, (_, i) => ({ email: `p${i}@x.co`, firstName: '' }));
+  const result = await sendLetters(recipients, 1, PRODUCTS, { fetcher: pickyFetcher('p17@x.co'), pause: 0 });
+  assert.deepEqual([result.sent, result.failed, result.missed[0].email], [29, 1, 'p17@x.co']);
+});
+test('a daily limit stops the send but remembers who missed it, then they can be finished', async () => {
+  const db = fakeDb();
+  const users = [{ email: 'a@x.co' }, { email: 'b@x.co' }];
+  const blocked = async () => ({ ok: false, status: 429 });
+  const first = await sendNow(db, fakeAuth(users), PRODUCTS, 1, { now: 1000000, fetcher: blocked, pause: 0 });
+  assert.deepEqual([first.sent, first.failed, 'missed' in first], [0, 2, false]);
+  const id = 'letter-1000000';
+  assert.equal(db.rows.get(`_growth_email_runs/${id}`).missed.length, 2);
+  await optOutRef(db, 'b@x.co').set({ at: 1 });
+  const { calls, fetcher } = recorder();
+  const again = await sendMissed(db, fakeAuth(users), PRODUCTS, id, { now: 2000000, fetcher, pause: 0 });
+  assert.deepEqual([again.recipients, again.sent, again.failed], [1, 1, 0]);
+  assert.deepEqual(calls[0].body.map(mail => mail.to[0]), ['a@x.co']);
+  assert.match(calls[0].body[0].html, /The Receipt/);
+  assert.equal(db.rows.get(`_growth_email_runs/${id}`).status, 'sent');
+  await assert.rejects(sendMissed(db, fakeAuth(users), PRODUCTS, id, { now: 3000000, fetcher, pause: 0 }), error => error.status === 400);
+});
+test('a letter from before missed people were recorded picks up after the sent count', async () => {
+  const db = fakeDb({ '_growth_email_runs/old': { issue: 1, edition: 5, sent: 1, failed: 1, status: 'partial' } });
+  const { calls, fetcher } = recorder();
+  await sendMissed(db, fakeAuth([{ email: 'a@x.co' }, { email: 'b@x.co' }]), PRODUCTS, 'old', { now: 4000000, fetcher, pause: 0 });
+  assert.deepEqual(calls[0].body.map(mail => mail.to[0]), ['b@x.co']);
 });
