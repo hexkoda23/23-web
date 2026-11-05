@@ -5,9 +5,10 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../contexts/AuthContext";
 import PageTransition from "../components/PageTransition";
 import { motion } from "framer-motion";
-import { SAMPLE_PROFILE, workLink } from "../../server/profile-model";
+import SongPlayer from "../components/SongPlayer";
+import { SAMPLE_PROFILE, isSong, songsFirst, workLink } from "../../server/profile-model";
 
-const isImage = file => !file.type || file.type.startsWith("image/");
+const isImage = file => !isSong(file) && (!file.type || file.type.startsWith("image/"));
 
 export default function DigitalProfile() {
   const { id } = useParams();
@@ -75,15 +76,16 @@ export default function DigitalProfile() {
   }
 
   const contactLink = profile.openForWork !== false ? workLink(profile) : null;
+  const cover = profile.craftFiles?.find(file => isImage(file) && (file.url || file.data));
 
   return (
     <PageTransition>
       <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
         {/* Header / Banner */}
         <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
-            {profile.craftFiles && profile.craftFiles.length > 0 && (profile.craftFiles[0].url || profile.craftFiles[0].data) ? (
+            {cover ? (
               <img 
-                src={profile.craftFiles[0].url || profile.craftFiles[0].data} 
+                src={cover.url || cover.data} 
                 alt="Cover" 
                 className="w-full h-full object-cover opacity-50 blur-sm scale-105"
               />
@@ -241,15 +243,15 @@ export default function DigitalProfile() {
                     </h2>
                     {profile.craftFiles && profile.craftFiles.length > 0 ? (
                         <div className="grid grid-cols-1 gap-6">
-                            {profile.craftFiles.map((file, idx) => (
+                            {songsFirst(profile.craftFiles).map((file, idx) => (
                                 <motion.div
                                     key={idx}
                                     initial={{ opacity: 0, y: 20 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
-                                    className="aspect-square bg-neutral-900 rounded-lg overflow-hidden border border-gray-800"
+                                    className={isSong(file) ? "" : "aspect-square bg-neutral-900 rounded-lg overflow-hidden border border-gray-800"}
                                 >
-                                    {isImage(file) ? (
+                                    {isSong(file) ? <SongPlayer file={file} artist={profile.name} /> : isImage(file) ? (
                                         <img
                                             src={file.url || file.data}
                                             alt={`${profile.name} work ${idx + 1}`}

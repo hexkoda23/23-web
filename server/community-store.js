@@ -1,4 +1,5 @@
 import { HttpError } from './growth-store.js';
+import { isSong } from './profile-model.js';
 
 const text = (value, limit) => String(value ?? '').trim().slice(0, limit);
 const featuredRef = db => db.collection('_growth_settings').doc('community');
@@ -13,7 +14,7 @@ export async function saveApplication(db, input) {
 }
 // Only the fields a homepage tile needs, and only after the owner has approved the person.
 export function publicPerson(id, profile) {
-  const file = (profile.craftFiles || []).find(item => /^https:\/\//.test(item.url || '') && (!item.type || item.type.startsWith('image/')));
+  const file = (profile.craftFiles || []).find(item => /^https:\/\//.test(item.url || '') && !isSong(item) && (!item.type || item.type.startsWith('image/')));
   return file ? { id, name: text(profile.name, 80), craft: text(profile.craft, 60), city: text(profile.city, 60), image: file.url } : null;
 }
 export async function featuredPeople(db) {

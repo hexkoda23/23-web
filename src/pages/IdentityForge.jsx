@@ -9,7 +9,7 @@ import { uploadFileCloudinary } from "../lib/uploader";
 import PageTransition from "../components/PageTransition.jsx";
 import * as QRCode from "qrcode";
 import { useCart } from "../contexts/CartContext";
-import { CRAFTS, profileFields } from "../../server/profile-model";
+import { CRAFTS, isSong, profileFields } from "../../server/profile-model";
 
 function IdentityForge() {
   const navigate = useNavigate();
@@ -50,6 +50,7 @@ function IdentityForge() {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const MAX_FILE_SIZE = 5 * 1024 * 1024;
+  const MAX_SONG_SIZE = 15 * 1024 * 1024;
   const [uploadProgress, setUploadProgress] = useState({});
 
   useEffect(() => {
@@ -85,8 +86,9 @@ function IdentityForge() {
     const files = Array.from(e.target.files);
     try {
       const validFiles = files.filter(f => {
-        if (f.size > MAX_FILE_SIZE) {
-          alert(`${f.name} is larger than 5MB and will be skipped.`);
+        const limit = isSong(f) ? MAX_SONG_SIZE : MAX_FILE_SIZE;
+        if (f.size > limit) {
+          alert(`${f.name} is larger than ${limit / 1024 / 1024}MB and will be skipped.`);
           return false;
         }
         return true;
@@ -491,7 +493,7 @@ function IdentityForge() {
 
               <div className="space-y-4">
                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-500">
-                  Craft Files (Images/Designs)
+                  Craft Files (Images, Designs, Songs)
                 </label>
                 <div className="relative border-2 border-dashed border-gray-200 rounded-lg p-8 hover:border-black transition-colors text-center cursor-pointer">
                   <input
@@ -505,7 +507,7 @@ function IdentityForge() {
                     <p className="text-sm text-gray-500">
                       {uploading ? "Uploading files..." : "Drop files here or click to upload"}
                     </p>
-                    <p className="text-xs text-gray-400">Support for files up to 5MB</p>
+                    <p className="text-xs text-gray-400">Images and designs up to 5MB, songs up to 15MB</p>
                   </div>
                 </div>
 

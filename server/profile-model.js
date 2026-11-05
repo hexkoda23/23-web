@@ -6,6 +6,8 @@ export const SAMPLE_PROFILE = {
   igHandle: 'twentythreepreppy', workContact: 'https://www.shopfrom23.com/contact',
   craftFiles: ['6.jpg', 'JF-11.JPG', '13.jpg', 'JF-8.JPG'].map(file => ({ name: file, type: 'image/jpeg', url: `/lookbook/${file}` })),
 };
+export const isSong = file => /^audio\//.test(file?.type || '') || /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(file?.name || '');
+export const songsFirst = files => [...(files || [])].sort((a, b) => isSong(b) - isSong(a));
 const DAY = 86400000;
 const text = (value, limit) => String(value ?? '').trim().slice(0, limit);
 const dayKey = time => new Date(time).toISOString().slice(0, 10);

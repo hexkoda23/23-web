@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { privateFields, profileFields, recordScan, scanSummary, workLink } from '../server/profile-model.js';
+import { isSong, privateFields, profileFields, recordScan, scanSummary, songsFirst, workLink } from '../server/profile-model.js';
 import { protectProfiles, saveScan } from '../server/profile-store.js';
 import scanHandler from '../api/profile-scans.js';
 
@@ -68,4 +68,14 @@ test('scan endpoint rejects other methods, other sites and signed-out totals', a
   assert.equal((await call({ method: 'POST', headers: { origin: 'https://evil.example' }, body: { id: 'real' } })).status, 403);
   assert.equal((await call({ method: 'POST', headers: { origin: 'https://shop.example.com' }, body: { id: '../bad' } })).status, 400);
   assert.equal((await call({ method: 'GET' })).status, 401);
+});
+
+test('songs are recognised and listed before other work', () => {
+  assert.equal(isSong({ type: 'audio/mpeg', name: 'a' }), true);
+  assert.equal(isSong({ name: 'demo.MP3' }), true);
+  assert.equal(isSong({ type: 'image/jpeg', name: 'a.jpg' }), false);
+  assert.equal(isSong(undefined), false);
+  const files = [{ name: 'a.jpg', type: 'image/jpeg' }, { name: 'b.mp3', type: 'audio/mpeg' }, { name: 'c.jpg', type: 'image/jpeg' }];
+  assert.deepEqual(songsFirst(files).map(file => file.name), ['b.mp3', 'a.jpg', 'c.jpg']);
+  assert.deepEqual(songsFirst(undefined), []);
 });
