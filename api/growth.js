@@ -4,11 +4,13 @@ import { requireAdmin, database, body, HttpError, respondError, milliseconds, th
 import { DEFAULT_SETTINGS, FOCUSES, summarize } from '../server/growth-model.js';
 import { runResearch } from '../server/growth-research.js';
 import { protectProfiles } from '../server/profile-store.js';
-import { emailConfigured, letterOverview, sendTest } from '../server/email-store.js';
+import { emailConfigured, letterOverview, saveLetterEdit, sendNow, sendTest } from '../server/email-store.js';
+import { EDITION_NAMES, issueNumber } from '../server/weekly-letter.js';
 import { creativesOverview, setFeatured, slumBookOverview } from '../server/community-store.js';
 import { PRODUCTS } from '../src/data/products.js';
 
 const docId = value => { if (!/^[a-zA-Z0-9_-]{1,128}$/.test(value || '')) throw new HttpError(400, 'Invalid record.'); return value; };
+const editionIndex = value => { const index = Number(value); if (!Number.isInteger(index) || index < 0 || index >= EDITION_NAMES.length) throw new HttpError(400, 'Choose an edition.'); return index; };
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'private, no-store');
   if (!['GET', 'POST'].includes(req.method)) return res.status(405).json({ error: 'GET or POST required.' });
@@ -62,8 +64,11 @@ export default async function handler(req, res) {
       if (input.enabled && !emailConfigured()) throw new HttpError(400, 'Connect Resend first: add RESEND_API_KEY and EMAIL_FROM, then redeploy.');
       await db.collection('_growth_settings').doc('email').set({ enabled: input.enabled, updatedAt: Date.now(), updatedBy: owner.uid });
     } else if (input.action === 'letter_test') {
-      const issue = Math.min(6, Math.max(1, Math.floor(Number(input.issue)) || 1));
-      await sendTest(owner.email, owner.name, issue, PRODUCTS);
+      await sendTest(db, owner.email, owner.name, issueNumber(), editionIndex(input.edition), PRODUCTS);
+    } else if (input.action === 'letter_edit') {
+      await saveLetterEdit(db, EDITION_NAMES[editionIndex(input.edition)], input.reset === true ? {} : input.fields);
+    } else if (input.action === 'letter_send_now') {
+      return res.status(200).json(await sendNow(db, getAuth(), PRODUCTS, editionIndex(input.edition)));
     } else if (input.action === 'feature_creative') {
       await setFeatured(db, docId(input.id), input.approved === true);
     } else if (input.action === 'protect_profiles') {

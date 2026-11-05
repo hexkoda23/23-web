@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { audience, optOutRef, runWeeklyLetter, sendLetters, unsubscribeToken, unsubscribeUrl, validUnsubscribe } from '../server/email-store.js';
-import { buildLetter, EDITION_NAMES, issueNumber, pickProducts } from '../server/weekly-letter.js';
+import { audience, optOutRef, runWeeklyLetter, saveLetterEdit, sendLetters, sendNow, sendTest, unsubscribeToken, unsubscribeUrl, validUnsubscribe } from '../server/email-store.js';
+import { buildLetter, cleanLetterEdit, EDITION_NAMES, issueNumber, letterFields, pickProducts } from '../server/weekly-letter.js';
 import { cleanApplication, publicPerson, setFeatured, featuredPeople, slumBookEntry } from '../server/community-store.js';
 import { publicPath } from '../server/growth-model.js';
 import { PRODUCTS } from '../src/data/products.js';
@@ -125,3 +125,62 @@ test('Slum Book entries are flattened for the owner and drop the QR image', () =
   assert.equal(slumBookEntry('s2', {}).name, '');
 });
 test('the creatives page is trackable', () => { assert.equal(publicPath('/creatives'), '/creatives'); });
+
+test('the owner can reword an edition, and what they type stays safe', () => {
+  const edits = { 'The Stranger': { subject: 'New drop', headline: 'Big <b>news</b>', copy: 'Line one\nLine two <script>', ctaLabel: 'Shop now', ctaLink: '/shop' } };
+  const letter = buildLetter({ issue: 1, edits, products: [], siteUrl: 'https://s.example', unsubscribeUrl: 'https://s.example/u' });
+  assert.equal(letter.subject, 'New drop');
+  assert.match(letter.html, /Big &lt;b&gt;news&lt;\/b&gt;/); assert.match(letter.html, /Line one<br\/>Line two &lt;script&gt;/);
+  assert.equal(letter.html.includes('<script>'), false);
+  assert.match(letter.html, /Shop now/); assert.match(letter.html, /https:\/\/s\.example\/shop\?/); assert.match(letter.text, /Line one\nLine two/);
+  assert.equal(letterFields('Wanted').headline, 'WANTED');
+});
+test('every edition shows its editable headline', () => {
+  EDITION_NAMES.forEach((name, edition) => {
+    const letter = buildLetter({ issue: 3, edition, edits: { [name]: { headline: 'Changed headline' } }, products: [], siteUrl: 'https://s.example', unsubscribeUrl: 'https://s.example/u' });
+    assert.equal(letter.edition, name); assert.match(letter.html, /Changed headline/);
+  });
+});
+test('saved edits only keep real changes and bad links are refused', async () => {
+  assert.deepEqual(cleanLetterEdit('Wanted', { ...letterFields('Wanted'), subject: ' Hello ' }), { subject: 'Hello' });
+  assert.equal(cleanLetterEdit('Nope', {}), null);
+  assert.equal(cleanLetterEdit('Wanted', { ctaLink: 'javascript:alert(1)' }), null);
+  const db = fakeDb();
+  await saveLetterEdit(db, 'Wanted', { ...letterFields('Wanted'), subject: 'Hello' });
+  assert.equal(db.rows.get('_growth_settings/letter_edits').editions.Wanted.subject, 'Hello');
+  await saveLetterEdit(db, 'Wanted', {});
+  assert.equal('Wanted' in db.rows.get('_growth_settings/letter_edits').editions, false);
+  await assert.rejects(saveLetterEdit(db, 'Wanted', { ctaLink: 'https://elsewhere.example' }), error => error.status === 400);
+});
+test('send now reaches everyone once, uses edits, and a double press is refused', async () => {
+  const db = fakeDb({ '_growth_settings/letter_edits': { editions: { 'Admit One': { subject: 'Doors open' } } } });
+  const { calls, fetcher } = recorder();
+  const users = [{ email: 'a@x.co' }, { email: 'b@x.co' }];
+  const result = await sendNow(db, fakeAuth(users), PRODUCTS, 2, { now: 1000000, fetcher, pause: 0 });
+  assert.deepEqual([result.recipients, result.sent, result.failed], [2, 2, 0]);
+  assert.equal(calls.length, 1); assert.equal(calls[0].body.length, 2); assert.equal(calls[0].body[0].subject, 'Doors open');
+  await assert.rejects(sendNow(db, fakeAuth(users), PRODUCTS, 2, { now: 1000000 + 60000, fetcher, pause: 0 }), error => error.status === 429);
+  assert.equal(calls.length, 1);
+  assert.equal((await sendNow(db, fakeAuth(users), PRODUCTS, 2, { now: 1000000 + 11 * 60000, fetcher, pause: 0 })).sent, 2);
+  assert.notEqual(calls[0].options.headers['Idempotency-Key'], calls[1].options.headers['Idempotency-Key']);
+});
+test('send now skips people who unsubscribed', async () => {
+  const db = fakeDb();
+  await optOutRef(db, 'b@x.co').set({ at: 1 });
+  const { calls, fetcher } = recorder();
+  await sendNow(db, fakeAuth([{ email: 'a@x.co' }, { email: 'b@x.co' }]), PRODUCTS, 0, { now: 5000000, fetcher, pause: 0 });
+  assert.deepEqual(calls[0].body.map(mail => mail.to[0]), ['a@x.co']);
+});
+test('a send that reaches nobody can be tried again straight away', async () => {
+  const db = fakeDb();
+  const fetcher = async () => ({ ok: false });
+  const first = await sendNow(db, fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, 0, { now: 9000000, fetcher, pause: 0 });
+  assert.equal(first.failed, 1);
+  assert.equal((await sendNow(db, fakeAuth([{ email: 'a@x.co' }]), PRODUCTS, 0, { now: 9000000 + 1000, fetcher, pause: 0 })).failed, 1);
+});
+test('the test letter uses saved edits and the chosen edition', async () => {
+  const db = fakeDb({ '_growth_settings/letter_edits': { editions: { Wanted: { subject: 'Edited' } } } });
+  const { calls, fetcher } = recorder();
+  await sendTest(db, 'owner@x.co', 'Owner Name', 3, 4, PRODUCTS, { now: 7, fetcher });
+  assert.equal(calls[0].body[0].subject, 'Edited'); assert.deepEqual(calls[0].body[0].to, ['owner@x.co']);
+});

@@ -18,7 +18,8 @@ export async function uploadFileCloudinary(file, userId = "anonymous") {
     }
     const data = await res.json();
     return {
-      url: data.secure_url,
+      // Only Safari can show HEIC, so ask Cloudinary for a JPG copy that every browser can display.
+      url: data.secure_url.replace(/\.hei[cf]$/i, '.jpg'),
       publicId: data.public_id,
       bytes: data.bytes,
       format: data.format,

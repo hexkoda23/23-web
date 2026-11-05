@@ -1,12 +1,15 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { hash, HttpError } from './growth-store.js';
-import { buildLetter, issueNumber, pickProducts } from './weekly-letter.js';
+import { buildLetter, cleanLetterEdit, issueNumber, pickProducts } from './weekly-letter.js';
 
 const RESEND = 'https://api.resend.com';
 const siteUrl = () => (process.env.SITE_URL || 'https://www.shopfrom23.com').replace(/\/$/, '');
 const validEmail = value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value || '');
 const firstName = value => (String(value || '').trim().split(/\s+/)[0] || '').replace(/[^\p{L}'-]/gu, '').slice(0, 30);
 const sleep = ms => new Promise(done => setTimeout(done, ms));
+const SEND_GAP = 10 * 60000;
+const editsRef = db => db.collection('_growth_settings').doc('letter_edits');
+const lockRef = db => db.collection('_growth_settings').doc('email_send_lock');
 
 export const emailConfigured = () => !!process.env.RESEND_API_KEY && !!process.env.EMAIL_FROM && !!process.env.CRON_SECRET;
 export function unsubscribeToken(email) {
@@ -48,32 +51,57 @@ export async function audience(db, auth) {
   }
   return [...people.values()].filter(person => !blocked.has(hash(person.email)));
 }
-function message(person, issue, products) {
+function message(person, issue, products, options = {}) {
   const link = unsubscribeUrl(person.email);
-  const letter = buildLetter({ issue, firstName: person.firstName, products, siteUrl: siteUrl(), unsubscribeUrl: link });
+  const letter = buildLetter({ issue, ...options, firstName: person.firstName, products, siteUrl: siteUrl(), unsubscribeUrl: link });
   return { from: process.env.EMAIL_FROM, to: [person.email], subject: letter.subject, html: letter.html, text: letter.text,
     headers: { 'List-Unsubscribe': `<${link}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } };
 }
-export async function sendLetters(recipients, issue, catalog, { fetcher = fetch, pause = 600 } = {}) {
+export async function sendLetters(recipients, issue, catalog, { fetcher = fetch, pause = 600, edits, edition, runId = `issue-${issue}` } = {}) {
   const products = pickProducts(catalog, issue);
   let sent = 0;
   let failed = 0;
   for (let start = 0; start < recipients.length; start += 100) {
     const chunk = recipients.slice(start, start + 100);
     const response = await fetcher(`${RESEND}/emails/batch`, { method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Idempotency-Key': `issue-${issue}-${start}` },
-      body: JSON.stringify(chunk.map(person => message(person, issue, products))) });
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Idempotency-Key': `${runId}-${start}` },
+      body: JSON.stringify(chunk.map(person => message(person, issue, products, { edits, edition }))) });
     if (response.ok) sent += chunk.length; else failed += chunk.length;
     if (pause && start + 100 < recipients.length) await sleep(pause);
   }
   return { sent, failed };
 }
-export async function sendTest(email, name, issue, catalog, fetcher = fetch) {
+const savedEdits = async db => (await editsRef(db).get()).data()?.editions || {};
+export async function saveLetterEdit(db, name, input) {
+  const fields = cleanLetterEdit(name, input);
+  if (!fields) throw new HttpError(400, 'Check the edition, and start the button link with / (for example /shop).');
+  const editions = await savedEdits(db);
+  if (Object.keys(fields).length) editions[name] = fields; else delete editions[name];
+  await editsRef(db).set({ editions, updatedAt: Date.now() });
+}
+// The test goes through the same batch route as a real send, so it proves that route works.
+export async function sendTest(db, email, name, issue, edition, catalog, { now = Date.now(), fetcher = fetch } = {}) {
   if (!emailConfigured()) throw new HttpError(400, 'Connect Resend first: add RESEND_API_KEY and EMAIL_FROM, then redeploy.');
-  const response = await fetcher(`${RESEND}/emails`, { method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-    body: JSON.stringify(message({ email, firstName: firstName(name) }, issue, pickProducts(catalog, issue))) });
-  if (!response.ok) throw new HttpError(502, 'Resend did not accept the test email. Check that your sending domain is verified.');
+  const { failed } = await sendLetters([{ email, firstName: firstName(name) }], issue, catalog, { fetcher, pause: 0, edition, edits: await savedEdits(db), runId: `test-${now}` });
+  if (failed) throw new HttpError(502, 'Resend did not accept the test email. Check that your sending domain is verified.');
+}
+// The owner's send-now button. The lock means a double press cannot email everyone twice.
+export async function sendNow(db, auth, catalog, edition, { now = Date.now(), fetcher, pause } = {}) {
+  if (!emailConfigured()) throw new HttpError(400, 'Connect Resend first: add RESEND_API_KEY and EMAIL_FROM, then redeploy.');
+  const claimed = await db.runTransaction(async tx => {
+    if (now - ((await tx.get(lockRef(db))).data()?.at || 0) < SEND_GAP) return false;
+    tx.set(lockRef(db), { at: now });
+    return true;
+  });
+  if (!claimed) throw new HttpError(429, 'A letter went out in the last 10 minutes. Wait a little before sending again.');
+  const issue = issueNumber(now);
+  const runId = `manual-${now}`;
+  const recipients = await audience(db, auth);
+  const result = await sendLetters(recipients, issue, catalog, { fetcher, pause, edition, edits: await savedEdits(db), runId });
+  await db.collection('_growth_email_runs').doc(runId).set({ issue, edition, manual: true, status: result.failed ? (result.sent ? 'partial' : 'failed') : 'sent', startedAt: now, finishedAt: Date.now(), recipients: recipients.length, ...result });
+  // A send that reached nobody should not block trying again.
+  if (!result.sent) await lockRef(db).set({ at: 0 });
+  return { recipients: recipients.length, ...result };
 }
 // One claim per issue: a retried schedule can never email people twice.
 export async function runWeeklyLetter(db, auth, catalog, { now = Date.now(), fetcher, pause } = {}) {
@@ -87,11 +115,11 @@ export async function runWeeklyLetter(db, auth, catalog, { now = Date.now(), fet
   });
   if (!claimed) return { skipped: 'already-sent', issue };
   const recipients = await audience(db, auth);
-  const result = await sendLetters(recipients, issue, catalog, { fetcher, pause });
+  const result = await sendLetters(recipients, issue, catalog, { fetcher, pause, edits: await savedEdits(db) });
   await ref.set({ issue, status: result.failed ? 'partial' : 'sent', startedAt: now, finishedAt: Date.now(), recipients: recipients.length, ...result });
   return { issue, recipients: recipients.length, ...result };
 }
 export async function letterOverview(db) {
-  const [settings, runs, optOuts] = await Promise.all([db.collection('_growth_settings').doc('email').get(), db.collection('_growth_email_runs').orderBy('issue', 'desc').limit(6).get(), db.collection('_growth_email_optouts').count().get()]);
-  return { enabled: settings.data()?.enabled === true, optOuts: optOuts.data().count, runs: runs.docs.map(doc => doc.data()) };
+  const [settings, runs, optOuts, edits] = await Promise.all([db.collection('_growth_settings').doc('email').get(), db.collection('_growth_email_runs').orderBy('startedAt', 'desc').limit(10).get(), db.collection('_growth_email_optouts').count().get(), savedEdits(db)]);
+  return { enabled: settings.data()?.enabled === true, optOuts: optOuts.data().count, edits, runs: runs.docs.map(doc => ({ id: doc.id, ...doc.data() })) };
 }
