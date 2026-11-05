@@ -1,4 +1,4 @@
-import { HttpError } from './growth-store.js';
+import { HttpError, milliseconds } from './growth-store.js';
 import { isSong } from './profile-model.js';
 
 const text = (value, limit) => String(value ?? '').trim().slice(0, limit);
@@ -30,6 +30,15 @@ export async function setFeatured(db, id, approved) {
     const next = approved ? [...new Set([...ids, id])].slice(-8) : ids.filter(value => value !== id);
     tx.set(ref, { ids: next, updatedAt: Date.now() });
   });
+}
+// Slum Book entries hold phone numbers, so they only ever leave the server through the owner's dashboard.
+export function slumBookEntry(id, entry) {
+  const form = entry.formData || {};
+  return { id, name: text(form.name, 120), nickname: text(form.nickname, 120), email: text(entry.userEmail, 120), phone: text(form.phone, 40), instagram: text(form.igHandle, 80), x: text(form.xHandle, 80), linkedin: text(form.linkedin, 200), snapchat: text(form.snapchat, 80), bio: text(form.bio, 1000), crush: text(form.crush, 200), files: Number(form.craftFilesCount) || 0, at: milliseconds(entry.submittedAt) };
+}
+export async function slumBookOverview(db) {
+  const entries = await db.collection('slumBookSubmissions').orderBy('submittedAt', 'desc').limit(301).get();
+  return { entries: entries.docs.slice(0, 300).map(doc => slumBookEntry(doc.id, doc.data())), truncated: entries.size > 300 };
 }
 export async function creativesOverview(db) {
   const [applications, requests, featured] = await Promise.all([db.collection('_growth_applications').orderBy('at', 'desc').limit(100).get(), db.collection('digitalProfiles').where('wantsFeature', '==', true).limit(50).get(), featuredRef(db).get()]);

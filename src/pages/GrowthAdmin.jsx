@@ -1,7 +1,7 @@
 import { createElement, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sendEmailVerification } from 'firebase/auth';
-import { Activity, ArrowUpRight, BarChart3, Compass, Copy, LayoutDashboard, Mail, Megaphone, RefreshCw, Settings, ShoppingBag, Sparkles, Users } from 'lucide-react';
+import { Activity, ArrowUpRight, BarChart3, BookOpen, Compass, Copy, LayoutDashboard, Mail, Megaphone, RefreshCw, Settings, ShoppingBag, Sparkles, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { growthRequest, campaignLink } from '../lib/growth-api';
 import { buildLetter, EDITION_NAMES, issueNumber, pickProducts } from '../../server/weekly-letter';
@@ -13,7 +13,7 @@ import '../growth.css';
 const money = n => `₦${Number(n || 0).toLocaleString('en-NG')}`;
 const date = n => n ? new Date(n).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }) : 'Not available';
 const names = { page_view: 'Page visit', product_view: 'Product view', add_to_cart: 'Added to bag', remove_from_cart: 'Removed from bag', checkout_start: 'Checkout opened', order_created: 'Order created', login: 'Signed in', signup: 'Account created', logout: 'Signed out', scroll_depth: 'Scroll depth', page_engagement: 'Active reading time', navigation: 'Link clicked', whatsapp_click: 'WhatsApp opened' };
-const tabs = [['overview', 'Overview', LayoutDashboard], ['journeys', 'Visitor journeys', Activity], ['orders', 'Orders & payments', ShoppingBag], ['people', 'Accounts', Users], ['letter', 'Weekly letter', Mail], ['creatives', 'First 23', Sparkles], ['radar', 'Opportunity radar', Compass], ['studio', 'Campaign studio', Megaphone], ['settings', 'Connections', Settings]];
+const tabs = [['overview', 'Overview', LayoutDashboard], ['journeys', 'Visitor journeys', Activity], ['orders', 'Orders & payments', ShoppingBag], ['people', 'Accounts', Users], ['letter', 'Weekly letter', Mail], ['creatives', 'First 23', Sparkles], ['slumbook', 'Slum Book', BookOpen], ['radar', 'Opportunity radar', Compass], ['studio', 'Campaign studio', Megaphone], ['settings', 'Connections', Settings]];
 const weeklyPlan = [
   ['Monday', 'Show the fit', 'Film a 15-second front, side, and back view in daylight. Include your height and the size you wear.'],
   ['Tuesday', 'Make the details clear', 'Show stitching, the barcode experience, the price, and available colors. Answer a real sizing question.'],
@@ -75,6 +75,7 @@ export default function GrowthAdmin() {
       {tab === 'people' && <People data={display} />}
       {tab === 'letter' && <WeeklyLetter data={display} act={act} busy={busy} />}
       {tab === 'creatives' && <FirstTwentyThree data={display} act={act} busy={busy} />}
+      {tab === 'slumbook' && <SlumBook data={display} />}
       {tab === 'radar' && <Radar data={display} act={act} busy={busy} />}
       {tab === 'studio' && <Studio data={display} act={act} busy={busy} />}
       {tab === 'settings' && <Connections key={JSON.stringify(display.settings)} data={display} act={act} busy={busy} />}
@@ -116,6 +117,13 @@ function WeeklyLetter({ data, act, busy }) {
 function FirstTwentyThree({ data, act, busy }) {
   const creatives = data.creatives || { applications: [], requests: [], featured: [] };
   return <><Heading label="The people behind the code" title="The First 23."><p>Applications from the For Creatives page, and wearers asking to appear on the homepage. Nobody appears publicly until you approve them.</p></Heading><div className="growth-stats"><article><p>Applications</p><strong>{creatives.applications.length}</strong><span>From the For Creatives page</span></article><article><p>On the homepage</p><strong>{creatives.featured.length}</strong><span>Up to 4 show at once</span></article></div><section className="growth-panel"><h2>Applications</h2>{!creatives.applications.length ? <Empty>Applications will appear here.</Empty> : <div className="growth-table-wrap"><table><thead><tr><th>Name</th><th>Craft</th><th>City</th><th>Contact</th><th>Work</th><th>Why</th></tr></thead><tbody>{creatives.applications.map(a => <tr key={a.id}><td>{a.name}</td><td>{a.craft}</td><td>{a.city}</td><td>{a.email}<br />{a.instagram}</td><td>{a.link}</td><td>{a.why}</td></tr>)}</tbody></table></div>}</section><section className="growth-panel"><h2>Homepage requests</h2>{!creatives.requests.length ? <Empty>Wearers who ask to be featured will appear here.</Empty> : <div className="growth-table-wrap"><table><thead><tr><th>Name</th><th>Craft</th><th>Profile</th><th>Homepage</th></tr></thead><tbody>{creatives.requests.map(person => { const live = creatives.featured.includes(person.id); return <tr key={person.id}><td>{person.name}</td><td>{[person.craft, person.city].filter(Boolean).join(' · ')}</td><td><Link to={`/profile/${person.id}`}>View</Link></td><td>{person.hasImage ? <button disabled={busy} onClick={() => act('feature_creative', { id: person.id, approved: !live }, live ? 'Removed from the homepage.' : 'Added to the homepage.')}>{live ? 'Remove' : 'Approve'}</button> : 'Needs a work image'}</td></tr>; })}</tbody></table></div>}</section></>;
+}
+function SlumBook({ data }) {
+  const [search, setSearch] = useState('');
+  const book = data.slumBook || { entries: [] };
+  const term = search.trim().toLowerCase();
+  const list = book.entries.filter(e => !term || [e.name, e.nickname, e.email, e.phone, e.instagram, e.x, e.snapchat].join(' ').toLowerCase().includes(term));
+  return <><Heading label="Private to you" title="The Slum Book."><p>Everyone who filled in the Slum Book, newest first. Only you can see this page.</p></Heading><div className="growth-stats"><article><p>Submissions</p><strong>{book.entries.length}{book.truncated ? '+' : ''}</strong><span>{book.truncated ? 'Showing the newest 300' : 'All time'}</span></article></div><section className="growth-panel"><div className="growth-panel-title"><h2>Submissions</h2><label>Search<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Name, email, phone or handle" /></label></div>{!list.length ? <Empty>{term ? 'Nobody matches that search.' : 'Slum Book submissions will appear here.'}</Empty> : <div className="growth-table-wrap"><table><thead><tr><th>Name</th><th>Contact</th><th>Socials</th><th>About</th><th>Sent</th></tr></thead><tbody>{list.map(e => <tr key={e.id}><td>{e.name || 'No name'}{e.nickname && <><br /><small>{e.nickname}</small></>}</td><td>{e.email && <a href={`mailto:${e.email}`}>{e.email}</a>}{e.email && e.phone && <br />}{e.phone && <a href={`tel:${e.phone.replace(/[^0-9+]/g, '')}`}>{e.phone}</a>}</td><td>{[['IG', e.instagram], ['X', e.x], ['Snap', e.snapchat], ['LinkedIn', e.linkedin]].filter(([, value]) => value).map(([label, value]) => <div key={label}>{label}: {value}</div>)}</td><td>{e.bio}{e.crush && <><br /><small>Crush: {e.crush}</small></>}{e.files > 0 && <><br /><small>{e.files} file{e.files === 1 ? '' : 's'} added</small></>}</td><td>{date(e.at)}</td></tr>)}</tbody></table></div>}</section></>;
 }
 function Radar({ data, act, busy }) {
   const [filter, setFilter] = useState('all');

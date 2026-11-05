@@ -5,7 +5,7 @@ import { DEFAULT_SETTINGS, FOCUSES, summarize } from '../server/growth-model.js'
 import { runResearch } from '../server/growth-research.js';
 import { protectProfiles } from '../server/profile-store.js';
 import { emailConfigured, letterOverview, sendTest } from '../server/email-store.js';
-import { creativesOverview, setFeatured } from '../server/community-store.js';
+import { creativesOverview, setFeatured, slumBookOverview } from '../server/community-store.js';
 import { PRODUCTS } from '../src/data/products.js';
 
 const docId = value => { if (!/^[a-zA-Z0-9_-]{1,128}$/.test(value || '')) throw new HttpError(400, 'Invalid record.'); return value; };
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const days = [7, 30, 90].includes(Number(req.query.days)) ? Number(req.query.days) : 30;
       const since = Date.now() - days * 86400000;
-      const [events, orders, settings, opportunities, runs, campaigns, accounts, letter, creatives] = await Promise.all([
+      const [events, orders, settings, opportunities, runs, campaigns, accounts, letter, creatives, slumBook] = await Promise.all([
         db.collection('_growth_events').where('at', '>=', since).orderBy('at', 'desc').limit(5001).get(),
         db.collection('orders').where('createdAt', '>=', timestamp.fromMillis(since)).orderBy('createdAt', 'desc').limit(301).get(),
         db.collection('_growth_settings').doc('workspace').get(),
@@ -28,6 +28,7 @@ export default async function handler(req, res) {
         getAuth().listUsers(1000),
         letterOverview(db),
         creativesOverview(db),
+        slumBookOverview(db),
       ]);
       const eventRows = events.docs.slice(0, 5000).map(d => d.data());
       const orderRows = orders.docs.slice(0, 300).map(d => {
@@ -39,7 +40,7 @@ export default async function handler(req, res) {
       const reviews = orderRows.length ? await db.getAll(...orderRows.map(o => db.collection('_growth_order_reviews').doc(o.id))) : [];
       return res.status(200).json({
         ...summarize(eventRows, orderRows, reviews.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() }))),
-        letter, creatives, ownerUid: owner.uid, days, siteUrl: process.env.SITE_URL || '', sampled: events.size > 5000 || orders.size > 300, accountListTruncated: !!accounts.pageToken,
+        letter, creatives, slumBook, ownerUid: owner.uid, days, siteUrl: process.env.SITE_URL || '', sampled: events.size > 5000 || orders.size > 300, accountListTruncated: !!accounts.pageToken,
         settings: { ...DEFAULT_SETTINGS, ...settings.data() },
         configured: { search: !!process.env.SERPAPI_API_KEY, analytics: !!process.env.CRON_SECRET && !!process.env.SITE_URL, cron: !!process.env.CRON_SECRET, email: emailConfigured() },
         dailyLimit: Math.min(5, Math.max(1, Number(process.env.RESEARCH_DAILY_LIMIT) || 2)),

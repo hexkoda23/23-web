@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { audience, optOutRef, runWeeklyLetter, sendLetters, unsubscribeToken, unsubscribeUrl, validUnsubscribe } from '../server/email-store.js';
 import { buildLetter, EDITION_NAMES, issueNumber, pickProducts } from '../server/weekly-letter.js';
-import { cleanApplication, publicPerson, setFeatured, featuredPeople } from '../server/community-store.js';
+import { cleanApplication, publicPerson, setFeatured, featuredPeople, slumBookEntry } from '../server/community-store.js';
 import { publicPath } from '../server/growth-model.js';
 import { PRODUCTS } from '../src/data/products.js';
 import weeklyHandler from '../api/weekly-email.js';
@@ -117,5 +117,11 @@ test('the homepage only shows people the owner approved, and no private fields',
   await setFeatured(db, 'ok', false);
   assert.deepEqual(await featuredPeople(db), []);
   assert.equal(publicPerson('x', { name: 'No work', craftFiles: [{ url: 'javascript:alert(1)' }] }), null);
+});
+test('Slum Book entries are flattened for the owner and drop the QR image', () => {
+  const entry = slumBookEntry('s1', { userEmail: 'a@x.co', qrCodeUrl: 'data:image/png;base64,AAAA', submittedAt: { toMillis: () => 5 }, formData: { name: ' Ada ', phone: '080', igHandle: '@ada', craftFilesCount: 2 } });
+  assert.equal(entry.name, 'Ada'); assert.equal(entry.phone, '080'); assert.equal(entry.instagram, '@ada'); assert.equal(entry.files, 2); assert.equal(entry.at, 5);
+  assert.equal('qrCodeUrl' in entry, false);
+  assert.equal(slumBookEntry('s2', {}).name, '');
 });
 test('the creatives page is trackable', () => { assert.equal(publicPath('/creatives'), '/creatives'); });
