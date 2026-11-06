@@ -36,7 +36,8 @@ async function allAccounts(auth) {
   } while (pageToken);
   return accounts;
 }
-export async function audience(db, auth) {
+// Everyone on file, in the order letters first went out.
+async function mailingList(db, auth) {
   const [accounts, subscribers, optOuts] = await Promise.all([allAccounts(auth), db.collection('subscribers').get(), db.collection('_growth_email_optouts').get()]);
   const blocked = new Set(optOuts.docs.map(doc => doc.id));
   const people = new Map();
@@ -53,6 +54,8 @@ export async function audience(db, auth) {
   }
   return [...people.values()].filter(person => !blocked.has(hash(person.email)));
 }
+// Older signups whose account is gone stay on file, but only live accounts are emailed.
+export const audience = async (db, auth) => (await mailingList(db, auth)).filter(person => person.account);
 function message(person, issue, products, options = {}) {
   const link = unsubscribeUrl(person.email);
   const letter = buildLetter({ issue, ...options, firstName: person.firstName, products, siteUrl: siteUrl(), unsubscribeUrl: link });
@@ -128,9 +131,9 @@ export async function sendMissed(db, auth, catalog, id, { now = Date.now(), fetc
   const run = (await ref.get()).data();
   if (!run?.failed) throw new HttpError(400, 'Everyone received that letter.');
   await claimSend(db, now);
-  const everyone = await audience(db, auth);
+  const everyone = await mailingList(db, auth);
   // Letters sent before missed people were recorded went out in list order, so whoever comes after the sent count missed it.
-  const current = new Set(everyone.map(person => person.email));
+  const current = new Set(everyone.filter(person => person.account).map(person => person.email));
   const people = (run.missed || everyone.slice(run.sent)).filter(person => current.has(person.email));
   const result = await sendLetters(people, run.issue, catalog, { fetcher, pause, edition: run.edition, edits: await savedEdits(db), runId: `${id}-again-${now}` });
   const totals = { sent: run.sent + result.sent, failed: result.failed, missed: result.missed };
@@ -140,6 +143,6 @@ export async function sendMissed(db, auth, catalog, id, { now = Date.now(), fetc
 }
 export async function letterOverview(db, auth) {
   const [runs, optOuts, edits, issue, people] = await Promise.all([db.collection('_growth_email_runs').orderBy('startedAt', 'desc').limit(10).get(), db.collection('_growth_email_optouts').count().get(), savedEdits(db), nextIssue(db), audience(db, auth)]);
-  return { nextIssue: issue, optOuts: optOuts.data().count, edits, audience: people.length, withoutAccount: people.filter(person => !person.account).length,
+  return { nextIssue: issue, optOuts: optOuts.data().count, edits, audience: people.length,
     runs: runs.docs.map(doc => { const { missed, ...run } = doc.data(); return { id: doc.id, ...run, missedCount: missed?.length ?? run.failed ?? 0 }; }) };
 }
